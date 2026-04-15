@@ -20,7 +20,10 @@
     "vite-plugin-solid": "^2.11.8"
   },
   "dependencies": {
+    "@kobalte/core": "^0.13.11",
+    "@tanstack/solid-hotkeys": "^0.9.1",
     "openapi-hooks": "^0.0.6",
+    "solid-icons": "^1.2.0",
     "solid-js": "^1.9.9"
   }
 }
