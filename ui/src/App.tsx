@@ -2,6 +2,7 @@ import type { Component } from 'solid-js';
 import { Navbar } from '#/components/navbar';
 import { Sidebar } from '#/components/sidebar';
 import { FaSolidArrowRight, FaSolidRefresh } from 'solid-icons/fa';
+import { Receive } from './views/receive';
 
 const App: Component = () => {
   return (
@@ -51,6 +52,7 @@ const App: Component = () => {
                 <div>
                   Pending transactions
                 </div>
+                <Receive />
               </div>
             </div>
           </div>
