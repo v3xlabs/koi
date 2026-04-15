@@ -1,6 +1,7 @@
 import logo from '../assets/kohaku.svg';
 
 export const Navbar = () => {
+    //
 
     return (
         <div class="border-b px-2 py-2 flex justify-between items-center bg-surface border-b-border">

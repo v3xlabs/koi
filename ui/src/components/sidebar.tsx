@@ -1,6 +1,6 @@
 import { For } from "solid-js";
 import { FiHome } from "solid-icons/fi";
-import { FaSolidArrows, FaSolidCopy, FaSolidExternalLink, FaSolidGear, FaSolidGridHorizontal, FaSolidQrcode, FaSolidWallet } from "solid-icons/fa";
+import { FaSolidAddressCard, FaSolidArrows, FaSolidCopy, FaSolidExternalLink, FaSolidGear, FaSolidGridHorizontal, FaSolidQrcode, FaSolidWallet } from "solid-icons/fa";
 
 export const Sidebar = () => {
     // Sidebar comment
@@ -39,8 +39,8 @@ export const Sidebar = () => {
                         }
                     ]}>
                         {(item) => (
-                            <button class="bg-surface-alt aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
-                                <item.icon class="w-3.5 h-3.5" />
+                            <button class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
+                                <item.icon class="w-3.5 h-3.5 text-secondary-foreground" />
                             </button>
                         )}
                     </For>
@@ -51,38 +51,52 @@ export const Sidebar = () => {
                     New transaction
                 </button>
             </div>
-            <div class="space-y-0">
+            <div class="divide-y divide-border">
                 <For each={[
-                    {
-                        icon: FiHome,
-                        label: "Home",
-                        href: "/",
-                    },
-                    {
-                        icon: FaSolidWallet,
-                        label: "Assets",
-                        href: "/assets",
-                    },
-                    {
-                        icon: FaSolidArrows,
-                        label: "Swap",
-                        href: "/swap"
-                    },
-                    {
-                        icon: FaSolidArrows,
-                        label: "Earn",
-                        href: "/earn"
-                    },
-                    {
-                        icon: FaSolidGridHorizontal,
-                        label: "Apps",
-                    }
+                    [
+                        {
+                            icon: FiHome,
+                            label: "Home",
+                            href: "/",
+                        },
+                        {
+                            icon: FaSolidWallet,
+                            label: "Assets",
+                            href: "/assets",
+                        },
+                        {
+                            icon: FaSolidArrows,
+                            label: "Swap",
+                            href: "/swap"
+                        },
+                        {
+                            icon: FaSolidArrows,
+                            label: "Earn",
+                            href: "/earn"
+                        },
+                        {
+                            icon: FaSolidGridHorizontal,
+                            label: "Apps",
+                        }],
+                    [
+                        {
+                            icon: FaSolidAddressCard,
+                            label: "Addressbook",
+                            href: "/addressbook"
+                        },
+                    ]
                 ]}>
-                    {(item) => (
-                        <button class="hover:bg-surface-alt w-full rounded-md p-2 flex items-center gap-2 cursor-pointer">
-                            <item.icon />
-                            {item.label}
-                        </button>
+                    {group => (
+                        <div class="py-2 first:pt-0">
+                            <For each={group}>
+                                {(item) => (
+                                    <button class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer first:bg-surface-alt">
+                                        <item.icon class="w-3.5 h-3.5" />
+                                        {item.label}
+                                    </button>
+                                )}
+                            </For>
+                        </div>
                     )}
                 </For>
             </div>

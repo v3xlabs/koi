@@ -4,6 +4,7 @@ import { render } from 'solid-js/web';
 import 'solid-devtools';
 
 import App from './App';
+import { AppProvider } from './api';
 
 const root = document.getElementById('root');
 
@@ -13,4 +14,4 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   );
 }
 
-render(() => <App />, root!);
+render(() => <AppProvider><App /></AppProvider>, root!);
