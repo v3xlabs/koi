@@ -12,6 +12,7 @@
   "license": "MIT",
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.13",
+    "eslint-plugin-v3xlabs": "^1.7.14",
     "solid-devtools": "^0.34.3",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
@@ -19,6 +20,7 @@
     "vite-plugin-solid": "^2.11.8"
   },
   "dependencies": {
+    "openapi-hooks": "^0.0.6",
     "solid-js": "^1.9.9"
   }
 }
