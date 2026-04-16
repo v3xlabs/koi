@@ -24,7 +24,9 @@
     "@kobalte/core": "^0.13.11",
     "@tanstack/solid-hotkeys": "^0.9.1",
     "openapi-hooks": "^0.0.6",
+    "qr": "^0.5.5",
     "solid-icons": "^1.2.0",
-    "solid-js": "^1.9.9"
+    "solid-js": "^1.9.9",
+    "ts-pattern": "^5.9.0"
   }
 }

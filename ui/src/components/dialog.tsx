@@ -19,9 +19,7 @@ const Root: typeof DialogRoot = (props) => {
     return (
         <DialogRoot
             {...props}
-        >
-            {props.children}
-        </DialogRoot>
+        />
     )
 }
 
@@ -32,6 +30,19 @@ const Overlay: typeof Dialog.Overlay = (props) => {
                 [props.class]: true,
                 "fixed inset-0 bg-background/50": true,
             }}
+            {...props}
+        />
+    )
+}
+
+const Title: typeof Dialog.Title = (props) => {
+    return (
+        <Dialog.Title
+            classList={{
+                [props.class]: true,
+                "w-full border-b border-border pb-4 px-4 pt-4": true,
+            }}
+            {...props}
         />
     )
 }
@@ -40,4 +51,5 @@ export const Modal = Object.assign(Root, {
     ...Dialog,
     CloseButton,
     Overlay,
+    Title,
 });

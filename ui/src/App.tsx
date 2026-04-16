@@ -3,6 +3,8 @@ import { Navbar } from '#/components/navbar';
 import { Sidebar } from '#/components/sidebar';
 import { FaSolidArrowRight, FaSolidRefresh } from 'solid-icons/fa';
 import { Receive } from './views/receive';
+import { ReceiveQR } from './views/receive/qr';
+import { Modal } from './components/dialog';
 
 const App: Component = () => {
   return (
@@ -38,12 +40,14 @@ const App: Component = () => {
                     <FaSolidArrowRight class="-rotate-45" />
                     Send
                   </button>
-                  <button
-                    class="bg-secondary hover:bg-secondary-hover text-primary-foreground w-full rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
-                  >
-                    <FaSolidArrowRight class="-rotate-225" />
-                    Receive
-                  </button>
+                  <ReceiveQR address={() => "0x1234567890123456789012345678901234567890"}>
+                    <Modal.Trigger
+                      class="bg-secondary hover:bg-secondary-hover text-primary-foreground w-full rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                    >
+                      <FaSolidArrowRight class="-rotate-225" />
+                      Receive
+                    </Modal.Trigger>
+                  </ReceiveQR>
                 </div>
               </div>
             </div>
@@ -52,7 +56,6 @@ const App: Component = () => {
                 <div>
                   Pending transactions
                 </div>
-                <Receive />
               </div>
             </div>
           </div>
