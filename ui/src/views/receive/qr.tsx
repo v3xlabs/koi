@@ -2,6 +2,7 @@ import { Modal } from "#/components/dialog";
 import { Accessor, createMemo, createSignal, For, ParentComponent } from "solid-js";
 import { encodeQR } from 'qr';
 import { match } from "ts-pattern";
+import { SegmentedControl } from "@kobalte/core/segmented-control";
 
 type ReceiveQRProperties = {
     address: Accessor<string>;
@@ -43,24 +44,40 @@ export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
                                 <div class="w-48 h-48 border border-border bg-[#ffff] rounded-md">
                                     <img src={qrImage()} alt="QR Code" class="w-full h-full object-contain" />
                                 </div>
-                                <div>
-                                    <div class="flex gap-2">
-                                        <For each={supportedQRType}>
-                                            {(type) => (
-                                                <button
-                                                    classList={{
-                                                        "bg-surface hover:bg-surface-alt rounded-md px-2 py-1 text-sm font-bold flex items-center gap-2 cursor-pointer": true,
-                                                        "bg-primary hover:bg-primary-hover text-primary-foreground": type === qrType(),
-                                                    }}
-                                                    onClick={() => setQRType(type)}
-                                                >
-                                                    {type}
-                                                </button>
-                                            )}
-                                        </For>
-                                    </div>
+                                <div class="space-y-2">
+                                    <SegmentedControl
+                                        value={qrType()}
+                                        onChange={setQRType}
+                                        class=""
+                                    >
+                                        <SegmentedControl.Label class="">
+                                            Url Format
+                                        </SegmentedControl.Label>
+                                        <div class="relative border border-border rounded-md p-1 w-fit" role="presentation">
+                                            <SegmentedControl.Indicator class="absolute top-1 left-1 w-full h-full bg-primary rounded-md transition-all duration-300" />
+                                            <div class="flex gap-2 w-fit relative">
+                                                <For each={supportedQRType}>
+                                                    {(type) => (
+                                                        <SegmentedControl.Item value={type}
+                                                            class="px-2"
+                                                        >
+                                                            <SegmentedControl.ItemInput class="" />
+                                                            <SegmentedControl.ItemLabel class="cursor-pointer">
+                                                                {type}
+                                                            </SegmentedControl.ItemLabel>
+                                                        </SegmentedControl.Item>
+                                                    )}
+                                                </For>
+                                            </div>
+                                        </div>
+                                    </SegmentedControl>
                                     <div>
-                                        <input type="text" class="w-full rounded-md px-2 py-1 text-sm font-bold flex items-center gap-2 cursor-pointer" value={url()} />
+                                        <input
+                                            type="text"
+                                            class="w-full rounded-md px-2 py-1 font-bold flex items-center gap-2 cursor-pointer border border-border"
+                                            value={url()}
+                                            readonly
+                                        />
                                     </div>
                                 </div>
                             </div>
