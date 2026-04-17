@@ -27,6 +27,7 @@
     "@tanstack/router-plugin": "^1.167.22",
     "@tanstack/solid-hotkeys": "^0.9.1",
     "@tanstack/solid-router": "^1.168.20",
+    "blo": "^2.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-v3xlabs": "^1.7.14",
     "openapi-hooks": "^0.0.6",

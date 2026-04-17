@@ -43,3 +43,27 @@
 html, body {
     @apply bg-background text-foreground;
 }
+
+.btn {
+    &.btn-large {
+        @apply px-6 py-3 rounded-md;
+    }
+    &:not(.btn-large):not(.btn-small) {
+        @apply px-4 py-1 rounded-md;
+    }
+    &.btn-small {
+        @apply px-2 py-0.5 rounded-md;
+    }
+    &.btn-primary {
+        @apply bg-primary hover:bg-primary-hover text-primary-foreground;
+    }
+    &.btn-secondary {
+        @apply bg-secondary hover:bg-secondary-hover text-secondary-foreground;
+    }
+    &.btn-tertiary {
+        @apply bg-transparent hover:bg-surface-alt text-foreground;
+    }
+    &.btn-ghost {
+        @apply bg-transparent hover:bg-surface-alt text-foreground;
+    }
+}
