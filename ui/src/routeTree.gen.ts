@@ -10,43 +10,65 @@
 
 import { Route as rootRouteImport } from "./routes/__root"
 import { Route as IndexRouteImport } from "./routes/index"
+import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
+import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/assets"
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => rootRouteImport,
 } as any)
-const AccAccountIndexRoute = AccAccountIndexRouteImport.update({
-  id: "/acc/$account/",
-  path: "/acc/$account/",
+const AccAccountRouteRoute = AccAccountRouteRouteImport.update({
+  id: "/acc/$account",
+  path: "/acc/$account",
   getParentRoute: () => rootRouteImport,
+} as any)
+const AccAccountIndexRoute = AccAccountIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => AccAccountRouteRoute,
+} as any)
+const AccAccountAssetsRoute = AccAccountAssetsRouteImport.update({
+  id: "/assets",
+  path: "/assets",
+  getParentRoute: () => AccAccountRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
+  "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/": typeof AccAccountIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
+  "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account": typeof AccAccountIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
+  "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/": typeof AccAccountIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: "/" | "/acc/$account/"
+  fullPaths: "/" | "/acc/$account" | "/acc/$account/assets" | "/acc/$account/"
   fileRoutesByTo: FileRoutesByTo
-  to: "/" | "/acc/$account"
-  id: "__root__" | "/" | "/acc/$account/"
+  to: "/" | "/acc/$account/assets" | "/acc/$account"
+  id:
+    | "__root__"
+    | "/"
+    | "/acc/$account"
+    | "/acc/$account/assets"
+    | "/acc/$account/"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AccAccountIndexRoute: typeof AccAccountIndexRoute
+  AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
 }
 
 declare module "@tanstack/solid-router" {
@@ -58,19 +80,47 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    "/acc/$account": {
+      id: "/acc/$account"
+      path: "/acc/$account"
+      fullPath: "/acc/$account"
+      preLoaderRoute: typeof AccAccountRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/acc/$account/": {
       id: "/acc/$account/"
-      path: "/acc/$account"
+      path: "/"
       fullPath: "/acc/$account/"
       preLoaderRoute: typeof AccAccountIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AccAccountRouteRoute
+    }
+    "/acc/$account/assets": {
+      id: "/acc/$account/assets"
+      path: "/assets"
+      fullPath: "/acc/$account/assets"
+      preLoaderRoute: typeof AccAccountAssetsRouteImport
+      parentRoute: typeof AccAccountRouteRoute
     }
   }
 }
 
+interface AccAccountRouteRouteChildren {
+  AccAccountAssetsRoute: typeof AccAccountAssetsRoute
+  AccAccountIndexRoute: typeof AccAccountIndexRoute
+}
+
+const AccAccountRouteRouteChildren: AccAccountRouteRouteChildren = {
+  AccAccountAssetsRoute: AccAccountAssetsRoute,
+  AccAccountIndexRoute: AccAccountIndexRoute,
+}
+
+const AccAccountRouteRouteWithChildren = AccAccountRouteRoute._addFileChildren(
+  AccAccountRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AccAccountIndexRoute: AccAccountIndexRoute,
+  AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

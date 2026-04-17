@@ -1,13 +1,12 @@
+import { Accessor, Component } from "solid-js";
+
 import { Modal } from "#/components/dialog";
-import { Component } from "solid-js";
 
 type ReceiveProperties = {
+    address: Accessor<string>;
+};
 
-}
-
-export const Receive: Component<ReceiveProperties> = (props) => {
-
-    return (
+export const Receive: Component<ReceiveProperties> = props => (
         <Modal>
             <Modal.Trigger>
                 hello
@@ -20,9 +19,11 @@ export const Receive: Component<ReceiveProperties> = (props) => {
                         <Modal.Title>
                             Title
                         </Modal.Title>
+                        <div>
+                            {props.address()}
+                        </div>
                     </Modal.Content>
                 </div>
             </Modal.Portal>
         </Modal>
-    )
-};
+    );

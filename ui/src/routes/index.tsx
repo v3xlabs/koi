@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/solid-router"
+import { createFileRoute } from "@tanstack/solid-router";
 
 export const Route = createFileRoute("/")({
-  component: RouteComponent,
-})
+  component: () => {
+    // something
+    Route.useParams();
 
-function RouteComponent() {
-  return <div>Hello "/"!</div>
-}
+    return <div>Hello "/"!</div>;
+  },
+});

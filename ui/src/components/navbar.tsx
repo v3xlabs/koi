@@ -1,12 +1,13 @@
-import { Link } from '@tanstack/solid-router';
-import logo from '../assets/kohaku.svg';
-import { For } from 'solid-js';
-import { FiHome, FiUser } from 'solid-icons/fi';
+import { Link } from "@tanstack/solid-router";
+import { FiHome, FiUser } from "solid-icons/fi";
+import { For } from "solid-js";
 
-export const Navbar = () => {
+import logo from "../assets/kohaku.svg";
+
+export const Navbar = () =>
     //
 
-    return (
+     (
         <div class="border-b px-2 py-2 flex justify-between items-center bg-surface border-b-border">
             <div class="flex items-center gap-2">
                 <div class="flex items-center gap-2">
@@ -29,9 +30,10 @@ export const Navbar = () => {
                             icon: FiUser,
                             label: "Account 1",
                             href: "/acc/1",
-                        }
-                    ]}>
-                        {(item) => (
+                        },
+                    ]}
+                    >
+                        {item => (
                             <Link to={item.href} class="flex items-center gap-2">
                                 <item.icon class="w-3.5 h-3.5" />
                                 {item.label}
@@ -47,5 +49,5 @@ export const Navbar = () => {
                 Right
             </div>
         </div>
-    );
-};
+    )
+;

@@ -1,30 +1,31 @@
-import { Modal } from "#/components/dialog";
-import { Accessor, createMemo, createSignal, For, ParentComponent } from "solid-js";
-import { encodeQR } from 'qr';
-import { match } from "ts-pattern";
 import { SegmentedControl } from "@kobalte/core/segmented-control";
+import { encodeQR } from "qr";
+import { Accessor, createMemo, createSignal, For, ParentComponent } from "solid-js";
+import { match } from "ts-pattern";
+
+import { Modal } from "#/components/dialog";
 
 type ReceiveQRProperties = {
     address: Accessor<string>;
-}
+};
 
 const supportedQRType = [
-    'raw',
-    'safe',
-    'erc681',
+    "raw",
+    "safe",
+    "erc681",
 ] as const;
 
 type QRType = typeof supportedQRType[number];
 
 export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
-    const [qrType, setQRType] = createSignal<QRType>('raw');
+    const [qrType, setQRType] = createSignal<QRType>("raw");
     const url = () => match({ type: qrType() })
-        .with({ type: 'raw' }, () => props.address())
+        .with({ type: "raw" }, () => props.address())
         // TODO: Add support for non-mainnet chains
-        .with({ type: 'safe' }, () => `eth:${props.address()}`)
-        .with({ type: 'erc681' }, () => `ethereum:${props.address()}`)
+        .with({ type: "safe" }, () => `eth:${props.address()}`)
+        .with({ type: "erc681" }, () => `ethereum:${props.address()}`)
         .exhaustive();
-    const qr = createMemo(() => encodeQR(url(), 'svg'));
+    const qr = createMemo(() => encodeQR(url(), "svg"));
     const qrImage = createMemo(() => `data:image/svg+xml;base64,${btoa(qr())}`);
 
     return (
@@ -46,9 +47,9 @@ export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
                                 </div>
                                 <div class="space-y-2">
                                     <SegmentedControl
-                                        value={qrType()}
-                                        onChange={setQRType}
-                                        class=""
+                                      value={qrType()}
+                                      onChange={setQRType}
+                                      class=""
                                     >
                                         <SegmentedControl.Label class="">
                                             Url Format
@@ -57,9 +58,10 @@ export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
                                             <SegmentedControl.Indicator class="absolute top-1 left-1 w-full h-full bg-primary rounded-md transition-all duration-300" />
                                             <div class="flex gap-2 w-fit relative">
                                                 <For each={supportedQRType}>
-                                                    {(type) => (
-                                                        <SegmentedControl.Item value={type}
-                                                            class="px-2"
+                                                    {type => (
+                                                        <SegmentedControl.Item
+                                                          value={type}
+                                                          class="px-2"
                                                         >
                                                             <SegmentedControl.ItemInput class="" />
                                                             <SegmentedControl.ItemLabel class="cursor-pointer">
@@ -73,10 +75,10 @@ export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
                                     </SegmentedControl>
                                     <div>
                                         <input
-                                            type="text"
-                                            class="w-full rounded-md px-2 py-1 font-bold flex items-center gap-2 cursor-pointer border border-border"
-                                            value={url()}
-                                            readonly
+                                          type="text"
+                                          class="w-full rounded-md px-2 py-1 font-bold flex items-center gap-2 cursor-pointer border border-border"
+                                          value={url()}
+                                          readonly
                                         />
                                     </div>
                                 </div>
@@ -86,5 +88,5 @@ export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
                 </div>
             </Modal.Portal>
         </Modal>
-    )
-}
+    );
+};
