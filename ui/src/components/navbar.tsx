@@ -19,28 +19,6 @@ export const Navbar = () =>
                         <span class="text-muted text-sm">a privacy wallet</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <For each={[
-                        {
-                            icon: FiHome,
-                            label: "Home",
-                            href: "/",
-                        },
-                        {
-                            icon: FiUser,
-                            label: "Account 1",
-                            href: "/acc/1",
-                        },
-                    ]}
-                    >
-                        {item => (
-                            <Link to={item.href} class="flex items-center gap-2">
-                                <item.icon class="w-3.5 h-3.5" />
-                                {item.label}
-                            </Link>
-                        )}
-                    </For>
-                </div>
             </div>
             <div>
                 Center
@@ -49,5 +27,4 @@ export const Navbar = () =>
                 Right
             </div>
         </div>
-    )
-;
+    );

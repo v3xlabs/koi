@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/solid-router";
-import { FaSolidAddressCard, FaSolidArrows, FaSolidCopy, FaSolidExternalLink, FaSolidGear, FaSolidGridHorizontal, FaSolidQrcode, FaSolidWallet } from "solid-icons/fa";
+import { FaSolidAddressCard, FaSolidArrows, FaSolidClock, FaSolidCopy, FaSolidExternalLink, FaSolidGear, FaSolidGridHorizontal, FaSolidQrcode, FaSolidWallet } from "solid-icons/fa";
 import { FiHome } from "solid-icons/fi";
 import { For } from "solid-js";
 
@@ -51,9 +51,12 @@ export const Sidebar = () => (
             </div>
         </div>
         <div>
-            <button class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold">
+            <Link
+              to="/acc/$account/new-tx"
+              class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+            >
                 New transaction
-            </button>
+            </Link>
         </div>
         <div class="divide-y divide-border">
             <For each={[
@@ -69,14 +72,9 @@ export const Sidebar = () => (
                         href: "/acc/$account/assets",
                     },
                     {
-                        icon: FaSolidArrows,
-                        label: "Swap",
-                        href: "/acc/$account/swap",
-                    },
-                    {
-                        icon: FaSolidArrows,
-                        label: "Earn",
-                        href: "/acc/$account/earn",
+                        icon: FaSolidClock,
+                        label: "History",
+                        href: "/acc/$account/history",
                     },
                     {
                         icon: FaSolidGridHorizontal,

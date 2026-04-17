@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from "./routes/__root"
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
+import { Route as AccAccountNewTxRouteImport } from "./routes/acc/$account/new-tx"
 import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/assets"
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const AccAccountIndexRoute = AccAccountIndexRouteImport.update({
   path: "/",
   getParentRoute: () => AccAccountRouteRoute,
 } as any)
+const AccAccountNewTxRoute = AccAccountNewTxRouteImport.update({
+  id: "/new-tx",
+  path: "/new-tx",
+  getParentRoute: () => AccAccountRouteRoute,
+} as any)
 const AccAccountAssetsRoute = AccAccountAssetsRouteImport.update({
   id: "/assets",
   path: "/assets",
@@ -39,11 +45,13 @@ export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
   "/acc/$account/assets": typeof AccAccountAssetsRoute
+  "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/$account/": typeof AccAccountIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
+  "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/$account": typeof AccAccountIndexRoute
 }
 export interface FileRoutesById {
@@ -51,18 +59,25 @@ export interface FileRoutesById {
   "/": typeof IndexRoute
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
   "/acc/$account/assets": typeof AccAccountAssetsRoute
+  "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/$account/": typeof AccAccountIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: "/" | "/acc/$account" | "/acc/$account/assets" | "/acc/$account/"
+  fullPaths:
+    | "/"
+    | "/acc/$account"
+    | "/acc/$account/assets"
+    | "/acc/$account/new-tx"
+    | "/acc/$account/"
   fileRoutesByTo: FileRoutesByTo
-  to: "/" | "/acc/$account/assets" | "/acc/$account"
+  to: "/" | "/acc/$account/assets" | "/acc/$account/new-tx" | "/acc/$account"
   id:
     | "__root__"
     | "/"
     | "/acc/$account"
     | "/acc/$account/assets"
+    | "/acc/$account/new-tx"
     | "/acc/$account/"
   fileRoutesById: FileRoutesById
 }
@@ -94,6 +109,13 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof AccAccountIndexRouteImport
       parentRoute: typeof AccAccountRouteRoute
     }
+    "/acc/$account/new-tx": {
+      id: "/acc/$account/new-tx"
+      path: "/new-tx"
+      fullPath: "/acc/$account/new-tx"
+      preLoaderRoute: typeof AccAccountNewTxRouteImport
+      parentRoute: typeof AccAccountRouteRoute
+    }
     "/acc/$account/assets": {
       id: "/acc/$account/assets"
       path: "/assets"
@@ -106,11 +128,13 @@ declare module "@tanstack/solid-router" {
 
 interface AccAccountRouteRouteChildren {
   AccAccountAssetsRoute: typeof AccAccountAssetsRoute
+  AccAccountNewTxRoute: typeof AccAccountNewTxRoute
   AccAccountIndexRoute: typeof AccAccountIndexRoute
 }
 
 const AccAccountRouteRouteChildren: AccAccountRouteRouteChildren = {
   AccAccountAssetsRoute: AccAccountAssetsRoute,
+  AccAccountNewTxRoute: AccAccountNewTxRoute,
   AccAccountIndexRoute: AccAccountIndexRoute,
 }
 

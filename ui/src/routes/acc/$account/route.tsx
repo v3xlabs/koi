@@ -11,4 +11,11 @@ export const Route = createFileRoute("/acc/$account")({
       </div>
     </div>
   ),
+  notFoundComponent: () => (
+    <div class="w-full px-4">
+      <div class="bg-surface p-4 rounded-md mx-auto mt-4">
+        Not found
+      </div>
+    </div>
+  ),
 });
