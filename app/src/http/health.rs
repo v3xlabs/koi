@@ -1,11 +1,11 @@
 use super::ApiTags;
 use poem::Result;
-use poem_openapi::{payload::Json, OpenApi};
+use poem_openapi::{OpenApi, payload::Json};
 
 pub struct HealthApi;
 
 pub fn api() -> impl OpenApi {
-    (HealthApi)
+    HealthApi
 }
 
 #[OpenApi]

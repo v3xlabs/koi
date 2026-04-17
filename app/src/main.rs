@@ -3,9 +3,9 @@ use tracing::info;
 
 use crate::state::State;
 
-pub mod wallet;
 pub mod http;
 pub mod state;
+pub mod account;
 
 #[tokio::main]
 async fn main() {

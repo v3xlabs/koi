@@ -1,15 +1,15 @@
-use poem_openapi::Tags;
-use tracing::info;
 use poem::endpoint::EmbeddedFilesEndpoint;
 use poem::{EndpointExt, Route, Server, handler, listener::TcpListener, web::Html};
+use poem_openapi::Tags;
 use poem_openapi::{OpenApi, OpenApiService};
 use rust_embed::RustEmbed;
+use tracing::info;
 
 use crate::state::AppState;
 
-mod health;
 mod accounts;
 mod auth;
+mod health;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -31,12 +31,8 @@ pub enum ApiTags {
     Health,
 }
 
-
 fn get_api() -> impl OpenApi {
-    (
-        health::api(),
-        accounts::api()
-    )
+    (health::api(), accounts::api())
 }
 
 #[derive(RustEmbed)]
