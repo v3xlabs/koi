@@ -3,10 +3,19 @@ import './index.css';
 import { render } from 'solid-js/web';
 import 'solid-devtools';
 
-import App from './App';
 import { AppProvider } from './api';
+import { createRouter, RouterProvider } from '@tanstack/solid-router';
+import { routeTree } from "./routeTree.gen";
 
 const root = document.getElementById('root');
+
+const router = createRouter({ routeTree });
+
+declare module "@tanstack/solid-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
 
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   throw new Error(
@@ -14,4 +23,9 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   );
 }
 
-render(() => <AppProvider><App /></AppProvider>, root!);
+render(() => <AppProvider><RouterProvider router={router} defaultErrorComponent={(error) => (
+  <div>
+    <div>Error: {error.error.message}</div>
+    <div>Stack: {error.error.stack}</div>
+  </div>
+)} /></AppProvider>, root!);

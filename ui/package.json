@@ -6,8 +6,10 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview"
+    "build": "tsc -b && vite build",
+    "serve": "vite preview",
+    "openapi": "openapi-typescript http://0.0.0.0:3000/openapi.json -t -o ./src/api/schema.gen.ts",
+    "lint": "eslint ."
   },
   "license": "MIT",
   "devDependencies": {
@@ -22,7 +24,11 @@
   },
   "dependencies": {
     "@kobalte/core": "^0.13.11",
+    "@tanstack/router-plugin": "^1.167.22",
     "@tanstack/solid-hotkeys": "^0.9.1",
+    "@tanstack/solid-router": "^1.168.20",
+    "eslint": "^9.39.2",
+    "eslint-plugin-v3xlabs": "^1.7.14",
     "openapi-hooks": "^0.0.6",
     "qr": "^0.5.5",
     "solid-icons": "^1.2.0",
