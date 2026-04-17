@@ -1,10 +1,15 @@
+import { QueryClientProvider } from "@tanstack/solid-query";
 import { createFetch } from "openapi-hooks";
 import { Accessor, createContext, createSignal, onCleanup, onMount, ParentComponent } from "solid-js";
 
-export const api = createFetch({
-    baseUrl: "http://localhost:3000",
+import { queryClient } from "./client";
+import type { paths } from "./schema.gen";
+
+export const api = createFetch<paths>({
+    baseUrl: "http://localhost:5173/api/",
     headers: {
         "Content-Type": "application/json",
+        "Authorization": "Bearer hello",
     },
     onError: (error) => {
         console.error(error);
@@ -37,8 +42,10 @@ export const AppProvider: ParentComponent = (props) => {
     });
 
     return (
-        <appcontext.Provider value={{ isOnline }}>
-            {props.children}
-        </appcontext.Provider>
+        <QueryClientProvider client={queryClient}>
+            <appcontext.Provider value={{ isOnline }}>
+                {props.children}
+            </appcontext.Provider>
+        </QueryClientProvider>
     );
 };

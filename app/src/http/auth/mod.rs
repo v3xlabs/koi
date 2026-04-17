@@ -1,7 +1,5 @@
-use poem::{Error, Route, Server, error::Unauthorized, listener::TcpListener};
-use poem_openapi::{OpenApi, OpenApiService, SecurityScheme, auth::Bearer, payload::PlainText};
-use reqwest::StatusCode;
-use tracing::{debug, info};
+use poem_openapi::{SecurityScheme, auth::Bearer};
+use tracing::info;
 
 #[derive(SecurityScheme)]
 #[oai(ty = "bearer", bearer_format = "JWT")]

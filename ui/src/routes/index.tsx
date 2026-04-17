@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { FiPlus } from "solid-icons/fi";
-import { For } from "solid-js";
+import { For, Suspense } from "solid-js";
 
 import { useAccounts } from "#/api/account";
 import { AccountPreview } from "#/components/account/preview";
 
 export const Route = createFileRoute("/")({
   component: () => {
-    const accounts = useAccounts();
+    const accountsQuery = useAccounts();
 
     return (
       <div class="w-full p-4">
@@ -25,13 +25,15 @@ export const Route = createFileRoute("/")({
           </div>
           <div class="bg-surface py-4 rounded-md w-full">
             <div class="space-y-2">
-              <For each={accounts}>
-                {account => (
-                  <Link to="/acc/$account" params={{ account: account.account_id.toString() }} class="w-full px-2 py-1 bg-surface-alt text-sm font-bold flex">
-                    <AccountPreview account_id={account.account_id} />
-                  </Link>
-                )}
-              </For>
+              <Suspense fallback={<div>Loading...</div>}>
+                <For each={accountsQuery.data?.accounts}>
+                  {account => (
+                    <Link to="/acc/$account" params={{ account: account.account_id.toString() }} class="w-full px-2 py-1 bg-surface-alt text-sm font-bold flex">
+                      <AccountPreview account_id={account.account_id} />
+                    </Link>
+                  )}
+                </For>
+              </Suspense>
             </div>
           </div>
         </div>

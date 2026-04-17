@@ -7,7 +7,7 @@ export type AccountIconProperties = {
 };
 
 export const AccountIcon: Component<AccountIconProperties> = (props) => {
-    const hash = createMemo(() => blo(props.address()));
+    const hash = createMemo(() => (props.address() == undefined ? "" : blo(props.address())));
 
     return (
         <div class={props.class}>

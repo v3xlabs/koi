@@ -6,15 +6,15 @@ import { truncateAddress } from "#/utils/address";
 import { AccountIcon } from "./icon";
 
 export type AccountPreviewProperties = {
-    account_id: number;
+    account_id: string;
 };
 
 export const AccountPreview: Component<AccountPreviewProperties> = (props) => {
-    const account = createMemo(() => useAccount(props.account_id));
+    const accountQuery = useAccount(props.account_id);
 
     return (
         <div>
-            <Show when={account()}>
+            <Show when={accountQuery.data}>
                 {acc => (
                     <div class="flex items-center gap-2">
                         <AccountIcon address={() => acc().evm_address} class="w-8 h-8" />
