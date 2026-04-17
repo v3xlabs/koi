@@ -8,7 +8,8 @@ use rust_embed::RustEmbed;
 use crate::state::AppState;
 
 mod health;
-mod wallets;
+mod accounts;
+mod auth;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -16,8 +17,8 @@ pub enum ApiTags {
     Network,
     /// Vendor endpoints
     Vendor,
-    /// Wallet endpoints
-    Wallet,
+    /// Account endpoints
+    Account,
     /// Token endpoints
     Token,
     /// Quoter endpoints
@@ -34,13 +35,18 @@ pub enum ApiTags {
 fn get_api() -> impl OpenApi {
     (
         health::api(),
-        wallets::api()
+        accounts::api()
     )
 }
 
 #[derive(RustEmbed)]
 #[folder = "../ui/dist"]
 struct WebAssets;
+
+#[handler]
+async fn get_openapi_docs() -> Html<&'static str> {
+    Html(include_str!("docs.html"))
+}
 
 pub async fn serve(state: AppState) {
     info!("Serving HTTP server");
@@ -63,7 +69,7 @@ pub async fn serve(state: AppState) {
     let app = Route::new()
         .nest("openapi.json", service.spec_endpoint())
         .nest("/api", service)
-        // .at("/docs", get_openapi_docs)
+        .at("/docs", get_openapi_docs)
         .at("/*", frontend)
         .data(state);
 
