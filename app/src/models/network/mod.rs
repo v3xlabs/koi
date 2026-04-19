@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use poem_openapi::Object;
+use serde::{Deserialize, Serialize};
 
 use crate::{error::KoiError, state::AppState};
 

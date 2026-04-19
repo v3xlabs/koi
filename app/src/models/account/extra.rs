@@ -1,8 +1,8 @@
 use uuid::Uuid;
 
 use crate::{
-    models::account::{EOAWallet, WalletType},
     error::KoiError,
+    models::account::{EOAWallet, WalletType},
     state::AppState,
 };
 

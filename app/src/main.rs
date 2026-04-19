@@ -3,9 +3,9 @@ use tracing::info;
 
 use crate::state::State;
 
-pub mod models;
 pub mod error;
 pub mod http;
+pub mod models;
 pub mod state;
 
 #[tokio::main]

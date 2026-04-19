@@ -1,6 +1,4 @@
-use crate::{
-    http::auth::Auth, models::network::Network, state::AppState
-};
+use crate::{http::auth::Auth, models::network::Network, state::AppState};
 
 use super::ApiTags;
 use poem::{Result, web::Data};

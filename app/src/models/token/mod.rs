@@ -1,3 +1,3 @@
-pub mod Token {
+pub mod metadata;
 
-}
+pub struct Token {}
