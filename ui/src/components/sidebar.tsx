@@ -96,6 +96,11 @@ export const Sidebar = () => {
                             label: "Addressbook",
                             href: "/addressbook",
                         },
+                        {
+                            icon: FaSolidGear,
+                            label: "Settings",
+                            href: "/settings",
+                        },
                     ],
                 ]}
                 >

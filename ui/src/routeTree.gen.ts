@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from "./routes/__root"
 import { Route as IndexRouteImport } from "./routes/index"
+import { Route as SettingsIndexRouteImport } from "./routes/settings/index"
 import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
 import { Route as AccAccountNewTxRouteImport } from "./routes/acc/$account/new-tx"
@@ -18,6 +19,11 @@ import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/asse
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: "/settings/",
+  path: "/settings/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccAccountRouteRoute = AccAccountRouteRouteImport.update({
@@ -44,12 +50,14 @@ const AccAccountAssetsRoute = AccAccountAssetsRouteImport.update({
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/settings/": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/$account/": typeof AccAccountIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
+  "/settings": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/$account": typeof AccAccountIndexRoute
@@ -58,6 +66,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/settings/": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/$account/": typeof AccAccountIndexRoute
@@ -67,15 +76,22 @@ export interface FileRouteTypes {
   fullPaths:
     | "/"
     | "/acc/$account"
+    | "/settings/"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
     | "/acc/$account/"
   fileRoutesByTo: FileRoutesByTo
-  to: "/" | "/acc/$account/assets" | "/acc/$account/new-tx" | "/acc/$account"
+  to:
+    | "/"
+    | "/settings"
+    | "/acc/$account/assets"
+    | "/acc/$account/new-tx"
+    | "/acc/$account"
   id:
     | "__root__"
     | "/"
     | "/acc/$account"
+    | "/settings/"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
     | "/acc/$account/"
@@ -84,6 +100,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
+  SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 declare module "@tanstack/solid-router" {
@@ -93,6 +110,13 @@ declare module "@tanstack/solid-router" {
       path: "/"
       fullPath: "/"
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/settings/": {
+      id: "/settings/"
+      path: "/settings"
+      fullPath: "/settings/"
+      preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/acc/$account": {
@@ -145,6 +169,7 @@ const AccAccountRouteRouteWithChildren = AccAccountRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
+  SettingsIndexRoute: SettingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,5 +1,5 @@
 use crate::{
-    account::Account,
+    models::account::Account,
     http::auth::Auth,
     state::AppState,
 };

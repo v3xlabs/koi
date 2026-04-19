@@ -10,7 +10,11 @@ export const AccountIcon: Component<AccountIconProperties> = (props) => {
     const hash = createMemo(() => (props.address() == undefined ? "" : blo(props.address())));
 
     return (
-        <div class={props.class}>
+        <div classList={{
+            [props.class ?? ""]: !!props.class,
+            "overflow-hidden": true,
+        }}
+        >
             <img src={hash()} alt="Account Icon" class="w-full h-full" />
         </div>
     );

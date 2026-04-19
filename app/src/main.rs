@@ -3,7 +3,7 @@ use tracing::info;
 
 use crate::state::State;
 
-pub mod account;
+pub mod models;
 pub mod error;
 pub mod http;
 pub mod state;
