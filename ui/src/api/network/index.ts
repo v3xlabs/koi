@@ -7,7 +7,7 @@ export const useNetwork = (network_id: string) => createQuery(() => ({
     queryFn: async () => {
         const response = await api("/net/{network_id}", "get", {
             path: {
-                network_id,
+                network_id: Number.parseInt(network_id),
             },
         });
 

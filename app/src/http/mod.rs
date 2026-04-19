@@ -10,6 +10,7 @@ use crate::state::AppState;
 mod account;
 mod auth;
 mod health;
+mod net;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -32,7 +33,7 @@ pub enum ApiTags {
 }
 
 fn get_api() -> impl OpenApi {
-    (health::api(), account::api())
+    (health::api(), account::api(), net::api())
 }
 
 #[derive(RustEmbed)]

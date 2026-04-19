@@ -51,7 +51,7 @@ export type paths = {
         };
         /**
          * List all accounts
-         * @description GET /api/accounts
+         * @description GET /api/acc
          */
         get: {
             parameters: {
@@ -89,7 +89,7 @@ export type paths = {
         };
         /**
          * Get an account by ID
-         * @description GET /api/accounts/:account_id
+         * @description GET /api/acc/:account_id
          */
         get: {
             parameters: {
@@ -120,6 +120,84 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/net": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all networks
+         * @description GET /api/net
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["NetworksResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/net/{network_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a network by ID
+         * @description GET /api/net/:network_id
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    network_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Network"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 };
 export type webhooks = Record<string, never>;
 export type components = {
@@ -134,6 +212,22 @@ export type components = {
         /** AccountsResponse */
         AccountsResponse: {
             accounts: components["schemas"]["Account"][];
+        };
+        /** Network */
+        Network: {
+            /**
+             * Format: int32
+             * @description evm chain id
+             */
+            network_identity: number;
+            /** @description name, Ethereum Mainnet, Optimism, etc */
+            network_name: string;
+            /** @description icon url, https://example.com/icon.png, etc */
+            network_icon_url?: string;
+        };
+        /** NetworksResponse */
+        NetworksResponse: {
+            networks: components["schemas"]["Network"][];
         };
     };
     responses: never;

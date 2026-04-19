@@ -25,7 +25,7 @@ pub struct AccountsResponse {
 impl AccountApi {
     /// List all accounts
     ///
-    /// GET /api/accounts
+    /// GET /api/acc
     #[oai(path = "/acc", method = "get", tag = "ApiTags::Account")]
     async fn get_accounts(
         &self,
@@ -41,7 +41,7 @@ impl AccountApi {
 
     /// Get an account by ID
     ///
-    /// GET /api/accounts/:account_id
+    /// GET /api/acc/:account_id
     #[oai(path = "/acc/:account_id", method = "get", tag = "ApiTags::Account")]
     async fn get_account_by_id(
         &self,
