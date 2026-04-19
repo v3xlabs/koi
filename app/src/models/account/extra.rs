@@ -13,7 +13,7 @@ fn get_accounts() -> Vec<Account> {
         account_id: "4f8b9a49-5de4-4209-b1b9-6b2b5f085463".parse().unwrap(),
         name: "Wallet 1".to_string(),
         chains: vec!["Ethereum".to_string()],
-        wallet: WalletType::EOA(EOAWallet {
+        metadata: WalletType::EOA(EOAWallet {
             evm_address: "0x225f137127d9067788314bc7fcc1f36746a3c3B5".to_string(),
         }),
     }]

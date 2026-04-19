@@ -9,13 +9,12 @@ pub struct Account {
     pub account_id: Uuid,
     pub name: String,
     pub chains: Vec<String>,
-    #[serde(flatten)]
-    #[oai(flatten)]
-    pub wallet: WalletType,
+    pub metadata: WalletType,
 }
 
 #[derive(Serialize, Deserialize, Union, Clone)]
 #[oai(discriminator_name = "type")]
+#[serde(tag = "type")]
 pub enum WalletType {
     Safe(SafeWallet),
     EOA(EOAWallet),

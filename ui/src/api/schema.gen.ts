@@ -208,10 +208,15 @@ export type components = {
             account_id: string;
             name: string;
             chains: string[];
+            metadata: components["schemas"]["WalletType"];
         };
         /** AccountsResponse */
         AccountsResponse: {
             accounts: components["schemas"]["Account"][];
+        };
+        /** EOAWallet */
+        EOAWallet: {
+            evm_address: string;
         };
         /** Network */
         Network: {
@@ -229,6 +234,47 @@ export type components = {
         NetworksResponse: {
             networks: components["schemas"]["Network"][];
         };
+        /** RailgunWallet */
+        RailgunWallet: {
+            railgun_address: string;
+        };
+        /** SafeWallet */
+        SafeWallet: {
+            evm_address: string;
+        };
+        /** ViewWallet */
+        ViewWallet: {
+            evm_address: string;
+        };
+        WalletType: components["schemas"]["WalletType_Safe"] | components["schemas"]["WalletType_EOA"] | components["schemas"]["WalletType_View"] | components["schemas"]["WalletType_Railgun"];
+        WalletType_EOA: {
+            /**
+             * @example EOA
+             * @enum {string}
+             */
+            type: "EOA";
+        } & components["schemas"]["EOAWallet"];
+        WalletType_Railgun: {
+            /**
+             * @example Railgun
+             * @enum {string}
+             */
+            type: "Railgun";
+        } & components["schemas"]["RailgunWallet"];
+        WalletType_Safe: {
+            /**
+             * @example Safe
+             * @enum {string}
+             */
+            type: "Safe";
+        } & components["schemas"]["SafeWallet"];
+        WalletType_View: {
+            /**
+             * @example View
+             * @enum {string}
+             */
+            type: "View";
+        } & components["schemas"]["ViewWallet"];
     };
     responses: never;
     parameters: never;

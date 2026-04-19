@@ -2,6 +2,11 @@ import { createQuery } from "@tanstack/solid-query";
 
 import { api } from "#/api";
 
+import { components } from "../schema.gen";
+
+export type Account = components["schemas"]["Account"];
+export type WalletType = components["schemas"]["WalletType"];
+
 export const useAccount = (account_id: string) => createQuery(() => ({
     queryKey: ["account", account_id],
     queryFn: async () => {

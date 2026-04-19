@@ -1,7 +1,7 @@
 import { Link, useParams } from "@tanstack/solid-router";
 import { FaSolidAddressCard, FaSolidClock, FaSolidCopy, FaSolidExternalLink, FaSolidGear, FaSolidGridHorizontal, FaSolidQrcode, FaSolidWallet } from "solid-icons/fa";
 import { FiHome } from "solid-icons/fi";
-import { createMemo, For, Show } from "solid-js";
+import { For, Show } from "solid-js";
 
 import { useAccount } from "#/api/account";
 import { truncateAddress } from "#/utils/address";
@@ -12,21 +12,21 @@ import { Modal } from "./dialog";
 
 export const Sidebar = () => {
     const params = useParams({ from: "/acc/$account" });
-    const account = createMemo(() => useAccount(Number.parseInt(params().account)));
+    const account = useAccount(params().account);
 
     return (
         <div class="border-r px-1.5 py-2 min-w-56 max-w-64 bg-surface border-r-border h-full space-y-2">
             <div class="space-y-2">
                 <div class="flex items-center gap-2 pl-1">
                     <div class="w-8 h-8 bg-surface-alt rounded-md">
-                        <Show when={account()}>
-                            {acc => <AccountIcon address={() => acc().evm_address} />}
+                        <Show when={account.data}>
+                            {acc => <AccountIcon address={() => acc().metadata.evm_address} />}
                         </Show>
                     </div>
                     <div class="leading-none">
-                        <div class="font-medium text-sm leading-none">Wallet Name</div>
+                        <div class="font-medium text-sm leading-none">{account.data?.name}</div>
                         <div class="text-muted text-sm leading-none">
-                            {truncateAddress(account()?.evm_address)}
+                            {truncateAddress(account.data?.metadata.evm_address)}
                         </div>
                     </div>
                 </div>

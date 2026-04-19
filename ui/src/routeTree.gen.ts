@@ -14,7 +14,11 @@ import { Route as IndexRouteImport } from "./routes/index"
 import { Route as SettingsIndexRouteImport } from "./routes/settings/index"
 import { Route as SettingsNetworksRouteImport } from "./routes/settings/networks"
 import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
+import { Route as AccNewIndexRouteImport } from "./routes/acc/new/index"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
+import { Route as AccNewKeyRouteImport } from "./routes/acc/new/key"
+import { Route as AccImportViewRouteImport } from "./routes/acc/import/view"
+import { Route as AccImportKeyRouteImport } from "./routes/acc/import/key"
 import { Route as AccAccountNewTxRouteImport } from "./routes/acc/$account/new-tx"
 import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/assets"
 
@@ -43,10 +47,30 @@ const AccAccountRouteRoute = AccAccountRouteRouteImport.update({
   path: "/acc/$account",
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccNewIndexRoute = AccNewIndexRouteImport.update({
+  id: "/acc/new/",
+  path: "/acc/new/",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccAccountIndexRoute = AccAccountIndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => AccAccountRouteRoute,
+} as any)
+const AccNewKeyRoute = AccNewKeyRouteImport.update({
+  id: "/acc/new/key",
+  path: "/acc/new/key",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccImportViewRoute = AccImportViewRouteImport.update({
+  id: "/acc/import/view",
+  path: "/acc/import/view",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccImportKeyRoute = AccImportKeyRouteImport.update({
+  id: "/acc/import/key",
+  path: "/acc/import/key",
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AccAccountNewTxRoute = AccAccountNewTxRouteImport.update({
   id: "/new-tx",
@@ -67,7 +91,11 @@ export interface FileRoutesByFullPath {
   "/settings/": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
+  "/acc/import/key": typeof AccImportKeyRoute
+  "/acc/import/view": typeof AccImportViewRoute
+  "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account/": typeof AccAccountIndexRoute
+  "/acc/new/": typeof AccNewIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
@@ -75,7 +103,11 @@ export interface FileRoutesByTo {
   "/settings": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
+  "/acc/import/key": typeof AccImportKeyRoute
+  "/acc/import/view": typeof AccImportViewRoute
+  "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account": typeof AccAccountIndexRoute
+  "/acc/new": typeof AccNewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,7 +118,11 @@ export interface FileRoutesById {
   "/settings/": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
+  "/acc/import/key": typeof AccImportKeyRoute
+  "/acc/import/view": typeof AccImportViewRoute
+  "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account/": typeof AccAccountIndexRoute
+  "/acc/new/": typeof AccNewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,7 +134,11 @@ export interface FileRouteTypes {
     | "/settings/"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
+    | "/acc/import/key"
+    | "/acc/import/view"
+    | "/acc/new/key"
     | "/acc/$account/"
+    | "/acc/new/"
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
@@ -106,7 +146,11 @@ export interface FileRouteTypes {
     | "/settings"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
+    | "/acc/import/key"
+    | "/acc/import/view"
+    | "/acc/new/key"
     | "/acc/$account"
+    | "/acc/new"
   id:
     | "__root__"
     | "/"
@@ -116,13 +160,21 @@ export interface FileRouteTypes {
     | "/settings/"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
+    | "/acc/import/key"
+    | "/acc/import/view"
+    | "/acc/new/key"
     | "/acc/$account/"
+    | "/acc/new/"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
+  AccImportKeyRoute: typeof AccImportKeyRoute
+  AccImportViewRoute: typeof AccImportViewRoute
+  AccNewKeyRoute: typeof AccNewKeyRoute
+  AccNewIndexRoute: typeof AccNewIndexRoute
 }
 
 declare module "@tanstack/solid-router" {
@@ -162,12 +214,40 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof AccAccountRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    "/acc/new/": {
+      id: "/acc/new/"
+      path: "/acc/new"
+      fullPath: "/acc/new/"
+      preLoaderRoute: typeof AccNewIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/acc/$account/": {
       id: "/acc/$account/"
       path: "/"
       fullPath: "/acc/$account/"
       preLoaderRoute: typeof AccAccountIndexRouteImport
       parentRoute: typeof AccAccountRouteRoute
+    }
+    "/acc/new/key": {
+      id: "/acc/new/key"
+      path: "/acc/new/key"
+      fullPath: "/acc/new/key"
+      preLoaderRoute: typeof AccNewKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/acc/import/view": {
+      id: "/acc/import/view"
+      path: "/acc/import/view"
+      fullPath: "/acc/import/view"
+      preLoaderRoute: typeof AccImportViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/acc/import/key": {
+      id: "/acc/import/key"
+      path: "/acc/import/key"
+      fullPath: "/acc/import/key"
+      preLoaderRoute: typeof AccImportKeyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     "/acc/$account/new-tx": {
       id: "/acc/$account/new-tx"
@@ -220,6 +300,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
+  AccImportKeyRoute: AccImportKeyRoute,
+  AccImportViewRoute: AccImportViewRoute,
+  AccNewKeyRoute: AccNewKeyRoute,
+  AccNewIndexRoute: AccNewIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

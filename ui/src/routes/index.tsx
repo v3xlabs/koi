@@ -17,10 +17,10 @@ export const Route = createFileRoute("/")({
               Accounts
             </div>
             <div>
-              <button class="btn btn-primary flex items-center gap-2 text-sm">
+              <Link to="/acc/new" class="btn btn-primary flex items-center gap-2 text-sm">
                 <FiPlus />
                 Add
-              </button>
+              </Link>
             </div>
           </div>
           <div class="bg-surface py-4 rounded-md w-full">
