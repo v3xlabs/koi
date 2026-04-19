@@ -23,12 +23,12 @@ export const Route = createFileRoute("/")({
               </Link>
             </div>
           </div>
-          <div class="bg-surface py-4 rounded-md w-full">
+          <div class="bg-surface border border-border py-4 px-2.5 rounded-md w-full">
             <div class="space-y-2">
               <Suspense fallback={<div>Loading...</div>}>
                 <For each={accountsQuery.data?.accounts}>
                   {account => (
-                    <Link to="/acc/$account" params={{ account: account.account_id.toString() }} class="w-full px-2 py-1 bg-surface-alt text-sm font-bold flex">
+                    <Link to="/acc/$account" params={{ account: account.account_id.toString() }} class="w-full px-4 hover:bg-surface-alt rounded-md py-1 text-sm font-bold flex">
                       <AccountPreview account_id={account.account_id} />
                     </Link>
                   )}

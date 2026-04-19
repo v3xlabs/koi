@@ -28,6 +28,7 @@
     "@tanstack/solid-hotkeys": "^0.9.1",
     "@tanstack/solid-query": "^5.99.0",
     "@tanstack/solid-router": "^1.168.20",
+    "@tanstack/solid-table": "^8.21.3",
     "blo": "^2.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-v3xlabs": "^1.7.14",

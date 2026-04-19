@@ -16,9 +16,9 @@ export const Sidebar = () => {
 
     return (
         <div class="border-r px-1.5 py-2 min-w-56 max-w-64 bg-surface border-r-border h-full space-y-2">
-            <div class="space-y-2">
-                <div class="flex items-center gap-2 pl-1">
-                    <div class="w-8 h-8 bg-surface-alt rounded-md">
+            <div class="space-y-2 pt-1">
+                <div class="flex items-center gap-2 pl-1 py-2">
+                    <div class="size-9 bg-surface-alt rounded-md">
                         <Show when={account.data}>
                             {acc => <AccountIcon address={() => acc().metadata.evm_address} />}
                         </Show>
