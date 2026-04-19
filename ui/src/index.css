@@ -66,4 +66,11 @@ html, body {
     &.btn-ghost {
         @apply bg-transparent hover:bg-surface-alt text-foreground;
     }
+    &:not(:disabled) {
+        @apply cursor-pointer;
+    }
+}
+
+.input {
+    @apply bg-surface border border-border rounded-md px-2 py-1;
 }

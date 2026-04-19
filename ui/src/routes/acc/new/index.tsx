@@ -63,19 +63,34 @@ const ACC_OPTIONS = [
       },
     ],
   },
+  {
+    label: "Hardware",
+    options: [
+      {
+        label: "Ledger",
+        icon: FaSolidEye,
+        disabled: true,
+      },
+      {
+        label: "Trezor",
+        icon: FaSolidKey,
+        disabled: true,
+      },
+    ],
+  },
 ];
 
 export const Route = createFileRoute("/acc/new/")({
   component: () => (
     <div class="w-full p-4">
-      <div class="mx-auto w-full max-w-lg space-y-4 mt-4">
+      <div class="mx-auto w-full max-w-3xl space-y-4 mt-4">
         <div class="flex items-end justify-between">
           <div class="text-xl">
             New Account
           </div>
         </div>
         <div class="bg-surface p-4 rounded-md w-full">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <For each={ACC_OPTIONS}>
               {group => (
                 <div class="space-y-2">
