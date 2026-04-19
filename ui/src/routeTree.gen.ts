@@ -9,22 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./routes/__root"
+import { Route as SettingsRouteRouteImport } from "./routes/settings/route"
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as SettingsIndexRouteImport } from "./routes/settings/index"
+import { Route as SettingsNetworksRouteImport } from "./routes/settings/networks"
 import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
 import { Route as AccAccountNewTxRouteImport } from "./routes/acc/$account/new-tx"
 import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/assets"
 
+const SettingsRouteRoute = SettingsRouteRouteImport.update({
+  id: "/settings",
+  path: "/settings",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: "/settings/",
-  path: "/settings/",
-  getParentRoute: () => rootRouteImport,
+  id: "/",
+  path: "/",
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsNetworksRoute = SettingsNetworksRouteImport.update({
+  id: "/networks",
+  path: "/networks",
+  getParentRoute: () => SettingsRouteRoute,
 } as any)
 const AccAccountRouteRoute = AccAccountRouteRouteImport.update({
   id: "/acc/$account",
@@ -49,7 +61,9 @@ const AccAccountAssetsRoute = AccAccountAssetsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
+  "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/settings/networks": typeof SettingsNetworksRoute
   "/settings/": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
@@ -57,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
+  "/settings/networks": typeof SettingsNetworksRoute
   "/settings": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
@@ -65,7 +80,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
+  "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/settings/networks": typeof SettingsNetworksRoute
   "/settings/": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
@@ -75,7 +92,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | "/"
+    | "/settings"
     | "/acc/$account"
+    | "/settings/networks"
     | "/settings/"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
@@ -83,6 +102,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
+    | "/settings/networks"
     | "/settings"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
@@ -90,7 +110,9 @@ export interface FileRouteTypes {
   id:
     | "__root__"
     | "/"
+    | "/settings"
     | "/acc/$account"
+    | "/settings/networks"
     | "/settings/"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
@@ -99,12 +121,19 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
-  SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 declare module "@tanstack/solid-router" {
   interface FileRoutesByPath {
+    "/settings": {
+      id: "/settings"
+      path: "/settings"
+      fullPath: "/settings"
+      preLoaderRoute: typeof SettingsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/": {
       id: "/"
       path: "/"
@@ -114,10 +143,17 @@ declare module "@tanstack/solid-router" {
     }
     "/settings/": {
       id: "/settings/"
-      path: "/settings"
+      path: "/"
       fullPath: "/settings/"
       preLoaderRoute: typeof SettingsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    "/settings/networks": {
+      id: "/settings/networks"
+      path: "/networks"
+      fullPath: "/settings/networks"
+      preLoaderRoute: typeof SettingsNetworksRouteImport
+      parentRoute: typeof SettingsRouteRoute
     }
     "/acc/$account": {
       id: "/acc/$account"
@@ -150,6 +186,20 @@ declare module "@tanstack/solid-router" {
   }
 }
 
+interface SettingsRouteRouteChildren {
+  SettingsNetworksRoute: typeof SettingsNetworksRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+}
+
+const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
+  SettingsNetworksRoute: SettingsNetworksRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+}
+
+const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
+  SettingsRouteRouteChildren,
+)
+
 interface AccAccountRouteRouteChildren {
   AccAccountAssetsRoute: typeof AccAccountAssetsRoute
   AccAccountNewTxRoute: typeof AccAccountNewTxRoute
@@ -168,8 +218,8 @@ const AccAccountRouteRouteWithChildren = AccAccountRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
-  SettingsIndexRoute: SettingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

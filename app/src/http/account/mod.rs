@@ -10,10 +10,10 @@ use poem_openapi::{Object, OpenApi, param::Path, payload::Json};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-pub struct AccountsApi;
+pub struct AccountApi;
 
 pub fn api() -> impl OpenApi {
-    AccountsApi
+    AccountApi
 }
 
 #[derive(Serialize, Deserialize, Object)]
@@ -22,11 +22,11 @@ pub struct AccountsResponse {
 }
 
 #[OpenApi]
-impl AccountsApi {
+impl AccountApi {
     /// List all accounts
     ///
     /// GET /api/accounts
-    #[oai(path = "/accounts", method = "get", tag = "ApiTags::Account")]
+    #[oai(path = "/acc", method = "get", tag = "ApiTags::Account")]
     async fn get_accounts(
         &self,
         auth: Auth,
@@ -42,7 +42,7 @@ impl AccountsApi {
     /// Get an account by ID
     ///
     /// GET /api/accounts/:account_id
-    #[oai(path = "/accounts/:account_id", method = "get", tag = "ApiTags::Account")]
+    #[oai(path = "/acc/:account_id", method = "get", tag = "ApiTags::Account")]
     async fn get_account_by_id(
         &self,
         auth: Auth,

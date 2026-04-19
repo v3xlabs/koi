@@ -42,7 +42,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/accounts": {
+    "/acc": {
         parameters: {
             query?: never;
             header?: never;
@@ -80,7 +80,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/accounts/{account_id}": {
+    "/acc/{account_id}": {
         parameters: {
             query?: never;
             header?: never;
