@@ -5,6 +5,7 @@ import { For, Show } from "solid-js";
 
 import { useAccount } from "#/api/account";
 import { truncateAddress } from "#/utils/address";
+import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";
 
 import { AccountIcon } from "./account/icon";
@@ -19,15 +20,19 @@ export const Sidebar = () => {
             <div class="space-y-2 pt-1">
                 <div class="flex items-center gap-2 pl-1 py-2">
                     <div class="size-9 bg-surface-alt rounded-md">
-                        <Show when={account.data}>
-                            {acc => <AccountIcon address={() => acc().metadata.evm_address} />}
+                        <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
+                            {acc => <AccountIcon address={() => acc().evm_address} />}
                         </Show>
                     </div>
                     <div class="leading-none">
                         <div class="font-medium text-sm leading-none">{account.data?.name}</div>
-                        <div class="text-muted text-sm leading-none">
-                            {truncateAddress(account.data?.metadata.evm_address)}
-                        </div>
+                        <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
+                            {acc => (
+                                <div class="text-muted text-sm leading-none">
+                                    {truncateAddress(acc().evm_address)}
+                                </div>
+                            )}
+                        </Show>
                     </div>
                 </div>
                 <div class="flex gap-2 px-1">
@@ -61,8 +66,8 @@ export const Sidebar = () => {
             </div>
             <div>
                 <Link
-                  to="/acc/$account/new-tx"
-                  class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                    to="/acc/$account/new-tx"
+                    class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
                 >
                     New transaction
                 </Link>
@@ -109,9 +114,9 @@ export const Sidebar = () => {
                             <For each={group}>
                                 {item => (
                                     <Link
-                                      to={item.href}
-                                      class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt"
-                                      activeOptions={{
+                                        to={item.href}
+                                        class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt"
+                                        activeOptions={{
                                             exact: true,
                                         }}
                                     >
