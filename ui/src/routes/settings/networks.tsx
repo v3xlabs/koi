@@ -4,6 +4,8 @@ import { Component, For, Show, Suspense } from "solid-js";
 import { useNetworkEndpoints, useNetworks } from "#/api/network";
 import { NetworkAdd } from "#/components/net/add";
 import { NetworkDelete } from "#/components/net/delete";
+import { NetworkEndpointAdd } from "#/components/net/endpoint/add";
+import { NetworkEndpointItem } from "#/components/net/endpoint/edit";
 
 const NetworkEndpoints: Component<{ network_id: number; }> = ({ network_id }) => {
   const networkEndpointsQuery = useNetworkEndpoints(() => ({
@@ -13,17 +15,18 @@ const NetworkEndpoints: Component<{ network_id: number; }> = ({ network_id }) =>
   }));
 
   return (
-    <div>
-      <div>Network Endpoints</div>
-      <ul>
+    <div class="space-y-2">
+      <div class="flex justify-between items-end">
+        <div>Network Endpoints</div>
+        <NetworkEndpointAdd network_id={network_id} />
+      </div>
+      <ul class="border border-border rounded-md p-2">
         <Suspense fallback={<div>Loading...</div>}>
           <Show when={networkEndpointsQuery.data}>
             {data => (
               <For each={data()}>
                 {endpoint => (
-                  <li>
-                    {endpoint.endpoint_label}
-                  </li>
+                  <NetworkEndpointItem network_id={network_id} endpoint={endpoint} />
                 )}
               </For>
             )}

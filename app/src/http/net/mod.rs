@@ -1,4 +1,11 @@
-use crate::{http::auth::Auth, models::network::{Network, endpoint::NetworkEndpoint}, state::AppState};
+use crate::{
+    http::auth::Auth,
+    models::network::{
+        Network,
+        endpoint::{NetworkEndpoint, NetworkEndpointUpdate},
+    },
+    state::AppState,
+};
 
 use super::ApiTags;
 use poem::{Result, web::Data};
@@ -49,15 +56,12 @@ impl NetworkApi {
 
         Ok(Json(Network::create(&state, payload.0).await?))
     }
-    
+
     /// Get network presets
     ///
     /// GET /api/net/presets
     #[oai(path = "/net/presets", method = "get", tag = "ApiTags::Network")]
-    async fn get_network_presets(
-        &self,
-        auth: Auth,
-    ) -> Result<Json<Vec<Network>>> {
+    async fn get_network_presets(&self, auth: Auth) -> Result<Json<Vec<Network>>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(Network::presets()))
@@ -96,7 +100,11 @@ impl NetworkApi {
     /// Get network endpoints
     ///
     /// GET /api/net/:network_id/endpoints
-    #[oai(path = "/net/:network_id/endpoints", method = "get", tag = "ApiTags::Network")]
+    #[oai(
+        path = "/net/:network_id/endpoints",
+        method = "get",
+        tag = "ApiTags::Network"
+    )]
     async fn get_network_endpoints(
         &self,
         auth: Auth,
@@ -105,13 +113,19 @@ impl NetworkApi {
     ) -> Result<Json<Vec<NetworkEndpoint>>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(NetworkEndpoint::get_by_network_id(&state, network_id.0).await?))
+        Ok(Json(
+            NetworkEndpoint::get_by_network_id(&state, network_id.0).await?,
+        ))
     }
 
     /// Create a network endpoint
     ///
     /// POST /api/net/:network_id/endpoints
-    #[oai(path = "/net/:network_id/endpoints", method = "post", tag = "ApiTags::Network")]
+    #[oai(
+        path = "/net/:network_id/endpoints",
+        method = "post",
+        tag = "ApiTags::Network"
+    )]
     async fn create_network_endpoint(
         &self,
         auth: Auth,
@@ -126,12 +140,16 @@ impl NetworkApi {
         }
 
         Ok(Json(NetworkEndpoint::create(&state, payload.0).await?))
-    }   
+    }
 
     /// Get a network endpoint by ID
     ///
     /// GET /api/net/:network_id/endpoints/:endpoint_id
-    #[oai(path = "/net/:network_id/endpoints/:endpoint_id", method = "get", tag = "ApiTags::Network")]
+    #[oai(
+        path = "/net/:network_id/endpoints/:endpoint_id",
+        method = "get",
+        tag = "ApiTags::Network"
+    )]
     async fn get_network_endpoint_by_id(
         &self,
         auth: Auth,
@@ -141,13 +159,42 @@ impl NetworkApi {
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(NetworkEndpoint::get_by_id(&state, network_id.0, endpoint_id.0).await?))
+        Ok(Json(
+            NetworkEndpoint::get_by_id(&state, network_id.0, endpoint_id.0).await?,
+        ))
+    }
+
+    /// Update a network endpoint by ID
+    ///
+    /// PUT /api/net/:network_id/endpoints/:endpoint_id
+    #[oai(
+        path = "/net/:network_id/endpoints/:endpoint_id",
+        method = "put",
+        tag = "ApiTags::Network"
+    )]
+    async fn update_network_endpoint_by_id(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+        endpoint_id: Path<String>,
+        payload: Json<NetworkEndpointUpdate>,
+    ) -> Result<Json<NetworkEndpoint>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(
+            NetworkEndpoint::update(&state, network_id.0, endpoint_id.0, payload.0).await?,
+        ))
     }
 
     /// Delete a network endpoint by ID
     ///
     /// DELETE /api/net/:network_id/endpoints/:endpoint_id
-    #[oai(path = "/net/:network_id/endpoints/:endpoint_id", method = "delete", tag = "ApiTags::Network")]
+    #[oai(
+        path = "/net/:network_id/endpoints/:endpoint_id",
+        method = "delete",
+        tag = "ApiTags::Network"
+    )]
     async fn delete_network_endpoint_by_id(
         &self,
         auth: Auth,
@@ -157,6 +204,8 @@ impl NetworkApi {
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(NetworkEndpoint::delete(&state, network_id.0, endpoint_id.0).await?))
+        Ok(Json(
+            NetworkEndpoint::delete(&state, network_id.0, endpoint_id.0).await?,
+        ))
     }
 }

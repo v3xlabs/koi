@@ -1,13 +1,14 @@
 import { Component, JSX } from "solid-js";
 
-import { useDeleteNetwork } from "#/api/network";
+import { useDeleteNetwork, useDeleteNetworkEndpoint } from "#/api/network";
 
-import { Modal } from "../dialog";
+import { Modal } from "../../dialog";
 
-export const NetworkDelete: Component<{ network_id: number; children?: JSX.Element; }> = ({ network_id, children }) => {
-    const deleteNetwork = useDeleteNetwork(() => ({
+export const NetworkEndpointDelete: Component<{ network_id: number; endpoint_id: string; children?: JSX.Element; }> = ({ network_id, endpoint_id, children }) => {
+    const deleteNetworkEndpoint = useDeleteNetworkEndpoint(() => ({
         path: {
             network_id,
+            endpoint_id,
         },
     }));
 
@@ -21,18 +22,18 @@ export const NetworkDelete: Component<{ network_id: number; children?: JSX.Eleme
                 <div class="fixed inset-0">
                     <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24">
                         <Modal.Title>
-                            Delete Network #
-                            {network_id.toString()}
+                            Delete Network Endpoint #
+                            {endpoint_id}
                         </Modal.Title>
                         <div class="px-4 pt-4">
-                            You are about to delete the network
+                            You are about to delete the network endpoint
                             <span class="font-bold bg-surface-alt rounded-md p-1">
-                                {network_id}
+                                {endpoint_id}
                             </span>
                             . This action cannot be undone.
                         </div>
                         <div class="w-full flex justify-end gap-2 p-4">
-                            <button class="btn btn-primary" onClick={() => deleteNetwork.mutate({})}>Delete</button>
+                            <button class="btn btn-primary" onClick={() => deleteNetworkEndpoint.mutate({})}>Delete</button>
                             <Modal.CloseButton class="btn btn-secondary">
                                 Cancel
                             </Modal.CloseButton>

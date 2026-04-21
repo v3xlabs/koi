@@ -349,7 +349,36 @@ export type paths = {
                 };
             };
         };
-        put?: never;
+        /**
+         * Update a network endpoint by ID
+         * @description PUT /api/net/:network_id/endpoints/:endpoint_id
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    network_id: number;
+                    endpoint_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["NetworkEndpointUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["NetworkEndpoint"];
+                    };
+                };
+            };
+        };
         post?: never;
         /**
          * Delete a network endpoint by ID
@@ -463,6 +492,15 @@ export type components = {
             endpoint_disabled: boolean;
             /** Format: int32 */
             network_identity: number;
+        };
+        /** NetworkEndpointUpdate */
+        NetworkEndpointUpdate: {
+            endpoint_label?: string;
+            endpoint_type?: string;
+            endpoint_url?: string;
+            /** Format: uint32 */
+            endpoint_priority?: number;
+            endpoint_disabled?: boolean;
         };
         /** NetworksResponse */
         NetworksResponse: {
