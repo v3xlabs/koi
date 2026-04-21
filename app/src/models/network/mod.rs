@@ -16,6 +16,12 @@ pub struct Network {
     pub network_icon_url: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct NetworkUpdate {
+    pub network_name: Option<String>,
+    pub network_icon_url: Option<String>,
+}
+
 impl Network {
     pub async fn all(state: &AppState) -> Result<Vec<Network>, KoiError> {
         query_as::<_, Network>("SELECT * FROM networks")
@@ -37,6 +43,28 @@ impl Network {
             .bind(network.network_identity)
             .bind(network.network_name)
             .bind(network.network_icon_url)
+            .fetch_one(&state.database)
+            .await
+            .map_err(KoiError::from)
+    }
+
+    pub async fn update(
+        state: &AppState,
+        network_id: i32,
+        network: NetworkUpdate,
+    ) -> Result<Network, KoiError> {
+        let original = Self::get_by_id(state, network_id).await?;
+
+        let network_name = network.network_name.unwrap_or(original.network_name);
+        let network_icon_url = match network.network_icon_url {
+            Some(url) => Some(url),
+            None => original.network_icon_url,
+        };
+
+        query_as::<_, Network>("UPDATE networks SET network_name = ?, network_icon_url = ? WHERE network_identity = ? RETURNING *")
+            .bind(network_name)
+            .bind(network_icon_url)
+            .bind(network_id)
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)

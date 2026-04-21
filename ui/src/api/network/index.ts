@@ -14,6 +14,11 @@ export const useCreateNetwork = createApiMutation("/net", "post", {
         queryClient.invalidateQueries({ queryKey: ["networks"] });
     },
 });
+export const useUpdateNetwork = createApiMutation("/net/{network_id}", "put", {
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["networks"] });
+    },
+});
 export const useDeleteNetwork = createApiMutation("/net/{network_id}", "delete", {
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["networks"] });

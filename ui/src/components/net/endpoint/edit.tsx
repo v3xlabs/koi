@@ -29,49 +29,53 @@ export const NetworkEndpointItem: Component<{ network_id: number; endpoint: Netw
     );
 
     return (
-        <li>
-            <div class="flex gap-2 w-full">
-                <label class="w-full">
-                    <span class="text-sm">Label</span>
-                    <input type="text" value={label()} onChange={e => setLabel(e.target.value)} class="input w-full" />
-                </label>
-                <label class="">
-                    <span class="text-sm">Enabled</span>
-                    <input type="checkbox" checked={enabled()} onChange={e => setEnabled(e.target.checked)} class="input w-full" />
+        <li class="space-y-2">
+            <div class="space-y-2">
+                <div class="flex gap-2 w-full">
+                    <label class="w-full">
+                        <span class="text-sm">Label</span>
+                        <input type="text" value={label()} onChange={e => setLabel(e.target.value)} class="input w-full" />
+                    </label>
+                    <label class="">
+                        <span class="text-sm">Enabled</span>
+                        <input type="checkbox" checked={enabled()} onChange={e => setEnabled(e.target.checked)} class="input w-full" />
+                    </label>
+                </div>
+                <div class="flex gap-2 w-full">
+                    <label class="w-full max-w-xs">
+                        <span class="text-sm">Type</span>
+                        <input type="text" value={type()} onChange={e => setType(e.target.value)} class="input w-full" />
+                    </label>
+                    <label class="w-full">
+                        <span class="text-sm">URL</span>
+                        <input type="text" value={url()} onChange={e => setUrl(e.target.value)} class="input w-full" />
+                    </label>
+                </div>
+                <label>
+                    <span class="text-sm">Priority</span>
+                    <input type="number" value={priority()} onChange={e => setPriority(Number(e.target.value))} class="input w-full" />
                 </label>
             </div>
-            <div class="flex gap-2 w-full">
-                <label class="w-full max-w-xs">
-                    <span class="text-sm">Type</span>
-                    <input type="text" value={type()} onChange={e => setType(e.target.value)} class="input w-full" />
-                </label>
-                <label class="w-full">
-                    <span class="text-sm">URL</span>
-                    <input type="text" value={url()} onChange={e => setUrl(e.target.value)} class="input w-full" />
-                </label>
+            <div class="flex justify-end gap-2">
+                <button
+                  class="btn btn-primary"
+                  disabled={!isDirty()}
+                  onClick={() => updateNetworkEndpoint.mutate({
+                        data: {
+                            endpoint_identity: endpoint.endpoint_identity,
+                            network_identity: network_id,
+                            endpoint_label: label(),
+                            endpoint_type: type(),
+                            endpoint_url: url(),
+                            endpoint_priority: priority(),
+                            endpoint_disabled: enabled(),
+                        },
+                    })}
+                >
+                    Update
+                </button>
+                <NetworkEndpointDelete network_id={network_id} endpoint_id={endpoint.endpoint_identity} />
             </div>
-            <label>
-                <span class="text-sm">Priority</span>
-                <input type="number" value={priority()} onChange={e => setPriority(Number(e.target.value))} class="input w-full" />
-            </label>
-            <button
-              class="btn btn-primary"
-              disabled={!isDirty()}
-              onClick={() => updateNetworkEndpoint.mutate({
-                    data: {
-                        endpoint_identity: endpoint.endpoint_identity,
-                        network_identity: network_id,
-                        endpoint_label: label(),
-                        endpoint_type: type(),
-                        endpoint_url: url(),
-                        endpoint_priority: priority(),
-                        endpoint_disabled: enabled(),
-                    },
-                })}
-            >
-                Update
-            </button>
-            <NetworkEndpointDelete network_id={network_id} endpoint_id={endpoint.endpoint_identity} />
         </li>
     );
 };

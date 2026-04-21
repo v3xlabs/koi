@@ -1,7 +1,7 @@
 use crate::{
     http::auth::Auth,
     models::network::{
-        Network,
+        Network, NetworkUpdate,
         endpoint::{NetworkEndpoint, NetworkEndpointUpdate},
     },
     state::AppState,
@@ -80,6 +80,24 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(Network::get_by_id(&state, network_id.0).await?))
+    }
+
+    /// Update a network by ID
+    ///
+    /// PUT /api/net/:network_id
+    #[oai(path = "/net/:network_id", method = "put", tag = "ApiTags::Network")]
+    async fn update_network_by_id(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+        payload: Json<NetworkUpdate>,
+    ) -> Result<Json<Network>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(
+            Network::update(&state, network_id.0, payload.0).await?,
+        ))
     }
 
     /// Delete a network by ID

@@ -216,7 +216,35 @@ export type paths = {
                 };
             };
         };
-        put?: never;
+        /**
+         * Update a network by ID
+         * @description PUT /api/net/:network_id
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    network_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["NetworkUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Network"];
+                    };
+                };
+            };
+        };
         post?: never;
         /**
          * Delete a network by ID
@@ -501,6 +529,11 @@ export type components = {
             /** Format: uint32 */
             endpoint_priority?: number;
             endpoint_disabled?: boolean;
+        };
+        /** NetworkUpdate */
+        NetworkUpdate: {
+            network_name?: string;
+            network_icon_url?: string;
         };
         /** NetworksResponse */
         NetworksResponse: {
