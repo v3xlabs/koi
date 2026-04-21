@@ -33,8 +33,8 @@ export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
             {props.children}
             <Modal.Portal>
                 <Modal.Overlay />
-                <div class="fixed inset-0">
-                    <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24">
+                <div class="fixed inset-0 z-50">
+                    <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24 z-50">
                         <Modal.CloseButton />
                         <Modal.Title>
                             Wallet Address QR
