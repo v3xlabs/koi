@@ -2,15 +2,18 @@ import { createFileRoute, useParams } from "@tanstack/solid-router";
 import { FaSolidArrowRight, FaSolidRefresh } from "solid-icons/fa";
 import { Show, Suspense } from "solid-js";
 
+import { useAccount } from "#/api/account";
 import { useAccountBalance } from "#/api/account/balance";
 import { AssetAmount } from "#/components/asset/amount";
 import { Modal } from "#/components/dialog";
+import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";
 
 export const Route = createFileRoute("/acc/$account/")({
   component: () => {
     const params = useParams({ from: "/acc/$account" });
     const balance = useAccountBalance(params().account);
+    const account = useAccount(params().account);
 
     return (
       <div class="p-4 grid grid-cols-5 w-full gap-4">
@@ -57,14 +60,18 @@ export const Route = createFileRoute("/acc/$account/")({
                 <FaSolidArrowRight class="-rotate-45" />
                 Send
               </button>
-              <ReceiveQR address={() => "0x1234567890123456789012345678901234567890"}>
-                <Modal.Trigger
-                  class="bg-secondary hover:bg-secondary-hover text-primary-foreground w-full rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
-                >
-                  <FaSolidArrowRight class="-rotate-225" />
-                  Receive
-                </Modal.Trigger>
-              </ReceiveQR>
+              <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
+                {x => (
+                  <ReceiveQR address={() => x().evm_address}>
+                    <Modal.Trigger
+                      class="bg-secondary hover:bg-secondary-hover text-primary-foreground w-full rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                    >
+                      <FaSolidArrowRight class="-rotate-225" />
+                      Receive
+                    </Modal.Trigger>
+                  </ReceiveQR>
+                )}
+              </Show>
             </div>
           </div>
         </div>

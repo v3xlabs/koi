@@ -36,11 +36,15 @@ export const Sidebar = () => {
                     </div>
                 </div>
                 <div class="flex gap-2 px-1">
-                    <ReceiveQR address={() => "0x1234567890123456789012345678901234567890"}>
-                        <Modal.Trigger class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
-                            <FaSolidQrcode class="w-3.5 h-3.5 text-secondary-foreground" />
-                        </Modal.Trigger>
-                    </ReceiveQR>
+                    <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
+                        {acc => (
+                            <ReceiveQR address={() => acc().evm_address}>
+                                <Modal.Trigger class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
+                                    <FaSolidQrcode class="w-3.5 h-3.5 text-secondary-foreground" />
+                                </Modal.Trigger>
+                            </ReceiveQR>
+                        )}
+                    </Show>
                     <For each={[
                         {
                             icon: FaSolidCopy,
