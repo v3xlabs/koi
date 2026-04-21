@@ -1,24 +1,21 @@
-import { createQuery } from "@tanstack/solid-query";
+import { createMutation } from "@tanstack/solid-query";
 
 import { api } from "#/api";
 
-export const useNetwork = (network_id: string) => createQuery(() => ({
-    queryKey: ["network", network_id],
-    queryFn: async () => {
-        const response = await api("/net/{network_id}", "get", {
-            path: {
-                network_id: Number.parseInt(network_id),
-            },
+import { createApi } from "../hook";
+import { components } from "../schema.gen";
+
+export type Network = components["schemas"]["Network"];
+
+export const useNetwork = createApi("/net/{network_id}", "get", options => ["network", options.path.network_id.toString()]);
+export const useNetworks = createApi("/net", "get", options => ["networks"]);
+
+export const useCreateNetwork = () => createMutation(() => ({
+    mutationFn: async (network: Network) => {
+        const response = await api("/net", "post", {
+            contentType: "application/json; charset=utf-8",
+            data: network,
         });
-
-        return response.data;
-    },
-}));
-
-export const useNetworks = () => createQuery(() => ({
-    queryKey: ["networks"],
-    queryFn: async () => {
-        const response = await api("/net", "get", {});
 
         return response.data;
     },

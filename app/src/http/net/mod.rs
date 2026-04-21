@@ -1,8 +1,9 @@
-use crate::{http::auth::Auth, models::network::Network, state::AppState};
+use crate::{http::auth::Auth, models::network::{Network, endpoint::NetworkEndpoint}, state::AppState};
 
 use super::ApiTags;
 use poem::{Result, web::Data};
 use poem_openapi::{Object, OpenApi, param::Path, payload::Json};
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 pub struct NetworkApi;
@@ -46,8 +47,85 @@ impl NetworkApi {
     ) -> Result<Json<Network>> {
         let _auth_data = auth.unwrap()?;
 
-        let network = Network::get_by_id(&state, network_id.0).await?;
+        Ok(Json(Network::get_by_id(&state, network_id.0).await?))
+    }
 
-        Ok(Json(network))
+    /// Create a network
+    ///
+    /// POST /api/net
+    #[oai(path = "/net", method = "post", tag = "ApiTags::Network")]
+    async fn create_network(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        payload: Json<Network>,
+    ) -> Result<Json<Network>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(Network::create(&state, payload.0).await?))
+    }
+    
+    /// Get network presets
+    ///
+    /// GET /api/net/presets
+    #[oai(path = "/net/presets", method = "get", tag = "ApiTags::Network")]
+    async fn get_network_presets(
+        &self,
+        auth: Auth,
+    ) -> Result<Json<Vec<Network>>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(Network::presets()))
+    }
+
+    /// Get network endpoints
+    ///
+    /// GET /api/net/:network_id/endpoints
+    #[oai(path = "/net/:network_id/endpoints", method = "get", tag = "ApiTags::Network")]
+    async fn get_network_endpoints(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+    ) -> Result<Json<Vec<NetworkEndpoint>>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(NetworkEndpoint::get_by_network_id(&state, network_id.0).await?))
+    }
+
+    /// Create a network endpoint
+    ///
+    /// POST /api/net/:network_id/endpoints
+    #[oai(path = "/net/:network_id/endpoints", method = "post", tag = "ApiTags::Network")]
+    async fn create_network_endpoint(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+        payload: Json<NetworkEndpoint>,
+    ) -> Result<Json<NetworkEndpoint>> {
+        let _auth_data = auth.unwrap()?;
+
+        if payload.0.network_identity != network_id.0 {
+            return Err(poem::Error::from_status(StatusCode::BAD_REQUEST));
+        }
+
+        Ok(Json(NetworkEndpoint::create(&state, payload.0).await?))
+    }   
+
+    /// Get a network endpoint by ID
+    ///
+    /// GET /api/net/:network_id/endpoints/:endpoint_id
+    #[oai(path = "/net/:network_id/endpoints/:endpoint_id", method = "get", tag = "ApiTags::Network")]
+    async fn get_network_endpoint_by_id(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+        endpoint_id: Path<String>,
+    ) -> Result<Json<NetworkEndpoint>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(NetworkEndpoint::get_by_id(&state, network_id.0, endpoint_id.0).await?))
     }
 }

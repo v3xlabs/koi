@@ -1,8 +1,11 @@
 use std::sync::Arc;
 
-use figment::{Figment, providers::{Env, Serialized}};
+use figment::{
+    Figment,
+    providers::{Env, Serialized},
+};
 use serde::{Deserialize, Serialize};
-use sqlx::{SqlitePool};
+use sqlx::SqlitePool;
 use tracing::info;
 
 use crate::{error::KoiError, models::vendor::VendorManager};

@@ -4,7 +4,7 @@ pub mod flags;
 
 #[derive(Default)]
 pub struct VendorManager {
-    pub vendors: HashMap<String, bool>
+    pub vendors: HashMap<String, bool>,
 }
 
 impl VendorManager {

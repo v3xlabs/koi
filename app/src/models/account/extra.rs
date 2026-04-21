@@ -41,7 +41,7 @@ fn get_accounts() -> Vec<Account> {
             metadata: WalletType::Railgun(RailgunWallet {
                 railgun_address: "0zk225f137127d9067788314bc7fcc1f36746a3c3B5".to_string(),
             }),
-        }
+        },
     ]
 }
 

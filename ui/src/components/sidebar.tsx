@@ -14,7 +14,7 @@ import { Modal } from "./dialog";
 
 export const Sidebar = () => {
     const params = useParams({ from: "/acc/$account" });
-    const account = useAccount(params().account);
+    const account = useAccount(() => ({ path: { account_id: params().account } }));
 
     return (
         <div class="border-r px-1.5 py-2 min-w-56 max-w-64 bg-surface border-r-border h-full space-y-2">
@@ -79,6 +79,7 @@ export const Sidebar = () => {
             <div>
                 <Link
                   to="/acc/$account/new-tx"
+                  params={{ account: params().account }}
                   class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
                 >
                     New transaction

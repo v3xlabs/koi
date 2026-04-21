@@ -12,7 +12,8 @@ export type AccountPreviewProperties = {
 };
 
 export const AccountPreview: Component<AccountPreviewProperties> = (props) => {
-    const accountQuery = useAccount(props.account_id);
+    const account_id = props.account_id;
+    const accountQuery = useAccount(() => ({ path: { account_id } }));
 
     return (
         <div class="w-full">

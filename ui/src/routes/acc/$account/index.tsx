@@ -13,7 +13,7 @@ export const Route = createFileRoute("/acc/$account/")({
   component: () => {
     const params = useParams({ from: "/acc/$account" });
     const balance = useAccountBalance(params().account);
-    const account = useAccount(params().account);
+    const account = useAccount(() => ({ path: { account_id: params().account } }));
 
     return (
       <div class="p-4 grid grid-cols-5 w-full gap-4">

@@ -9,7 +9,9 @@ impl Token {
     /// This requires the `avara_token_logos` vendor flag
     pub async fn fetch_icon_avara(state: &AppState) -> Result<String, KoiError> {
         if !state.vendors.has_flag("avara_token_logos") {
-            return Err(KoiError::Internal("Avara token logos vendor flag is not enabled".to_string()));
+            return Err(KoiError::Internal(
+                "Avara token logos vendor flag is not enabled".to_string(),
+            ));
         }
 
         // do work

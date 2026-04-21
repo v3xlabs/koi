@@ -1,11 +1,12 @@
-use poem_openapi::Object;
+use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
+use sqlx::{prelude::FromRow, query_as};
 
 use crate::{error::KoiError, state::AppState};
 
 pub mod endpoint;
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, Object, FromRow)]
 pub struct Network {
     /// evm chain id
     pub network_identity: i32,
@@ -16,21 +17,63 @@ pub struct Network {
 }
 
 impl Network {
-    pub async fn all(_state: &AppState) -> Result<Vec<Network>, KoiError> {
-        Ok(vec![Network {
-            network_identity: 1,
-            network_name: "Ethereum Mainnet".to_string(),
-            network_icon_url: Some("https://example.com/icon.png".to_string()),
-        }])
+    pub async fn all(state: &AppState) -> Result<Vec<Network>, KoiError> {
+        query_as::<_, Network>("SELECT * FROM networks")
+            .fetch_all(&state.database)
+            .await
+            .map_err(KoiError::from)
+    }
+
+    pub async fn get_by_id(state: &AppState, network_id: i32) -> Result<Network, KoiError> {
+        query_as::<_, Network>("SELECT * FROM networks WHERE network_identity = ?")
+            .bind(network_id)
+            .fetch_one(&state.database)
+            .await
+            .map_err(KoiError::from)
+    }
+
+    pub async fn create(state: &AppState, network: Network) -> Result<Network, KoiError> {
+        query_as::<_, Network>("INSERT INTO networks (network_identity, network_name, network_icon_url) VALUES (?, ?, ?)")
+            .bind(network.network_identity)
+            .bind(network.network_name)
+            .bind(network.network_icon_url)
+            .fetch_one(&state.database)
+            .await
+            .map_err(KoiError::from)
+    }
+
+    pub fn presets() -> Vec<Network> {
+        vec![
+            Network {
+                network_identity: 1,
+                network_name: "Ethereum Mainnet".to_string(),
+                network_icon_url: None,
+            },
+            Network {
+                network_identity: 10,
+                network_name: "Optimism".to_string(),
+                network_icon_url: None,
+            },
+            Network {
+                network_identity: 137,
+                network_name: "Polygon".to_string(),
+                network_icon_url: None,
+            },
+            Network {
+                network_identity: 42161,
+                network_name: "Arbitrum".to_string(),
+                network_icon_url: None,
+            },
+        ]
     }
 }
 
-impl Network {
-    pub async fn get_by_id(_state: &AppState, network_id: i32) -> Result<Network, KoiError> {
-        Ok(Network {
-            network_identity: network_id,
+impl Example for Network {
+    fn example() -> Self {
+        Self {
+            network_identity: 1,
             network_name: "Ethereum Mainnet".to_string(),
             network_icon_url: Some("https://example.com/icon.png".to_string()),
-        })
+        }
     }
 }
