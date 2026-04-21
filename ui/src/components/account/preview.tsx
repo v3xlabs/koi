@@ -5,6 +5,7 @@ import { truncateAddress } from "#/utils/address";
 import { narrow } from "#/utils/narrow";
 
 import { AccountIcon } from "./icon";
+import { AccountTypeIcon } from "./type";
 
 export type AccountPreviewProperties = {
     account_id: string;
@@ -28,8 +29,9 @@ export const AccountPreview: Component<AccountPreviewProperties> = (props) => {
                                 <div>
                                     {acc().name}
                                 </div>
-                                <div>
+                                <div class="flex items-center gap-1.5 text-muted">
                                     {acc().metadata.type}
+                                    <AccountTypeIcon type={() => acc().metadata.type} />
                                 </div>
                             </div>
                             <div class="text-muted text-sm">

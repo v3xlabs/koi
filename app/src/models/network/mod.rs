@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{error::KoiError, state::AppState};
 
+pub mod endpoint;
+
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct Network {
     /// evm chain id

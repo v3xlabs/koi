@@ -9,6 +9,7 @@ import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";
 
 import { AccountIcon } from "./account/icon";
+import { AccountTypeIcon } from "./account/type";
 import { Modal } from "./dialog";
 
 export const Sidebar = () => {
@@ -17,15 +18,22 @@ export const Sidebar = () => {
 
     return (
         <div class="border-r px-1.5 py-2 min-w-56 max-w-64 bg-surface border-r-border h-full space-y-2">
-            <div class="space-y-2 pt-1">
-                <div class="flex items-center gap-2 pl-1 py-2">
+            <div class="space-y-2 pt-1 w-full">
+                <div class="flex items-center gap-2 pl-1 pr-2 py-2 w-full">
                     <div class="size-9 bg-surface-alt rounded-md">
                         <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
                             {acc => <AccountIcon address={() => acc().evm_address} />}
                         </Show>
                     </div>
-                    <div class="leading-none">
-                        <div class="font-medium text-sm leading-none">{account.data?.name}</div>
+                    <div class="leading-none grow">
+                        <div class="font-medium text-sm leading-none flex items-center justify-between gap-1">
+                            <span>
+                                {account.data?.name}
+                            </span>
+                            <Show when={account.data?.metadata.type}>
+                                {type => <AccountTypeIcon type={type} />}
+                            </Show>
+                        </div>
                         <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
                             {acc => (
                                 <div class="text-muted text-sm leading-none">
@@ -70,8 +78,8 @@ export const Sidebar = () => {
             </div>
             <div>
                 <Link
-                    to="/acc/$account/new-tx"
-                    class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                  to="/acc/$account/new-tx"
+                  class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
                 >
                     New transaction
                 </Link>
@@ -118,9 +126,9 @@ export const Sidebar = () => {
                             <For each={group}>
                                 {item => (
                                     <Link
-                                        to={item.href}
-                                        class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt"
-                                        activeOptions={{
+                                      to={item.href}
+                                      class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt"
+                                      activeOptions={{
                                             exact: true,
                                         }}
                                     >

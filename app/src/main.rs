@@ -15,7 +15,7 @@ async fn main() {
 
     info!("Heya");
 
-    let state = State::new();
+    let state = State::new().await.unwrap();
 
     http::serve(state).await
 }

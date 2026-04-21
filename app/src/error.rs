@@ -6,6 +6,10 @@ use thiserror::Error;
 pub enum KoiError {
     #[error("internal error: {0}")]
     Internal(String),
+    #[error("database error: {0}")]
+    Database(#[from] sqlx::Error),
+    #[error("environment error: {0}")]
+    Configuration(#[from] figment::Error),
 }
 
 impl IntoResponse for KoiError {
