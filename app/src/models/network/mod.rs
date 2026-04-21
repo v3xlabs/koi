@@ -33,7 +33,7 @@ impl Network {
     }
 
     pub async fn create(state: &AppState, network: Network) -> Result<Network, KoiError> {
-        query_as::<_, Network>("INSERT INTO networks (network_identity, network_name, network_icon_url) VALUES (?, ?, ?)")
+        query_as::<_, Network>("INSERT INTO networks (network_identity, network_name, network_icon_url) VALUES (?, ?, ?) RETURNING *")
             .bind(network.network_identity)
             .bind(network.network_name)
             .bind(network.network_icon_url)

@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/solid-router";
-import { For, Suspense } from "solid-js";
+import { For, Show, Suspense } from "solid-js";
 
 import { useNetworks } from "#/api/network";
+import { NetworkAdd } from "#/components/net/add";
 
 export const Route = createFileRoute("/settings/networks")({
   component: () => {
@@ -9,16 +10,25 @@ export const Route = createFileRoute("/settings/networks")({
 
     return (
       <div class="w-full">
-        <div class="text-lg">
-          Networks
+        <div class="flex justify-between items-center">
+          <div class="text-lg">
+            Networks
+          </div>
+          <div>
+            <NetworkAdd />
+          </div>
         </div>
         <div class="bg-surface p-4 rounded-md w-full">
           <Suspense fallback={<div>Loading...</div>}>
-            <For each={networksQuery.data?.networks}>
-              {network => (
-                <div>{network.network_name}</div>
+            <Show when={networksQuery.data}>
+              {data => (
+                <For each={data().networks}>
+                  {network => (
+                    <div>{network.network_name}</div>
+                  )}
+                </For>
               )}
-            </For>
+            </Show>
           </Suspense>
         </div>
       </div>

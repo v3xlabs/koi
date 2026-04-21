@@ -33,7 +33,7 @@ pub enum ApiTags {
 }
 
 fn get_api() -> impl OpenApi {
-    (health::api(), account::api(), net::api())
+    (account::api(), net::api(), health::api())
 }
 
 #[derive(RustEmbed)]

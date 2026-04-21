@@ -1,5 +1,4 @@
-
-import { createApi } from "../hook";
+import { createApi } from "../query";
 import { components } from "../schema.gen";
 
 export type Account = components["schemas"]["Account"];

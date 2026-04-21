@@ -3,10 +3,7 @@ import { Link } from "@tanstack/solid-router";
 import logo from "../../assets/kohaku.svg";
 import { NetworkWidget } from "./networks";
 
-export const Navbar = () =>
-//
-
-(
+export const Navbar = () => (
     <div class="border-b px-2 py-2 flex justify-between items-center bg-surface border-b-border">
         <div class="flex items-center gap-2">
             <Link to="/" class="flex items-center gap-2">
@@ -23,7 +20,6 @@ export const Navbar = () =>
         </div>
         <div>
             <NetworkWidget />
-
         </div>
     </div>
 );

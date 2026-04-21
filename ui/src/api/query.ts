@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createQuery } from "@tanstack/solid-query";
+import { createMutation, createQuery, MutationOptions } from "@tanstack/solid-query";
 import { PathMethods } from "openapi-hooks";
 
 import { api } from ".";
@@ -19,24 +19,15 @@ export const createApi = <
 >(path: TPath, method: TMethod, queryKeygen?: QueryKeyFn) => {
     console.log("setup");
 
-    return (propstwo: ApiPropsTwo<TOptions, QueryKeyFn> = undefined as ApiPropsTwo<TOptions, QueryKeyFn>) => {
-        console.log("use");
-
-        return createQuery(() => {
-            console.log("hi");
+    return (propstwo: ApiPropsTwo<TOptions, QueryKeyFn> = undefined as ApiPropsTwo<TOptions, QueryKeyFn>) => createQuery(() => {
             const options: TOptions = propstwo ? propstwo() : {} as TOptions;
 
-            console.log("hiz");
             const queryKey = queryKeygen?.(options);
-
-            console.log({ queryKey });
 
             if (!queryKey) {
                 console.log("query key is required");
                 throw new Error("Query key is required");
             }
-
-            console.log("return");
 
             return {
                 queryKey,
@@ -47,5 +38,26 @@ export const createApi = <
                 },
             };
         });
-    };
 };
+
+type ApiPropsThree<TOptions, TTOptions> = (props: TTOptions) => TOptions;
+
+export const createApiMutation = <
+    TPath extends keyof paths,
+    TMethod extends PathMethods<paths, TPath>,
+    TOptions extends Parameters<typeof api<TPath, TMethod>>[2],
+    TData extends Awaited<ReturnType<typeof api<TPath, TMethod>>>["data"],
+    TTOptions extends object,
+    TTTOptions extends Omit<MutationOptions<TData, Error, TTOptions, any>, "mutationFn">,
+>(path: TPath, method: TMethod, extraOptions: Partial<TTTOptions> = {}) =>
+    (propstwo: ApiPropsThree<TOptions, TTOptions>) =>
+        createMutation(() => ({
+            mutationFn: async (props: TTOptions) => {
+                const options: TOptions = propstwo(props);
+
+                const response = await api(path, method, options as any);
+
+                return response.data as TData;
+            },
+            ...extraOptions,
+        }));
