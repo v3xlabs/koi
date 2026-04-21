@@ -35,21 +35,6 @@ impl NetworkApi {
         Ok(Json(NetworksResponse { networks }))
     }
 
-    /// Get a network by ID
-    ///
-    /// GET /api/net/:network_id
-    #[oai(path = "/net/:network_id", method = "get", tag = "ApiTags::Network")]
-    async fn get_network_by_id(
-        &self,
-        auth: Auth,
-        state: Data<&AppState>,
-        network_id: Path<i32>,
-    ) -> Result<Json<Network>> {
-        let _auth_data = auth.unwrap()?;
-
-        Ok(Json(Network::get_by_id(&state, network_id.0).await?))
-    }
-
     /// Create a network
     ///
     /// POST /api/net
@@ -76,6 +61,36 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(Network::presets()))
+    }
+
+    /// Get a network by ID
+    ///
+    /// GET /api/net/:network_id
+    #[oai(path = "/net/:network_id", method = "get", tag = "ApiTags::Network")]
+    async fn get_network_by_id(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+    ) -> Result<Json<Network>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(Network::get_by_id(&state, network_id.0).await?))
+    }
+
+    /// Delete a network by ID
+    ///
+    /// DELETE /api/net/:network_id
+    #[oai(path = "/net/:network_id", method = "delete", tag = "ApiTags::Network")]
+    async fn delete_network_by_id(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+    ) -> Result<Json<()>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(Network::delete(&state, network_id.0).await?))
     }
 
     /// Get network endpoints
@@ -127,5 +142,21 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(NetworkEndpoint::get_by_id(&state, network_id.0, endpoint_id.0).await?))
+    }
+
+    /// Delete a network endpoint by ID
+    ///
+    /// DELETE /api/net/:network_id/endpoints/:endpoint_id
+    #[oai(path = "/net/:network_id/endpoints/:endpoint_id", method = "delete", tag = "ApiTags::Network")]
+    async fn delete_network_endpoint_by_id(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+        endpoint_id: Path<String>,
+    ) -> Result<Json<()>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(NetworkEndpoint::delete(&state, network_id.0, endpoint_id.0).await?))
     }
 }

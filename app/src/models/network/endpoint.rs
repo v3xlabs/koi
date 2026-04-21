@@ -1,6 +1,6 @@
 use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::FromRow, query_as};
+use sqlx::{prelude::FromRow, query, query_as};
 
 use crate::{error::KoiError, models::network::Network, state::AppState};
 
@@ -53,6 +53,16 @@ impl NetworkEndpoint {
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)
+    }
+
+    pub async fn delete(state: &AppState, network_id: i32, endpoint_id: String) -> Result<(), KoiError> {
+        query("DELETE FROM network_endpoints WHERE network_identity = ? AND endpoint_identity = ?")
+            .bind(network_id)
+            .bind(endpoint_id)
+            .execute(&state.database)
+            .await
+            .map_err(KoiError::from)
+            .map(|_| ())
     }
 }
 

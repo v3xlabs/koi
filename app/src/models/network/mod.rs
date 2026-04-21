@@ -1,6 +1,6 @@
 use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::FromRow, query_as};
+use sqlx::{prelude::FromRow, query, query_as};
 
 use crate::{error::KoiError, state::AppState};
 
@@ -40,6 +40,15 @@ impl Network {
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)
+    }
+
+    pub async fn delete(state: &AppState, network_id: i32) -> Result<(), KoiError> {
+        query("DELETE FROM networks WHERE network_identity = ?")
+            .bind(network_id)
+            .execute(&state.database)
+            .await
+            .map_err(KoiError::from)
+            .map(|_| ())
     }
 
     pub fn presets() -> Vec<Network> {

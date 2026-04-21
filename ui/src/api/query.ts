@@ -47,10 +47,9 @@ export const createApiMutation = <
     TMethod extends PathMethods<paths, TPath>,
     TOptions extends Parameters<typeof api<TPath, TMethod>>[2],
     TData extends Awaited<ReturnType<typeof api<TPath, TMethod>>>["data"],
-    TTOptions extends object,
-    TTTOptions extends Omit<MutationOptions<TData, Error, TTOptions, any>, "mutationFn">,
+    TTTOptions extends Omit<MutationOptions<TData, Error, any, any>, "mutationFn">,
 >(path: TPath, method: TMethod, extraOptions: Partial<TTTOptions> = {}) =>
-    (propstwo: ApiPropsThree<TOptions, TTOptions>) =>
+    <TTOptions extends object>(propstwo: ApiPropsThree<TOptions, TTOptions>) =>
         createMutation(() => ({
             mutationFn: async (props: TTOptions) => {
                 const options: TOptions = propstwo(props);

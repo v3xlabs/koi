@@ -13,3 +13,20 @@ export const useCreateNetwork = createApiMutation("/net", "post", {
         queryClient.invalidateQueries({ queryKey: ["networks"] });
     },
 });
+export const useDeleteNetwork = createApiMutation("/net/{network_id}", "delete", {
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["networks"] });
+    },
+});
+
+export const useNetworkEndpoints = createApi("/net/{network_id}/endpoints", "get", options => ["network-endpoints", options.path.network_id.toString()]);
+export const useCreateNetworkEndpoint = createApiMutation("/net/{network_id}/endpoints", "post", {
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["network-endpoints"] });
+    },
+});
+export const useDeleteNetworkEndpoint = createApiMutation("/net/{network_id}/endpoints/{endpoint_id}", "delete", {
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["network-endpoints"] });
+    },
+});

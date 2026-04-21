@@ -1,5 +1,6 @@
 import { Popover } from "@kobalte/core/popover";
-import { createMemo, For } from "solid-js";
+import { Tabs } from "@kobalte/core/tabs";
+import { createMemo, createSignal, For } from "solid-js";
 
 import { Network, useCreateNetwork, useNetworkPresets, useNetworks } from "#/api/network";
 
@@ -17,6 +18,9 @@ export const NetworkAdd = () => {
         data,
     }));
 
+    const [chainId, setChainId] = createSignal("");
+    const [name, setName] = createSignal("");
+
     return (
         <Popover>
             <Popover.Trigger>
@@ -25,20 +29,53 @@ export const NetworkAdd = () => {
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content class="bg-surface p-4 rounded-md border border-border outline-none">
-                    <div>
-                        Hello
-                        <ul>
-                            <For each={availablePresets()}>
-                                {preset => (
-                                    <li>
-                                        <button class="btn btn-primary" onClick={() => createNetwork.mutate({ data: preset })}>
-                                            {preset.network_name}
+                <Popover.Content class="bg-surface p-4 rounded-md border border-border outline-none w-full max-w-md">
+                    <div class="w-full">
+                        <Tabs>
+                            <Tabs.List>
+                                <Tabs.Trigger value="new" class="btn btn-secondary">
+                                    New
+                                </Tabs.Trigger>
+                                <Tabs.Trigger value="presets" class="btn btn-secondary">
+                                    Presets
+                                </Tabs.Trigger>
+                            </Tabs.List>
+                            <Tabs.Content value="new">
+                                <div class="w-full">
+                                    <label class="space-y-1 block w-full">
+                                        <span>Chain Id</span>
+                                        <input type="text" class="input w-full" value={chainId()} onChange={e => setChainId(e.target.value)} />
+                                    </label>
+                                    <label class="space-y-1 block w-full">
+                                        <span>Name</span>
+                                        <input type="text" class="input w-full" value={name()} onChange={e => setName(e.target.value)} />
+                                    </label>
+                                    <div class="flex justify-end">
+                                        <button class="btn btn-primary" onClick={() => createNetwork.mutate({ data: { network_identity: Number.parseInt(chainId()), network_name: name() } })}>
+                                            Create
                                         </button>
-                                    </li>
-                                )}
-                            </For>
-                        </ul>
+                                    </div>
+                                </div>
+                            </Tabs.Content>
+                            <Tabs.Content value="presets">
+                                <div class="w-full">
+                                    <div>
+                                        Presets
+                                    </div>
+                                    <ul>
+                                        <For each={availablePresets()}>
+                                            {preset => (
+                                                <li class="w-full">
+                                                    <button class="btn btn-primary w-full" onClick={() => createNetwork.mutate({ data: preset })}>
+                                                        {preset.network_name}
+                                                    </button>
+                                                </li>
+                                            )}
+                                        </For>
+                                    </ul>
+                                </div>
+                            </Tabs.Content>
+                        </Tabs>
                     </div>
                 </Popover.Content>
             </Popover.Portal>
