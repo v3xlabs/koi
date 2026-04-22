@@ -1,4 +1,5 @@
 import { Popover } from "@kobalte/core/popover";
+import { FaSolidNetworkWired } from "solid-icons/fa";
 import { For } from "solid-js";
 
 import { useNetworks } from "#/api/network";
@@ -8,10 +9,8 @@ export const NetworkWidget = () => {
 
     return (
         <Popover>
-            <Popover.Trigger>
-                <button>
-                    Networks
-                </button>
+            <Popover.Trigger class="h-full aspect-square flex justify-center items-center hover:bg-surface-alt cursor-pointer">
+                <FaSolidNetworkWired />
             </Popover.Trigger>
             <Popover.Content>
                 <div class="bg-surface p-3 rounded-md border border-border outline-none w-full max-w-md">

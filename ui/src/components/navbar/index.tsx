@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/solid-router";
 
 import logo from "../../assets/kohaku.svg";
+import { ConnectionButton } from "../connection";
 import { NetworkWidget } from "./networks";
 
 export const Navbar = () => (
-    <div class="border-b px-2 py-2 flex justify-between items-center bg-surface border-b-border">
-        <div class="flex items-center gap-2">
+    <div class="border-b px-2 flex justify-between items-center bg-surface border-b-border">
+        <div class="flex items-center gap-2 py-2">
             <Link to="/" class="flex items-center gap-2">
                 <div class="w-8 h-8">
                     <img src={logo} alt="Koi" class="w-full h-full object-contain" />
@@ -18,7 +19,8 @@ export const Navbar = () => (
         </div>
         <div>
         </div>
-        <div>
+        <div class="flex items-center h-full">
+            <ConnectionButton />
             <NetworkWidget />
         </div>
     </div>

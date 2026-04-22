@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@kobalte/core": "^0.13.11",
+    "@openlv/session": "0.0.1-beta.11",
+    "@openlv/transport": "0.0.1-beta.8",
     "@tanstack/router-plugin": "^1.167.22",
     "@tanstack/solid-hotkeys": "^0.9.1",
     "@tanstack/solid-query": "^5.99.0",
