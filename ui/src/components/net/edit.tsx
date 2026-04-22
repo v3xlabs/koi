@@ -5,6 +5,8 @@ import { useNetwork, useNetworkEndpoints, useUpdateNetwork } from "#/api/network
 import { NetworkDelete } from "./delete";
 import { NetworkEndpointAdd } from "./endpoint/add";
 import { NetworkEndpointItem } from "./endpoint/edit";
+import { NetworkEndpointPreview } from "./endpoint/preview";
+import { NetworkEndpointCollapsible } from "./endpoint/collapsible";
 
 const NetworkEndpoints: Component<{ network_id: number; }> = ({ network_id }) => {
     const networkEndpointsQuery = useNetworkEndpoints(() => ({
@@ -16,16 +18,16 @@ const NetworkEndpoints: Component<{ network_id: number; }> = ({ network_id }) =>
     return (
         <div class="space-y-2">
             <div class="flex justify-between items-end">
-                <div>Network Endpoints</div>
+                <div>Endpoints</div>
                 <NetworkEndpointAdd network_id={network_id} />
             </div>
-            <ul class="border border-border rounded-md p-2">
+            <ul class="border border-border rounded-md">
                 <Suspense fallback={<div>Loading...</div>}>
                     <Show when={networkEndpointsQuery.data}>
                         {data => (
                             <For each={data()}>
                                 {endpoint => (
-                                    <NetworkEndpointItem network_id={network_id} endpoint={endpoint} />
+                                    <NetworkEndpointCollapsible network_id={network_id} endpoint_id={endpoint.endpoint_identity} />
                                 )}
                             </For>
                         )}

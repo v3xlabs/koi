@@ -36,7 +36,7 @@ export const NetworkEndpointItem: Component<{ network_id: number; endpoint: Netw
     }));
 
     return (
-        <li class="space-y-2">
+        <li class="space-y-2 p-4">
             <div class="space-y-2">
                 <div class="flex gap-2 w-full">
                     <label class="w-full">
@@ -59,33 +59,6 @@ export const NetworkEndpointItem: Component<{ network_id: number; endpoint: Netw
                     </label>
                 </div>
             </div>
-            <Suspense>
-                <div>
-                    <Show when={status.data}>
-                        {data => (
-                            <div classList={{
-                                "border rounded-md p-2": true,
-                                "border-primary": data().status === "Alive",
-                                "border-tertiary": data().status === "Disabled",
-                            }}
-                            >
-                                <div>
-                                    <span>Status</span>
-                                    <span>{data().status}</span>
-                                    <Show when={narrow(data, x => x.status === "Alive")}>
-                                        {alive => (
-                                            <span>{alive().block_number}</span>
-                                        )}
-                                    </Show>
-                                </div>
-                                <button class="btn btn-secondary aspect-square" onClick={() => status.refetch()}>
-                                    <FaSolidRefresh class="size-3 text-primary-foreground" />
-                                </button>
-                            </div>
-                        )}
-                    </Show>
-                </div>
-            </Suspense>
             <div class="flex justify-end gap-2">
                 <button
                   class="btn btn-primary"

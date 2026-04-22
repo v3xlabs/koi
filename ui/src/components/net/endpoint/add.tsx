@@ -2,6 +2,7 @@ import { Popover } from "@kobalte/core/popover";
 import { Component, createSignal } from "solid-js";
 
 import { NetworkEndpoint, useCreateNetworkEndpoint } from "#/api/network";
+import { FiPlus } from "solid-icons/fi";
 
 export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network_id }) => {
     const createNetwork = useCreateNetworkEndpoint(({ data }: { data: NetworkEndpoint; }) => ({
@@ -20,9 +21,9 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
 
     return (
         <Popover>
-            <Popover.Trigger>
-                <button class="btn btn-primary">
-                    Add Endpoint
+            <Popover.Trigger class="flex items-center gap-2">
+                <button class="btn btn-primary aspect-square flex justify-center items-center">
+                    <FiPlus />
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
@@ -51,8 +52,8 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
                             </label>
                             <div class="flex justify-end">
                                 <button
-                                  class="btn btn-primary"
-                                  onClick={() => createNetwork.mutate({
+                                    class="btn btn-primary"
+                                    onClick={() => createNetwork.mutate({
                                         data: {
                                             endpoint_identity: network_id.toString(),
                                             endpoint_label: name(),
