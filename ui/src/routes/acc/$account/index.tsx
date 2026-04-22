@@ -4,8 +4,8 @@ import { Show, Suspense } from "solid-js";
 
 import { useAccount } from "#/api/account";
 import { useAccountBalance } from "#/api/account/balance";
-import { AccountAssetTable } from "#/components/asset/table";
 import { AssetAmount } from "#/components/asset/amount";
+import { AccountAssetTable } from "#/components/asset/table";
 import { Modal } from "#/components/dialog";
 import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";

@@ -1,6 +1,6 @@
 import { Component, JSX } from "solid-js";
 
-import { useDeleteNetwork, useDeleteNetworkEndpoint } from "#/api/network";
+import { useDeleteNetworkEndpoint } from "#/api/network";
 
 import { Modal } from "../../dialog";
 
