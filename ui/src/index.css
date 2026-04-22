@@ -40,7 +40,8 @@
     --color-secondary-hover: oklch(0.1822 0 0 / 0.8);
 }
 
-html, body {
+html,
+body {
     @apply bg-background text-foreground;
 }
 
@@ -79,4 +80,39 @@ html, body {
 
 .input {
     @apply bg-surface border border-border rounded-md px-2 py-1;
+}
+
+@keyframes skeleton-fade {
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+.skeleton {
+    position: relative;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+.skeleton[data-animate="true"]::after {
+    animation: skeleton-fade 1500ms linear infinite;
+}
+.skeleton[data-visible="true"] {
+    overflow: hidden;
+}
+.skeleton[data-visible="true"]::before {
+    position: absolute;
+    content: "";
+    inset: 0;
+    z-index: 10;
+    background-color: white;
+}
+.skeleton[data-visible="true"]::after {
+    position: absolute;
+    content: "";
+    inset: 0;
+    z-index: 11;
+    background-color: gray;
 }

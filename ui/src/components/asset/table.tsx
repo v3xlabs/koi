@@ -1,3 +1,4 @@
+import { Skeleton } from "@kobalte/core/skeleton";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel } from "@tanstack/solid-table";
 import { Component, For } from "solid-js";
 
@@ -9,8 +10,10 @@ const columns = [
         header: "Name",
         cell: ({ row }) => (
             <div class="flex items-center gap-2 py-3.5">
-                <div class="size-10 bg-surface-alt border border-border rounded-full" />
-                <div>{row.original.name}</div>
+                <div class="size-10 bg-surface-alt border border-border rounded-full aspect-square" />
+                <Skeleton visible={!row.original.name || row.original.name === "placeholder"} class="skeleton animate-spin">
+                    {row.original.name}
+                </Skeleton>
             </div>
         ),
     }),
@@ -18,26 +21,26 @@ const columns = [
         header: "Price",
         cell: ({ row }) => (
             <div class="flex items-center gap-2 py-3.5">
-                <div>
+                <Skeleton visible={!row.original.price} class="skeleton animate-spin">
                     $
-                    {row.original.price.toString()}
-                </div>
+                    {row.original.price?.toString()}
+                </Skeleton>
             </div>
         ),
     }),
     helper.accessor("balance", {
         header: "Balance",
         cell: ({ row }) => (
-            <div class="">
-                <div>
-                    {row.original.balance.toString()}
+            <div class="space-y-1">
+                <Skeleton visible={!row.original.price} class="skeleton animate-spin">
+                    {row.original.balance?.toString()}
                     {" "}
                     {row.original.name}
-                </div>
-                <div class="text-muted">
+                </Skeleton>
+                <Skeleton visible={!row.original.price || !row.original.balance} class="skeleton animate-spin text-muted">
                     $
                     {(Number(row.original.balance) * Number(row.original.price)).toFixed(2)}
-                </div>
+                </Skeleton>
             </div>
         ),
     }),
@@ -64,6 +67,11 @@ export const AccountAssetTable: Component<{ account_id: string; }> = (params) =>
         name: "WBTC",
         price: 1000n,
         balance: 100n,
+    },
+    {
+        name: "placeholder",
+        price: undefined,
+        balance: undefined,
     }];
 
     const table = createSolidTable({
