@@ -16,7 +16,7 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
     const [name, setName] = createSignal("");
     const [url, setUrl] = createSignal("");
     const [type, setType] = createSignal("http");
-    const [enabled, setEnabled] = createSignal(false);
+    const [disabled, setDisabled] = createSignal(false);
 
     return (
         <Popover>
@@ -43,7 +43,7 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
                             </label>
                             <label class="space-y-1 block w-full">
                                 <span>Enabled</span>
-                                <input type="checkbox" class="input w-full" checked={enabled()} onChange={e => setEnabled(e.target.checked)} />
+                                <input type="checkbox" class="input w-full" checked={!disabled()} onChange={e => setDisabled(!e.target.checked)} />
                             </label>
                             <div class="flex justify-end">
                                 <button
@@ -54,7 +54,7 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
                                             endpoint_label: name(),
                                             endpoint_type: type(),
                                             endpoint_url: url(),
-                                            endpoint_disabled: enabled(),
+                                            endpoint_disabled: disabled(),
                                             network_identity: network_id,
                                         },
                                     })}

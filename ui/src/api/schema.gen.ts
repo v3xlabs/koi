@@ -557,7 +557,7 @@ export type components = {
             endpoint_type: string;
             endpoint_url: string;
             endpoint_disabled: boolean;
-            /** Format: int32 */
+            /** Format: uint64 */
             network_identity: number;
         };
         /** NetworkEndpointUpdate */
