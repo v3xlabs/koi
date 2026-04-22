@@ -19,19 +19,17 @@ export const Route = createFileRoute("/settings/networks")({
             <NetworkAdd />
           </div>
         </div>
-        <div class="bg-surface p-4 rounded-md w-full divide-y divide-border">
-          <Suspense fallback={<div>Loading...</div>}>
-            <Show when={networksQuery.data}>
-              {data => (
-                <For each={data().networks}>
-                  {network => (
-                    <NetworkEdit network_id={network.network_identity} />
-                  )}
-                </For>
-              )}
-            </Show>
-          </Suspense>
-        </div>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Show when={networksQuery.data}>
+            {data => (
+              <For each={data().networks}>
+                {network => (
+                  <NetworkEdit network_id={network.network_identity} />
+                )}
+              </For>
+            )}
+          </Show>
+        </Suspense>
       </div>
     );
   },

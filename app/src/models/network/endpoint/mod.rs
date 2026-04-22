@@ -2,7 +2,11 @@ use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
 use sqlx::{SqlitePool, prelude::FromRow, query, query_as};
 
-use crate::{error::KoiError, models::network::Network, state::AppState};
+use crate::{
+    error::KoiError,
+    models::network::{Network, identity::NetworkIdentity},
+    state::AppState,
+};
 
 pub mod provider;
 
@@ -13,7 +17,7 @@ pub struct NetworkEndpoint {
     pub endpoint_type: String,
     pub endpoint_url: String,
     pub endpoint_disabled: bool,
-    pub network_identity: i32,
+    pub network_identity: NetworkIdentity,
 }
 
 #[derive(Debug, Serialize, Deserialize, Object)]
@@ -52,7 +56,7 @@ impl NetworkEndpoint {
 
     pub async fn get_by_network_id(
         state: &AppState,
-        network_id: i32,
+        network_id: &NetworkIdentity,
     ) -> Result<Vec<NetworkEndpoint>, KoiError> {
         query_as::<_, NetworkEndpoint>("SELECT * FROM network_endpoints WHERE network_identity = ?")
             .bind(network_id)
@@ -63,7 +67,7 @@ impl NetworkEndpoint {
 
     pub async fn get_by_id(
         database: &SqlitePool,
-        network_id: i32,
+        network_id: &NetworkIdentity,
         endpoint_id: &str,
     ) -> Result<NetworkEndpoint, KoiError> {
         query_as::<_, NetworkEndpoint>(
@@ -92,7 +96,7 @@ impl NetworkEndpoint {
 
     pub async fn update(
         state: &AppState,
-        network_id: i32,
+        network_id: &NetworkIdentity,
         endpoint_id: &str,
         update: NetworkEndpointUpdate,
     ) -> Result<NetworkEndpoint, KoiError> {
@@ -117,7 +121,7 @@ impl Example for NetworkEndpoint {
             endpoint_type: "http".to_string(),
             endpoint_url: "https://example.com".to_string(),
             endpoint_disabled: false,
-            network_identity: 1,
+            network_identity: NetworkIdentity(1),
         }
     }
 }

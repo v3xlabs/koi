@@ -82,6 +82,9 @@ body {
     &.btn-tertiary {
         @apply bg-transparent hover:bg-surface-alt text-foreground;
     }
+    &.btn-danger {
+        @apply bg-secondary hover:bg-secondary-hover text-secondary-foreground border border-primary;
+    }
     &.btn-ghost {
         @apply bg-transparent hover:bg-surface-alt text-foreground;
     }

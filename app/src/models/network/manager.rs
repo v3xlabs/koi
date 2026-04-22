@@ -1,6 +1,9 @@
-use std::{collections::HashMap, sync::{Arc, Mutex}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
-use crate::models::network::pool::RpcPool;
+use crate::models::network::{identity::NetworkIdentity, pool::RpcPool};
 
 /// Manages the RPC clients for all network endpoints
 /// Scoped by network
@@ -9,20 +12,20 @@ use crate::models::network::pool::RpcPool;
 /// This struct is accessible via AppState
 #[derive(Default)]
 pub struct NetworkManager {
-    clients: Mutex<HashMap<i32, Arc<RpcPool>>>,
+    clients: Mutex<HashMap<NetworkIdentity, Arc<RpcPool>>>,
 }
 
 impl NetworkManager {
-    pub fn get_pool(&self, network_id: i32) -> Arc<RpcPool> {
+    pub fn get_pool(&self, network_id: &NetworkIdentity) -> Arc<RpcPool> {
         let mut pools = self.clients.lock().unwrap();
-        
-        let pool = pools.get(&network_id);
+
+        let pool = pools.get(network_id);
         if let Some(pool) = pool {
             return pool.clone();
         }
 
-        let pool = Arc::new(RpcPool::new(network_id));
-        pools.insert(network_id, pool.clone());
+        let pool = Arc::new(RpcPool::new(network_id.clone()));
+        pools.insert(network_id.clone(), pool.clone());
         pool
     }
 }

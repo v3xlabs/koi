@@ -1,8 +1,8 @@
 import { Popover } from "@kobalte/core/popover";
+import { FiPlus } from "solid-icons/fi";
 import { Component, createSignal } from "solid-js";
 
 import { NetworkEndpoint, useCreateNetworkEndpoint } from "#/api/network";
-import { FiPlus } from "solid-icons/fi";
 
 export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network_id }) => {
     const createNetwork = useCreateNetworkEndpoint(({ data }: { data: NetworkEndpoint; }) => ({
@@ -16,13 +16,12 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
     const [name, setName] = createSignal("");
     const [url, setUrl] = createSignal("");
     const [type, setType] = createSignal("http");
-    const [priority, setPriority] = createSignal(1);
     const [enabled, setEnabled] = createSignal(false);
 
     return (
         <Popover>
             <Popover.Trigger class="flex items-center gap-2">
-                <button class="btn btn-primary aspect-square flex justify-center items-center">
+                <button class="btn btn-secondary aspect-square flex justify-center items-center">
                     <FiPlus />
                 </button>
             </Popover.Trigger>
@@ -43,23 +42,18 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
                                 <input type="text" class="input w-full" value={type()} onChange={e => setType(e.target.value)} />
                             </label>
                             <label class="space-y-1 block w-full">
-                                <span>Priority</span>
-                                <input type="number" class="input w-full" value={priority()} onChange={e => setPriority(Number(e.target.value))} />
-                            </label>
-                            <label class="space-y-1 block w-full">
                                 <span>Enabled</span>
                                 <input type="checkbox" class="input w-full" checked={enabled()} onChange={e => setEnabled(e.target.checked)} />
                             </label>
                             <div class="flex justify-end">
                                 <button
-                                    class="btn btn-primary"
-                                    onClick={() => createNetwork.mutate({
+                                  class="btn btn-primary"
+                                  onClick={() => createNetwork.mutate({
                                         data: {
                                             endpoint_identity: network_id.toString(),
                                             endpoint_label: name(),
                                             endpoint_type: type(),
                                             endpoint_url: url(),
-                                            endpoint_priority: priority(),
                                             endpoint_disabled: enabled(),
                                             network_identity: network_id,
                                         },

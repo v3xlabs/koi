@@ -14,7 +14,7 @@ export const NetworkEndpointDelete: Component<{ network_id: number; endpoint_id:
 
     return (
         <Modal>
-            <Modal.Trigger class={children ? "" : "btn btn-secondary"}>
+            <Modal.Trigger class={children ? "" : "btn btn-danger"}>
                 {children ?? "Delete"}
             </Modal.Trigger>
             <Modal.Portal>

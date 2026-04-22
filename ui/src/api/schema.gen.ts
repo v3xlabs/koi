@@ -541,7 +541,7 @@ export type components = {
         /** Network */
         Network: {
             /**
-             * Format: int32
+             * Format: uint64
              * @description evm chain id
              */
             network_identity: number;

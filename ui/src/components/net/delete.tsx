@@ -13,7 +13,7 @@ export const NetworkDelete: Component<{ network_id: number; children?: JSX.Eleme
 
     return (
         <Modal>
-            <Modal.Trigger class={children ? "" : "btn btn-secondary"}>
+            <Modal.Trigger class={children ? "" : "btn btn-danger"}>
                 {children ?? "Delete"}
             </Modal.Trigger>
             <Modal.Portal>

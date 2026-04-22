@@ -8,7 +8,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tracing::info;
 
-use crate::{error::KoiError, models::{network::manager::NetworkManager, vendor::VendorManager}};
+use crate::{
+    error::KoiError,
+    models::{network::manager::NetworkManager, vendor::VendorManager},
+};
 
 pub type AppState = Arc<State>;
 

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::models::network::{endpoint::NetworkEndpoint, identity::NetworkIdentity};
 use alloy::{
     providers::{DynProvider, Provider, ProviderBuilder},
     transports::{RpcError as AlloyRpcError, TransportErrorKind},
@@ -9,10 +10,9 @@ use poem_openapi::{Object, Union};
 use rustls::lock::Mutex;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
-use crate::models::network::endpoint::NetworkEndpoint;
 
 pub struct EthProvider {
-    network_id: u64,
+    network_id: NetworkIdentity,
     endpoint_id: String,
     state: Arc<Mutex<RpcState>>,
 }
@@ -30,7 +30,7 @@ impl RpcState {
             true => RpcState::Disabled,
             false => RpcState::Dead {
                 error: RpcError::Starting("Starting...".to_string()),
-            }
+            },
         }
     }
 
@@ -48,7 +48,7 @@ pub enum RpcError {
     #[error("Provider error: {0}")]
     ProviderError(#[from] Arc<AlloyRpcError<TransportErrorKind>>),
     #[error("Chain id mismatch: {0} != {1}")]
-    ChainIdMismatch(u64, u64),
+    ChainIdMismatch(NetworkIdentity, NetworkIdentity),
     #[error("Connection failed: {0}")]
     ConnectionFailed(String),
     #[error("Starting: {0}")]
@@ -57,11 +57,10 @@ pub enum RpcError {
     NetworkIdentityNotEvm,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct RpcStatusAlive {
     block_number: u64,
-    chain_id: u64,
+    chain_id: NetworkIdentity,
     timestamp: u64,
 }
 
@@ -83,10 +82,12 @@ pub enum RpcStatus {
 
 impl EthProvider {
     pub async fn start(endpoint: &NetworkEndpoint) -> Self {
-        let state = Arc::new(Mutex::new(RpcState::from_disabled(endpoint.endpoint_disabled)));
+        let state = Arc::new(Mutex::new(RpcState::from_disabled(
+            endpoint.endpoint_disabled,
+        )));
 
         let me = Self {
-            network_id: endpoint.network_identity as u64,
+            network_id: endpoint.network_identity.clone(),
             endpoint_id: endpoint.endpoint_identity.clone(),
             state,
         };
@@ -140,11 +141,17 @@ impl EthProvider {
                 return Err(error);
             }
         };
-        if chain_id != self.network_id {
+        if chain_id != self.network_id.0 {
             self.set_state(RpcState::Dead {
-                error: RpcError::ChainIdMismatch(chain_id, self.network_id),
+                error: RpcError::ChainIdMismatch(
+                    NetworkIdentity(chain_id),
+                    self.network_id.clone(),
+                ),
             });
-            return Err(RpcError::ChainIdMismatch(chain_id, self.network_id));
+            return Err(RpcError::ChainIdMismatch(
+                NetworkIdentity(chain_id),
+                self.network_id.clone(),
+            ));
         }
 
         info!("Chain id matches, RPC started");
@@ -175,7 +182,7 @@ impl EthProvider {
 
                 RpcStatus::Alive(RpcStatusAlive {
                     block_number,
-                    chain_id: self.network_id,
+                    chain_id: self.network_id.clone(),
                     timestamp: Utc::now().timestamp_millis() as u64,
                 })
             }

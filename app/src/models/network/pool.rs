@@ -6,15 +6,21 @@ use std::{
 use sqlx::SqlitePool;
 use tracing::info;
 
-use crate::models::network::endpoint::{NetworkEndpoint, provider::{EthProvider, RpcState}};
+use crate::models::network::{
+    endpoint::{
+        NetworkEndpoint,
+        provider::{EthProvider, RpcState},
+    },
+    identity::NetworkIdentity,
+};
 
 pub struct RpcPool {
-    network_identity: i32,
+    network_identity: NetworkIdentity,
     endpoints: Mutex<HashMap<String, Arc<EthProvider>>>,
 }
 
 impl RpcPool {
-    pub fn new(network_identity: i32) -> Self {
+    pub fn new(network_identity: NetworkIdentity) -> Self {
         Self {
             network_identity,
             endpoints: Mutex::new(HashMap::new()),
@@ -42,10 +48,10 @@ impl RpcPool {
             }
         }
 
-        let endpoint = NetworkEndpoint::get_by_id(db, self.network_identity, endpoint_identity)
+        let endpoint = NetworkEndpoint::get_by_id(db, &self.network_identity, endpoint_identity)
             .await
             .unwrap();
-        
+
         self.start_endpoint(&endpoint).await
     }
 

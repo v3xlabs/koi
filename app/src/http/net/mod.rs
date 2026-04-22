@@ -1,8 +1,12 @@
 use crate::{
-    error::KoiError, http::auth::Auth, models::network::{
+    error::KoiError,
+    http::auth::Auth,
+    models::network::{
         Network, NetworkUpdate,
         endpoint::{NetworkEndpoint, NetworkEndpointUpdate, provider::RpcStatus},
-    }, state::AppState
+        identity::NetworkIdentity,
+    },
+    state::AppState,
 };
 
 use super::ApiTags;
@@ -125,12 +129,12 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
+        network_id: Path<NetworkIdentity>,
     ) -> Result<Json<Vec<NetworkEndpoint>>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::get_by_network_id(&state, network_id.0).await?,
+            NetworkEndpoint::get_by_network_id(&state, &network_id.0).await?,
         ))
     }
 
@@ -146,7 +150,7 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
+        network_id: Path<NetworkIdentity>,
         payload: Json<NetworkEndpoint>,
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
@@ -170,13 +174,13 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
+        network_id: Path<NetworkIdentity>,
         endpoint_id: Path<String>,
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::get_by_id(&state.database, network_id.0, &endpoint_id.0).await?,
+            NetworkEndpoint::get_by_id(&state.database, &network_id.0, &endpoint_id.0).await?,
         ))
     }
 
@@ -192,16 +196,24 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
+        network_id: Path<NetworkIdentity>,
         endpoint_id: Path<String>,
         payload: Json<NetworkEndpointUpdate>,
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
-        let updated_endpoint = NetworkEndpoint::update(&state, network_id.0, &endpoint_id.0, payload.0).await?;
+        let updated_endpoint =
+            NetworkEndpoint::update(&state, &network_id.0, &endpoint_id.0, payload.0).await?;
 
         // Notify the running rpc
-        state.networks.get_pool(network_id.0).get_rpc(&endpoint_id.0, &state.database).await.update(&updated_endpoint).await.map_err(KoiError::from)?;
+        state
+            .networks
+            .get_pool(&network_id.0)
+            .get_rpc(&endpoint_id.0, &state.database)
+            .await
+            .update(&updated_endpoint)
+            .await
+            .map_err(KoiError::from)?;
 
         Ok(Json(updated_endpoint))
     }
@@ -229,7 +241,7 @@ impl NetworkApi {
     }
 
     /// Get a network endpoint status
-    /// 
+    ///
     /// GET /api/net/:network_id/endpoints/:endpoint_id/status
     #[oai(
         path = "/net/:network_id/endpoints/:endpoint_id/status",
@@ -240,12 +252,12 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
+        network_id: Path<NetworkIdentity>,
         endpoint_id: Path<String>,
     ) -> Result<Json<RpcStatus>> {
         let _auth_data = auth.unwrap()?;
 
-        let pool = state.networks.get_pool(network_id.0);
+        let pool = state.networks.get_pool(&network_id.0);
 
         let rpc = pool.get_rpc(&endpoint_id, &state.database).await;
 
