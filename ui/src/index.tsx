@@ -7,6 +7,7 @@ import { render } from "solid-js/web";
 
 import { AppProvider } from "./api";
 import { routeTree } from "./routeTree.gen";
+import { Toaster } from "./components/toaster";
 
 const root = document.querySelector("#root");
 
@@ -25,21 +26,22 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 }
 
 render(() => (
-<AppProvider>
-<RouterProvider
-  router={router}
-  defaultErrorComponent={error => (
-  <div>
-    <div>
-Error:
-{error.error.message}
-    </div>
-    <div>
-Stack:
-{error.error.stack}
-    </div>
-  </div>
-)}
-/>
-</AppProvider>
+  <AppProvider>
+    <RouterProvider
+      router={router}
+      defaultErrorComponent={error => (
+        <div>
+          <div>
+            Error:
+            {error.error.message}
+          </div>
+          <div>
+            Stack:
+            {error.error.stack}
+          </div>
+        </div>
+      )}
+    />
+    <Toaster />
+  </AppProvider>
 ), root!);

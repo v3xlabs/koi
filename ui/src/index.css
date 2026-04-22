@@ -134,3 +134,7 @@ body {
     z-index: 11;
     background-color: gray;
 }
+
+.toast {
+    @apply bg-surface border border-border rounded-md p-4;
+}
