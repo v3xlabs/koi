@@ -84,22 +84,23 @@ impl Network {
             Network {
                 network_identity: 1,
                 network_name: "Ethereum Mainnet".to_string(),
-                network_icon_url: None,
+                network_icon_url: Some("data:image/webp;base64,UklGRqIBAABXRUJQVlA4TJYBAAAvG8AGAIVka9sMSdJqVubKtm2bKxs7rWzbtm0jM+NnRGRhPJc0f9clRPR/Avj/nj1qGpB9EABicxZBWH2K6DJUrYMrOcohICs7UEUbR4DS8wc/QKInILGpIwin1npyqAoYbT7N5cvuwZfLkpFXrqNghFt7+8xH74m8ZDZg+HDg0PCuN78WKZEAtpCEM8ePDe0565OX4PJoSwovDp7b321op8MFpUL21abu9P6TZ8b37zaWOH4OuS3ePnVl6/z2XUZ02vTnS85i0/N7lk7qV69l227jvkARwHZxzoRu3Ya3qt+oZf3VvxIs2Xb26TppWPemTZs3qL+af3wiW/5war/BI1s0rO32CFW92N49+rGzb98G9deVDp38kQSwwe2TaTq13xM3byGogrfp12MnXhT80SE9P/wDQrSRvDyy7/jCQd2PlZ/nUbzNBXfp/KkhA5Yr/gj4BW25FN4f3j5xxMP40X2OZWdLg9CbQ6M25r7EpSR4G6F6PD2lIJyJYgCbzyC6F6+RK6okgdNMK0MiyCFQpdihV2cD".to_string()),
             },
             Network {
                 network_identity: 10,
                 network_name: "Optimism".to_string(),
-                network_icon_url: None,
+                // TODO: replace these with either optimized base64 import macros
+                network_icon_url: Some("https://icons.llamao.fi/icons/chains/rsz_optimism.jpg".to_string()),
             },
             Network {
                 network_identity: 137,
                 network_name: "Polygon".to_string(),
-                network_icon_url: None,
+                network_icon_url: Some("https://icons.llamao.fi/icons/chains/rsz_polygon.jpg".to_string()),
             },
             Network {
                 network_identity: 42161,
                 network_name: "Arbitrum".to_string(),
-                network_icon_url: None,
+                network_icon_url: Some("https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg".to_string()),
             },
         ]
     }

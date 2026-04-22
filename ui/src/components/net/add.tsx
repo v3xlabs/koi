@@ -1,6 +1,6 @@
 import { Popover } from "@kobalte/core/popover";
 import { Tabs } from "@kobalte/core/tabs";
-import { createMemo, createSignal, For } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 
 import { Network, useCreateNetwork, useNetworkPresets, useNetworks } from "#/api/network";
 
@@ -66,8 +66,13 @@ export const NetworkAdd = () => {
                                         <For each={availablePresets()}>
                                             {preset => (
                                                 <li class="w-full">
-                                                    <button class="btn btn-primary w-full" onClick={() => createNetwork.mutate({ data: preset })}>
-                                                        {preset.network_name}
+                                                    <button class="btn btn-secondary w-full flex items-center gap-2" onClick={() => createNetwork.mutate({ data: preset })}>
+                                                        <Show when={preset.network_icon_url}>
+                                                            {icon => <img src={icon()} alt={preset.network_name} class="size-4 aspect-square" />}
+                                                        </Show>
+                                                        <span>
+                                                            {preset.network_name}
+                                                        </span>
                                                     </button>
                                                 </li>
                                             )}
