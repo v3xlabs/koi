@@ -42,3 +42,4 @@ export const useDeleteNetworkEndpoint = createApiMutation("/net/{network_id}/end
         queryClient.invalidateQueries({ queryKey: ["network-endpoints"] });
     },
 });
+export const useNetworkEndpointStatus = createApi("/net/{network_id}/endpoints/{endpoint_id}/status", "get", options => ["network-endpoint-status", options.path.network_id.toString(), options.path.endpoint_id.toString()]);

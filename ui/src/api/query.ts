@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createMutation, createQuery, MutationOptions } from "@tanstack/solid-query";
+import { createMutation, createQuery, MutationOptions, QueryOptions } from "@tanstack/solid-query";
 import { PathMethods } from "openapi-hooks";
 
 import { api } from ".";
@@ -15,29 +15,31 @@ export const createApi = <
     TPath extends keyof paths,
     TMethod extends PathMethods<paths, TPath>,
     TOptions extends Parameters<typeof api<TPath, TMethod>>[2],
+    TData extends Awaited<ReturnType<typeof api<TPath, TMethod>>>["data"],
     QueryKeyFn extends ((options: TOptions) => string[]) | undefined = ((options: TOptions) => string[]),
 >(path: TPath, method: TMethod, queryKeygen?: QueryKeyFn) => {
     console.log("setup");
 
-    return (propstwo: ApiPropsTwo<TOptions, QueryKeyFn> = undefined as ApiPropsTwo<TOptions, QueryKeyFn>) => createQuery(() => {
-            const options: TOptions = propstwo ? propstwo() : {} as TOptions;
+    return (propstwo: ApiPropsTwo<TOptions, QueryKeyFn> = undefined as ApiPropsTwo<TOptions, QueryKeyFn>, extraOptions: Partial<QueryOptions<TData, Error, any, any>> = {}) => createQuery(() => {
+        const options: TOptions = propstwo ? propstwo() : {} as TOptions;
 
-            const queryKey = queryKeygen?.(options);
+        const queryKey = queryKeygen?.(options);
 
-            if (!queryKey) {
-                console.log("query key is required");
-                throw new Error("Query key is required");
-            }
+        if (!queryKey) {
+            console.log("query key is required");
+            throw new Error("Query key is required");
+        }
 
-            return {
-                queryKey,
-                queryFn: async () => {
-                    const response = await api(path, method, options as any);
+        return {
+            queryKey,
+            queryFn: async () => {
+                const response = await api(path, method, options as any);
 
-                    return response.data;
-                },
-            };
-        });
+                return response.data as TData;
+            },
+            ...extraOptions,
+        };
+    });
 };
 
 type ApiPropsThree<TOptions, TTOptions> = (props: TTOptions) => TOptions;

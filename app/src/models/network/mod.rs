@@ -5,6 +5,8 @@ use sqlx::{prelude::FromRow, query, query_as};
 use crate::{error::KoiError, state::AppState};
 
 pub mod endpoint;
+pub mod manager;
+pub mod pool;
 
 #[derive(Debug, Serialize, Deserialize, Object, FromRow)]
 pub struct Network {

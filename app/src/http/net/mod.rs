@@ -1,10 +1,8 @@
 use crate::{
-    http::auth::Auth,
-    models::network::{
+    error::KoiError, http::auth::Auth, models::network::{
         Network, NetworkUpdate,
-        endpoint::{NetworkEndpoint, NetworkEndpointUpdate},
-    },
-    state::AppState,
+        endpoint::{NetworkEndpoint, NetworkEndpointUpdate, provider::RpcStatus},
+    }, state::AppState
 };
 
 use super::ApiTags;
@@ -178,7 +176,7 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::get_by_id(&state, network_id.0, endpoint_id.0).await?,
+            NetworkEndpoint::get_by_id(&state.database, network_id.0, &endpoint_id.0).await?,
         ))
     }
 
@@ -200,9 +198,12 @@ impl NetworkApi {
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(
-            NetworkEndpoint::update(&state, network_id.0, endpoint_id.0, payload.0).await?,
-        ))
+        let updated_endpoint = NetworkEndpoint::update(&state, network_id.0, &endpoint_id.0, payload.0).await?;
+
+        // Notify the running rpc
+        state.networks.get_pool(network_id.0).get_rpc(&endpoint_id.0, &state.database).await.update(&updated_endpoint).await.map_err(KoiError::from)?;
+
+        Ok(Json(updated_endpoint))
     }
 
     /// Delete a network endpoint by ID
@@ -223,7 +224,31 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::delete(&state, network_id.0, endpoint_id.0).await?,
+            NetworkEndpoint::delete(&state, network_id.0, &endpoint_id.0).await?,
         ))
+    }
+
+    /// Get a network endpoint status
+    /// 
+    /// GET /api/net/:network_id/endpoints/:endpoint_id/status
+    #[oai(
+        path = "/net/:network_id/endpoints/:endpoint_id/status",
+        method = "get",
+        tag = "ApiTags::Network"
+    )]
+    async fn get_network_endpoint_status(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<i32>,
+        endpoint_id: Path<String>,
+    ) -> Result<Json<RpcStatus>> {
+        let _auth_data = auth.unwrap()?;
+
+        let pool = state.networks.get_pool(network_id.0);
+
+        let rpc = pool.get_rpc(&endpoint_id, &state.database).await;
+
+        Ok(Json(rpc.get_status().await))
     }
 }

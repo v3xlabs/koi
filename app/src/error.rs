@@ -2,6 +2,8 @@ use poem::{IntoResponse, Response, web::headers::ContentType};
 use reqwest::StatusCode;
 use thiserror::Error;
 
+use crate::models::network::endpoint::provider::RpcError;
+
 #[derive(Debug, Error)]
 pub enum KoiError {
     #[error("internal error: {0}")]
@@ -10,6 +12,8 @@ pub enum KoiError {
     Database(#[from] sqlx::Error),
     #[error("environment error: {0}")]
     Configuration(#[from] figment::Error),
+    #[error("rpc error: {0}")]
+    Rpc(#[from] RpcError),
 }
 
 impl IntoResponse for KoiError {

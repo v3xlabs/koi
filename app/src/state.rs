@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use tracing::info;
 
-use crate::{error::KoiError, models::vendor::VendorManager};
+use crate::{error::KoiError, models::{network::manager::NetworkManager, vendor::VendorManager}};
 
 pub type AppState = Arc<State>;
 
@@ -26,9 +26,10 @@ impl Default for Configuration {
 }
 
 pub struct State {
-    pub database: SqlitePool,
-    pub vendors: VendorManager,
     pub config: Configuration,
+    pub database: SqlitePool,
+    pub networks: NetworkManager,
+    pub vendors: VendorManager,
 }
 
 impl State {
@@ -44,6 +45,7 @@ impl State {
 
         Ok(Arc::new(State {
             vendors: VendorManager::default(),
+            networks: NetworkManager::default(),
             database,
             config,
         }))

@@ -439,6 +439,47 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/net/{network_id}/endpoints/{endpoint_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a network endpoint status
+         * @description GET /api/net/:network_id/endpoints/:endpoint_id/status
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    network_id: number;
+                    endpoint_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["RpcStatus"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -515,8 +556,6 @@ export type components = {
             endpoint_label?: string;
             endpoint_type: string;
             endpoint_url: string;
-            /** Format: uint32 */
-            endpoint_priority: number;
             endpoint_disabled: boolean;
             /** Format: int32 */
             network_identity: number;
@@ -526,8 +565,6 @@ export type components = {
             endpoint_label?: string;
             endpoint_type?: string;
             endpoint_url?: string;
-            /** Format: uint32 */
-            endpoint_priority?: number;
             endpoint_disabled?: boolean;
         };
         /** NetworkUpdate */
@@ -543,6 +580,43 @@ export type components = {
         RailgunWallet: {
             railgun_address: string;
         };
+        RpcStatus: components["schemas"]["RpcStatus_Alive"] | components["schemas"]["RpcStatus_Dead"] | components["schemas"]["RpcStatus_Disabled"];
+        /** RpcStatusAlive */
+        RpcStatusAlive: {
+            /** Format: uint64 */
+            block_number: number;
+            /** Format: uint64 */
+            chain_id: number;
+            /** Format: uint64 */
+            timestamp: number;
+        };
+        /** RpcStatusDead */
+        RpcStatusDead: {
+            error: string;
+        };
+        /** RpcStatusDisabled */
+        RpcStatusDisabled: Record<string, never>;
+        RpcStatus_Alive: {
+            /**
+             * @example Alive
+             * @enum {string}
+             */
+            status: "Alive";
+        } & components["schemas"]["RpcStatusAlive"];
+        RpcStatus_Dead: {
+            /**
+             * @example Dead
+             * @enum {string}
+             */
+            status: "Dead";
+        } & components["schemas"]["RpcStatusDead"];
+        RpcStatus_Disabled: {
+            /**
+             * @example Disabled
+             * @enum {string}
+             */
+            status: "Disabled";
+        } & components["schemas"]["RpcStatusDisabled"];
         /** SafeWallet */
         SafeWallet: {
             evm_address: string;
