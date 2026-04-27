@@ -10,9 +10,14 @@
 
 import { Route as rootRouteImport } from "./routes/__root"
 import { Route as SettingsRouteRouteImport } from "./routes/settings/route"
+import { Route as OnboardingRouteRouteImport } from "./routes/onboarding/route"
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as SettingsIndexRouteImport } from "./routes/settings/index"
+import { Route as OnboardingIndexRouteImport } from "./routes/onboarding/index"
 import { Route as SettingsNetworksRouteImport } from "./routes/settings/networks"
+import { Route as OnboardingVendorsRouteImport } from "./routes/onboarding/vendors"
+import { Route as OnboardingNetworksRouteImport } from "./routes/onboarding/networks"
+import { Route as OnboardingAccountsRouteImport } from "./routes/onboarding/accounts"
 import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
 import { Route as AccNewIndexRouteImport } from "./routes/acc/new/index"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
@@ -27,6 +32,11 @@ const SettingsRouteRoute = SettingsRouteRouteImport.update({
   path: "/settings",
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRouteRoute = OnboardingRouteRouteImport.update({
+  id: "/onboarding",
+  path: "/onboarding",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
@@ -37,10 +47,30 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: "/",
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
+  id: "/",
+  path: "/",
+  getParentRoute: () => OnboardingRouteRoute,
+} as any)
 const SettingsNetworksRoute = SettingsNetworksRouteImport.update({
   id: "/networks",
   path: "/networks",
   getParentRoute: () => SettingsRouteRoute,
+} as any)
+const OnboardingVendorsRoute = OnboardingVendorsRouteImport.update({
+  id: "/vendors",
+  path: "/vendors",
+  getParentRoute: () => OnboardingRouteRoute,
+} as any)
+const OnboardingNetworksRoute = OnboardingNetworksRouteImport.update({
+  id: "/networks",
+  path: "/networks",
+  getParentRoute: () => OnboardingRouteRoute,
+} as any)
+const OnboardingAccountsRoute = OnboardingAccountsRouteImport.update({
+  id: "/accounts",
+  path: "/accounts",
+  getParentRoute: () => OnboardingRouteRoute,
 } as any)
 const AccAccountRouteRoute = AccAccountRouteRouteImport.update({
   id: "/acc/$account",
@@ -85,9 +115,14 @@ const AccAccountAssetsRoute = AccAccountAssetsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
+  "/onboarding": typeof OnboardingRouteRouteWithChildren
   "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/onboarding/accounts": typeof OnboardingAccountsRoute
+  "/onboarding/networks": typeof OnboardingNetworksRoute
+  "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/onboarding/": typeof OnboardingIndexRoute
   "/settings/": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
@@ -99,7 +134,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
+  "/onboarding/accounts": typeof OnboardingAccountsRoute
+  "/onboarding/networks": typeof OnboardingNetworksRoute
+  "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/onboarding": typeof OnboardingIndexRoute
   "/settings": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
@@ -112,9 +151,14 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   "/": typeof IndexRoute
+  "/onboarding": typeof OnboardingRouteRouteWithChildren
   "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/onboarding/accounts": typeof OnboardingAccountsRoute
+  "/onboarding/networks": typeof OnboardingNetworksRoute
+  "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/onboarding/": typeof OnboardingIndexRoute
   "/settings/": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
@@ -128,9 +172,14 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | "/"
+    | "/onboarding"
     | "/settings"
     | "/acc/$account"
+    | "/onboarding/accounts"
+    | "/onboarding/networks"
+    | "/onboarding/vendors"
     | "/settings/networks"
+    | "/onboarding/"
     | "/settings/"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
@@ -142,7 +191,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
+    | "/onboarding/accounts"
+    | "/onboarding/networks"
+    | "/onboarding/vendors"
     | "/settings/networks"
+    | "/onboarding"
     | "/settings"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
@@ -154,9 +207,14 @@ export interface FileRouteTypes {
   id:
     | "__root__"
     | "/"
+    | "/onboarding"
     | "/settings"
     | "/acc/$account"
+    | "/onboarding/accounts"
+    | "/onboarding/networks"
+    | "/onboarding/vendors"
     | "/settings/networks"
+    | "/onboarding/"
     | "/settings/"
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
@@ -169,6 +227,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
   AccImportKeyRoute: typeof AccImportKeyRoute
@@ -186,6 +245,13 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof SettingsRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    "/onboarding": {
+      id: "/onboarding"
+      path: "/onboarding"
+      fullPath: "/onboarding"
+      preLoaderRoute: typeof OnboardingRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/": {
       id: "/"
       path: "/"
@@ -200,12 +266,40 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    "/onboarding/": {
+      id: "/onboarding/"
+      path: "/"
+      fullPath: "/onboarding/"
+      preLoaderRoute: typeof OnboardingIndexRouteImport
+      parentRoute: typeof OnboardingRouteRoute
+    }
     "/settings/networks": {
       id: "/settings/networks"
       path: "/networks"
       fullPath: "/settings/networks"
       preLoaderRoute: typeof SettingsNetworksRouteImport
       parentRoute: typeof SettingsRouteRoute
+    }
+    "/onboarding/vendors": {
+      id: "/onboarding/vendors"
+      path: "/vendors"
+      fullPath: "/onboarding/vendors"
+      preLoaderRoute: typeof OnboardingVendorsRouteImport
+      parentRoute: typeof OnboardingRouteRoute
+    }
+    "/onboarding/networks": {
+      id: "/onboarding/networks"
+      path: "/networks"
+      fullPath: "/onboarding/networks"
+      preLoaderRoute: typeof OnboardingNetworksRouteImport
+      parentRoute: typeof OnboardingRouteRoute
+    }
+    "/onboarding/accounts": {
+      id: "/onboarding/accounts"
+      path: "/accounts"
+      fullPath: "/onboarding/accounts"
+      preLoaderRoute: typeof OnboardingAccountsRouteImport
+      parentRoute: typeof OnboardingRouteRoute
     }
     "/acc/$account": {
       id: "/acc/$account"
@@ -266,6 +360,24 @@ declare module "@tanstack/solid-router" {
   }
 }
 
+interface OnboardingRouteRouteChildren {
+  OnboardingAccountsRoute: typeof OnboardingAccountsRoute
+  OnboardingNetworksRoute: typeof OnboardingNetworksRoute
+  OnboardingVendorsRoute: typeof OnboardingVendorsRoute
+  OnboardingIndexRoute: typeof OnboardingIndexRoute
+}
+
+const OnboardingRouteRouteChildren: OnboardingRouteRouteChildren = {
+  OnboardingAccountsRoute: OnboardingAccountsRoute,
+  OnboardingNetworksRoute: OnboardingNetworksRoute,
+  OnboardingVendorsRoute: OnboardingVendorsRoute,
+  OnboardingIndexRoute: OnboardingIndexRoute,
+}
+
+const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
+  OnboardingRouteRouteChildren,
+)
+
 interface SettingsRouteRouteChildren {
   SettingsNetworksRoute: typeof SettingsNetworksRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -298,6 +410,7 @@ const AccAccountRouteRouteWithChildren = AccAccountRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
   AccImportKeyRoute: AccImportKeyRoute,

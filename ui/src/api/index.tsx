@@ -1,7 +1,7 @@
 import { Toast, toaster } from "@kobalte/core/toast";
 import { QueryClientProvider } from "@tanstack/solid-query";
 import { createFetch } from "openapi-hooks";
-import { FaSolidClose, FaSolidCross } from "solid-icons/fa";
+import { FaSolidClose } from "solid-icons/fa";
 import { Accessor, createContext, createSignal, onCleanup, onMount, ParentComponent } from "solid-js";
 
 import { queryClient } from "./client";
