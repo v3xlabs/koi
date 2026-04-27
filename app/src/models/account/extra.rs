@@ -2,7 +2,10 @@ use uuid::Uuid;
 
 use crate::{
     error::KoiError,
-    models::{account::{EOAWallet, RailgunWallet, SafeWallet, ViewWallet, WalletType}, network::identity::NetworkIdentity},
+    models::{
+        account::{EOAWallet, RailgunWallet, SafeWallet, ViewWallet, WalletType},
+        network::identity::NetworkIdentity,
+    },
     state::AppState,
 };
 

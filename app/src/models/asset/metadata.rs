@@ -1,8 +1,8 @@
 use crate::{error::KoiError, state::AppState};
 
-use super::Token;
+use super::Asset;
 
-impl Token {
+impl Asset {
     pub async fn fetch_metadata() {}
 
     /// Fetch the icon from the token-logos.family.co/asset?id=1:0x endpoint

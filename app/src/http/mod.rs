@@ -8,6 +8,7 @@ use tracing::info;
 use crate::state::AppState;
 
 mod account;
+mod asset;
 mod auth;
 mod health;
 mod net;
@@ -20,8 +21,8 @@ pub enum ApiTags {
     Vendor,
     /// Account endpoints
     Account,
-    /// Token endpoints
-    Token,
+    /// Asset endpoints
+    Asset,
     /// Quoter endpoints
     Quoter,
     /// Settings endpoints
@@ -33,7 +34,7 @@ pub enum ApiTags {
 }
 
 fn get_api() -> impl OpenApi {
-    (account::api(), net::api(), health::api())
+    (account::api(), net::api(), asset::api(), health::api())
 }
 
 #[derive(RustEmbed)]

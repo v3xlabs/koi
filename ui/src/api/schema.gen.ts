@@ -480,6 +480,162 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/asset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all assets
+         * @description GET /api/asset
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AssetsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create an asset
+         * @description POST /api/asset
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["Asset"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Asset"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/asset/{asset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an asset by ID
+         * @description GET /api/asset/:asset_id
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    asset_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Asset"];
+                    };
+                };
+            };
+        };
+        /**
+         * Update an asset by ID
+         * @description PUT /api/asset/:asset_id
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    asset_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["AssetUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Asset"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /**
+         * Delete an asset by ID
+         * @description DELETE /api/asset/:asset_id
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    asset_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -533,6 +689,27 @@ export type components = {
         /** AccountsResponse */
         AccountsResponse: {
             accounts: components["schemas"]["Account"][];
+        };
+        /** Asset */
+        Asset: {
+            asset_identity: string;
+            asset_name: string;
+            asset_symbol: string;
+            /** Format: uint8 */
+            asset_decimals: number;
+            asset_icon_url?: string;
+        };
+        /** AssetUpdate */
+        AssetUpdate: {
+            asset_name?: string;
+            asset_symbol?: string;
+            /** Format: uint8 */
+            asset_decimals?: number;
+            asset_icon_url?: string;
+        };
+        /** AssetsResponse */
+        AssetsResponse: {
+            assets: components["schemas"]["Asset"][];
         };
         /** EOAWallet */
         EOAWallet: {

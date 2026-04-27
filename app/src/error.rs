@@ -1,3 +1,5 @@
+use std::num::ParseIntError;
+
 use poem::{IntoResponse, Response, web::headers::ContentType};
 use reqwest::StatusCode;
 use thiserror::Error;
@@ -14,6 +16,10 @@ pub enum KoiError {
     Configuration(#[from] figment::Error),
     #[error("rpc error: {0}")]
     Rpc(#[from] RpcError),
+    #[error("parse error: {0}")]
+    Parse(#[from] ParseIntError),
+    #[error("alloy hex error: {0}")]
+    AlloyHex(#[from] alloy::primitives::hex::FromHexError),
 }
 
 impl IntoResponse for KoiError {

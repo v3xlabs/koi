@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, num::ParseIntError, str::FromStr};
 
 use poem_openapi::NewType;
 use serde::{Deserialize, Serialize};
@@ -40,5 +40,13 @@ impl<'q> Encode<'q, Sqlite> for NetworkIdentity {
 impl Display for NetworkIdentity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl FromStr for NetworkIdentity {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(NetworkIdentity(s.parse::<u64>()?))
     }
 }
