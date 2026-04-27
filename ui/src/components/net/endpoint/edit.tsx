@@ -1,8 +1,6 @@
-import { FaSolidRefresh } from "solid-icons/fa";
-import { Component, createMemo, createSignal, Show, Suspense } from "solid-js";
+import { Component, createMemo, createSignal } from "solid-js";
 
 import { NetworkEndpoint, useNetworkEndpointStatus, useUpdateNetworkEndpoint } from "#/api/network";
-import { narrow } from "#/utils/narrow";
 
 import { NetworkEndpointDelete } from "./delete";
 

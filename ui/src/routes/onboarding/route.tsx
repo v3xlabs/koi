@@ -9,13 +9,13 @@ export const Route = createFileRoute("/onboarding")({
           <For each={[
             { label: "Main", href: "/onboarding" },
             { label: "Networks", href: "/onboarding/networks" },
-            { label: "Vendors", href: "/onboarding/vendors" },
             { label: "Accounts", href: "/onboarding/accounts" },
+            { label: "Vendors", href: "/onboarding/vendors" },
           ]}
           >
             {item => (
               <li class="text-sm">
-                <Link to={item.href} class="h-full hover:bg-surface-alt rounded-md px-2 py-1" activeProps={{ class: "bg-surface-alt" }}>
+                <Link to={item.href} class="h-full hover:bg-surface-alt rounded-md px-2 py-1" activeProps={{ class: "bg-surface-alt" }} activeOptions={{ exact: true }}>
                   {item.label}
                 </Link>
               </li>

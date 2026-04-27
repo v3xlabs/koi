@@ -527,7 +527,7 @@ export type components = {
             /** Format: uuid */
             account_id: string;
             name: string;
-            chains: string[];
+            networks: number[];
             metadata: components["schemas"]["WalletType"];
         };
         /** AccountsResponse */

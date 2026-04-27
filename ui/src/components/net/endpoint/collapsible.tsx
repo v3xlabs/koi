@@ -1,11 +1,11 @@
 import { Collapsible } from "@kobalte/core/collapsible";
+import { FaSolidChevronDown } from "solid-icons/fa";
 import { Component, createMemo, Show, Suspense } from "solid-js";
 
 import { useNetworkEndpoint } from "#/api/network";
 
 import { NetworkEndpointItem } from "./edit";
 import { NetworkEndpointPreview } from "./preview";
-import { FaSolidChevronDown } from "solid-icons/fa";
 
 export const NetworkEndpointCollapsible: Component<{ network_id: number; endpoint_id: string; }> = ({ network_id, endpoint_id }) => {
     const endpointQuery = useNetworkEndpoint(() => ({

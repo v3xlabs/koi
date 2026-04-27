@@ -2,13 +2,15 @@ use poem_openapi::{Object, Union};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::models::network::identity::NetworkIdentity;
+
 pub mod extra;
 
 #[derive(Serialize, Deserialize, Object, Clone)]
 pub struct Account {
     pub account_id: Uuid,
     pub name: String,
-    pub chains: Vec<String>,
+    pub networks: Vec<NetworkIdentity>,
     pub metadata: WalletType,
 }
 

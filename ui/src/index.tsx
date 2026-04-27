@@ -6,8 +6,8 @@ import { createRouter, RouterProvider } from "@tanstack/solid-router";
 import { render } from "solid-js/web";
 
 import { AppProvider } from "./api";
-import { routeTree } from "./routeTree.gen";
 import { Toaster } from "./components/toaster";
+import { routeTree } from "./routeTree.gen";
 
 const root = document.querySelector("#root");
 

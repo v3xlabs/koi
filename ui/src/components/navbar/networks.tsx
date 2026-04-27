@@ -1,7 +1,7 @@
 import { Popover } from "@kobalte/core/popover";
 import { Link } from "@tanstack/solid-router";
 import { FaSolidNetworkWired } from "solid-icons/fa";
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 
 import { useNetworks } from "#/api/network";
 
@@ -18,7 +18,10 @@ export const NetworkWidget = () => {
                     <For each={networksQuery.data?.networks}>
                         {network => (
                             <li>
-                                <button class="py-1">
+                                <button class="py-1 flex items-center gap-2">
+                                    <Show when={network.network_icon_url}>
+                                        {icon => <img src={icon()} alt={network.network_name} class="size-4 aspect-square rounded-full" />}
+                                    </Show>
                                     {network.network_name}
                                 </button>
                             </li>

@@ -1,10 +1,10 @@
+import { FaSolidCubes } from "solid-icons/fa";
 import { Component, Show, Suspense } from "solid-js";
 
 import { useNetworkEndpoint, useNetworkEndpointStatus } from "#/api/network";
+import { narrow } from "#/utils/narrow";
 
 import { NetworkEndpointStatus } from "./status";
-import { narrow } from "#/utils/narrow";
-import { FaSolidCube, FaSolidCubes } from "solid-icons/fa";
 
 export const NetworkEndpointPreview: Component<{ network_id: number; endpoint_id: string; }> = ({ network_id, endpoint_id }) => {
     const endpointQuery = useNetworkEndpoint(() => ({
