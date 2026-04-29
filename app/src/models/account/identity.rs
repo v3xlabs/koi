@@ -8,9 +8,9 @@ use sqlx::{
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone, NewType, PartialEq, Hash, Eq)]
-pub struct NetworkIdentity(pub u64);
+pub struct AccountIdentity(pub u64);
 
-impl sqlx::types::Type<Sqlite> for NetworkIdentity {
+impl sqlx::types::Type<Sqlite> for AccountIdentity {
     fn type_info() -> SqliteTypeInfo {
         <u64 as sqlx::types::Type<Sqlite>>::type_info()
     }
@@ -19,16 +19,16 @@ impl sqlx::types::Type<Sqlite> for NetworkIdentity {
     }
 }
 
-impl<'r> Decode<'r, Sqlite> for NetworkIdentity {
+impl<'r> Decode<'r, Sqlite> for AccountIdentity {
     fn decode(
         value: SqliteValueRef<'r>,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync + 'static>> {
         let s: u64 = <u64 as Decode<Sqlite>>::decode(value)?;
-        Ok(NetworkIdentity(s))
+        Ok(AccountIdentity(s))
     }
 }
 
-impl<'q> Encode<'q, Sqlite> for NetworkIdentity {
+impl<'q> Encode<'q, Sqlite> for AccountIdentity {
     fn encode_by_ref(
         &self,
         buf: &mut <Sqlite as sqlx::Database>::ArgumentBuffer,
@@ -38,16 +38,16 @@ impl<'q> Encode<'q, Sqlite> for NetworkIdentity {
     }
 }
 
-impl Display for NetworkIdentity {
+impl Display for AccountIdentity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl FromStr for NetworkIdentity {
+impl FromStr for AccountIdentity {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(NetworkIdentity(s.parse::<u64>()?))
+        Ok(AccountIdentity(s.parse::<u64>()?))
     }
 }

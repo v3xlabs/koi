@@ -9,7 +9,7 @@ import { AccountIcon } from "./icon";
 import { AccountTypeIcon } from "./type";
 
 export type AccountPreviewProperties = {
-    account_id: string;
+    account_id: number;
 };
 
 export const AccountPreview: Component<AccountPreviewProperties> = (props) => {

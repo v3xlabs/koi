@@ -35,7 +35,33 @@ export type paths = {
             };
         };
         put?: never;
-        post?: never;
+        /**
+         * Create an account
+         * @description POST /api/acc
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["Account"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Account"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -58,7 +84,7 @@ export type paths = {
                 query?: never;
                 header?: never;
                 path: {
-                    account_id: string;
+                    account_id: number;
                 };
                 cookie?: never;
             };
@@ -680,8 +706,8 @@ export type components = {
     schemas: {
         /** Account */
         Account: {
-            /** Format: uuid */
-            account_id: string;
+            /** Format: uint64 */
+            account_id: number;
             name: string;
             networks: number[];
             metadata: components["schemas"]["WalletType"];
@@ -805,31 +831,31 @@ export type components = {
         WalletType: components["schemas"]["WalletType_Safe"] | components["schemas"]["WalletType_EOA"] | components["schemas"]["WalletType_View"] | components["schemas"]["WalletType_Railgun"];
         WalletType_EOA: {
             /**
-             * @example EOA
+             * @example e_o_a
              * @enum {string}
              */
-            type: "EOA";
+            type: "e_o_a";
         } & components["schemas"]["EOAWallet"];
         WalletType_Railgun: {
             /**
-             * @example Railgun
+             * @example railgun
              * @enum {string}
              */
-            type: "Railgun";
+            type: "railgun";
         } & components["schemas"]["RailgunWallet"];
         WalletType_Safe: {
             /**
-             * @example Safe
+             * @example safe
              * @enum {string}
              */
-            type: "Safe";
+            type: "safe";
         } & components["schemas"]["SafeWallet"];
         WalletType_View: {
             /**
-             * @example View
+             * @example view
              * @enum {string}
              */
-            type: "View";
+            type: "view";
         } & components["schemas"]["ViewWallet"];
     };
     responses: never;
