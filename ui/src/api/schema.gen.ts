@@ -460,6 +460,46 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/net/{network_id}/endpoints/next-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the next network endpoint ID
+         * @description GET /api/net/:network_id/endpoints/next-id
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    _network_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/net/{network_id}/endpoints/{endpoint_id}": {
         parameters: {
             query?: never;
@@ -477,7 +517,7 @@ export type paths = {
                 header?: never;
                 path: {
                     network_id: number;
-                    endpoint_id: string;
+                    endpoint_id: number;
                 };
                 cookie?: never;
             };
@@ -503,7 +543,7 @@ export type paths = {
                 header?: never;
                 path: {
                     network_id: number;
-                    endpoint_id: string;
+                    endpoint_id: number;
                 };
                 cookie?: never;
             };
@@ -534,7 +574,7 @@ export type paths = {
                 header?: never;
                 path: {
                     network_id: number;
-                    endpoint_id: string;
+                    endpoint_id: number;
                 };
                 cookie?: never;
             };
@@ -572,7 +612,7 @@ export type paths = {
                 header?: never;
                 path: {
                     network_id: number;
-                    endpoint_id: string;
+                    endpoint_id: number;
                 };
                 cookie?: never;
             };
@@ -851,7 +891,8 @@ export type components = {
         };
         /** NetworkEndpoint */
         NetworkEndpoint: {
-            endpoint_identity: string;
+            /** Format: int32 */
+            endpoint_identity: number;
             endpoint_label?: string;
             endpoint_type: string;
             endpoint_url: string;

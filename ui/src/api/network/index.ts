@@ -25,6 +25,8 @@ export const useDeleteNetwork = createApiMutation("/net/{network_id}", "delete",
     },
 });
 
+export const useNetworkEndpointNextId = createApi("/net/{network_id}/endpoints/next-id", "get", () => ["network-endpoint-next-id"]);
+
 export const useNetworkEndpoints = createApi("/net/{network_id}/endpoints", "get", options => ["network-endpoints", options.path.network_id.toString()]);
 export const useCreateNetworkEndpoint = createApiMutation("/net/{network_id}/endpoints", "post", {
     onSuccess: () => {

@@ -14,12 +14,12 @@ export const Route = createFileRoute("/acc/$account/")({
   component: () => {
     const params = useParams({ from: "/acc/$account" });
     const balance = useAccountBalance(params().account);
-    const account = useAccount(() => ({ path: { account_id: params().account } }));
+    const account = useAccount(() => ({ path: { account_id: Number.parseInt(params().account) } }));
 
     return (
       <div class="p-4 space-y-4">
-        <div class="grid grid-cols-5 w-full gap-4">
-          <div class="space-y-4 w-full col-span-3">
+        <div class="grid grid-cols-1 xl:grid-cols-5 w-full gap-4">
+          <div class="space-y-4 w-full xl:col-span-3">
             <div class="bg-surface p-4 rounded-md space-y-4">
               <div class="flex justify-between items-center">
                 <div class="text-sm font-bold text-muted">
@@ -82,7 +82,7 @@ export const Route = createFileRoute("/acc/$account/")({
               <AccountAssetTable account_id={params().account} />
             </div>
           </div>
-          <div class="bg-surface p-4 col-span-2 rounded-md max-h-128">
+          <div class="bg-surface p-4 xl:col-span-2 rounded-md max-h-128">
             <div>
               <div>
                 Pending transactions

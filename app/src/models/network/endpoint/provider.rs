@@ -13,7 +13,7 @@ use tracing::{info, warn};
 
 pub struct EthProvider {
     network_id: NetworkIdentity,
-    endpoint_id: String,
+    endpoint_id: i32,
     state: Arc<Mutex<RpcState>>,
 }
 
@@ -88,7 +88,7 @@ impl EthProvider {
 
         let me = Self {
             network_id: endpoint.network_identity.clone(),
-            endpoint_id: endpoint.endpoint_identity.clone(),
+            endpoint_id: endpoint.endpoint_identity,
             state,
         };
 

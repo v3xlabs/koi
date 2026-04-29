@@ -1,5 +1,5 @@
 CREATE TABLE network_endpoints (
-    endpoint_identity TEXT PRIMARY KEY,
+    endpoint_identity INTEGER PRIMARY KEY,
     endpoint_label TEXT,
     endpoint_type TEXT NOT NULL,
     endpoint_url TEXT NOT NULL,

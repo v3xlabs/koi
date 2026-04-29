@@ -12,6 +12,7 @@ use sqlx::{
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum WalletType {
     Safe(SafeWallet),
+    #[serde(rename = "eoa")]
     EOA(EOAWallet),
     View(ViewWallet),
     Railgun(RailgunWallet),

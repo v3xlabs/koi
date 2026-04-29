@@ -22,7 +22,8 @@ export const useDeleteAccount = createApiMutation("/acc/{account_id}", "delete",
 });
 
 export const useUpdateAccount = createApiMutation("/acc/{account_id}", "put", {
-    onSuccess: () => {
+    onSuccess: (x) => {
         queryClient.invalidateQueries({ queryKey: ["accounts"] });
+        queryClient.invalidateQueries({ queryKey: ["account", x.account_id.toString()] });
     },
 });

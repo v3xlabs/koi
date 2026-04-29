@@ -1,17 +1,19 @@
 import { createFileRoute } from "@tanstack/solid-router";
-import { createSignal } from "solid-js";
+import { createMemo, createSignal } from "solid-js";
 
 import { useCreateAccount, useNextAccountId } from "#/api/account";
 import { AddressInput } from "#/components/input/address";
+import { NetworkSelect } from "#/components/net/input";
 
 export const Route = createFileRoute("/acc/import/view")({
   component: () => {
     const nextAccountId = useNextAccountId();
     const [address, setAddress] = createSignal("");
     const [name, setName] = createSignal("");
-    const createAccount = useCreateAccount(({ data: { account_id, name, address } }: { data: { account_id: number; name: string; address: string; }; }) => ({
+    const [networks, setNetworks] = createSignal<number[]>([]);
+    const createAccount = useCreateAccount(({ data: { account_id, name, networks, address } }: { data: { account_id: number; name: string; networks: number[]; address: string; }; }) => ({
       contentType: "application/json; charset=utf-8",
-      data: { account_id, name, networks: [1], metadata: { type: "view", evm_address: address } },
+      data: { account_id, name, networks, metadata: { type: "view", evm_address: address } },
     }));
 
     const handleClick = () => {
@@ -19,8 +21,12 @@ export const Route = createFileRoute("/acc/import/view")({
 
       if (!account_id || account_id <= 0) return;
 
-      createAccount.mutate({ data: { account_id, name: name(), address: address() } });
+      if (networks().length === 0) return;
+
+      createAccount.mutate({ data: { account_id, name: name(), networks: networks(), address: address() } });
     };
+
+    const disabled = createMemo(() => createAccount.isPending || !address() || !name() || networks().length === 0);
 
     return (
       <div class="p-4 mx-auto w-full max-w-lg">
@@ -37,9 +43,18 @@ export const Route = createFileRoute("/acc/import/view")({
               <span class="block">Address</span>
               <AddressInput placeholder="0x123...456" class="w-full" value={address} onChange={setAddress} />
             </label>
+            <label class="space-y-1 block">
+              <span class="block">Networks</span>
+              <NetworkSelect value={networks} onChange={setNetworks} />
+              <p class="text-sm text-gray-500">
+                {networks().length}
+                {" "}
+                networks selected
+              </p>
+            </label>
           </div>
           <div class="flex justify-end">
-            <button class="btn btn-primary" onClick={handleClick} disabled={createAccount.isPending || !address() || !name()}>
+            <button class="btn btn-primary" onClick={handleClick} disabled={disabled()}>
               Import
             </button>
           </div>

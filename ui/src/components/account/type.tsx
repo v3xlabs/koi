@@ -4,18 +4,20 @@ import { Accessor, Component, createMemo } from "solid-js";
 import { match } from "ts-pattern";
 
 import { WalletType } from "#/api/account";
+import SafeIcon from "#/assets/safe-icon.svg";
 
 export const AccountTypeIcon: Component<{ type: Accessor<WalletType["type"]>; }> = (props) => {
     const icon = createMemo(() => match(props.type())
-        .with("EOA", () => FaSolidUser)
-        .with("View", () => FaSolidEye)
+        .with("eoa", () => FaSolidUser)
+        .with("view", () => FaSolidEye)
+        .with("safe", () => () => <img src={SafeIcon} alt="Safe Multisig" class="size-3.5" />)
         .otherwise(() => FaSolidQuestion));
 
     const tooltip = createMemo(() => match(props.type())
-        .with("EOA", () => "Externally Owned Account")
-        .with("View", () => "View-only")
-        .with("Safe", () => "Safe Multisig")
-        .with("Railgun", () => "Railgun")
+        .with("eoa", () => "Externally Owned Account")
+        .with("view", () => "View-only")
+        .with("safe", () => "Safe Multisig")
+        .with("railgun", () => "Railgun")
         .otherwise(() => "Unknown"));
 
     return (

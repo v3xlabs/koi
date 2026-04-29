@@ -138,6 +138,20 @@ impl NetworkApi {
         ))
     }
 
+    /// Get the next network endpoint ID
+    ///
+    /// GET /api/net/:network_id/endpoints/next-id
+    #[oai(
+        path = "/net/:network_id/endpoints/next-id",
+        method = "get",
+        tag = "ApiTags::Network"
+    )]
+    async fn get_network_endpoint_next_id(&self, auth: Auth, state: Data<&AppState>, network_id: Path<NetworkIdentity>) -> Result<Json<i32>> {
+        let _auth_data = auth.unwrap()?;
+        let _network_id = network_id.0;
+        Ok(Json(NetworkEndpoint::get_next_id(&state).await?))
+    }
+
     /// Create a network endpoint
     ///
     /// POST /api/net/:network_id/endpoints
@@ -175,7 +189,7 @@ impl NetworkApi {
         auth: Auth,
         state: Data<&AppState>,
         network_id: Path<NetworkIdentity>,
-        endpoint_id: Path<String>,
+        endpoint_id: Path<i32>,
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
@@ -197,7 +211,7 @@ impl NetworkApi {
         auth: Auth,
         state: Data<&AppState>,
         network_id: Path<NetworkIdentity>,
-        endpoint_id: Path<String>,
+        endpoint_id: Path<i32>,
         payload: Json<NetworkEndpointUpdate>,
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
@@ -230,13 +244,13 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
-        endpoint_id: Path<String>,
+        network_id: Path<NetworkIdentity>,
+        endpoint_id: Path<i32>,
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::delete(&state, network_id.0, &endpoint_id.0).await?,
+            NetworkEndpoint::delete(&state, &network_id.0, &endpoint_id.0).await?,
         ))
     }
 
@@ -253,7 +267,7 @@ impl NetworkApi {
         auth: Auth,
         state: Data<&AppState>,
         network_id: Path<NetworkIdentity>,
-        endpoint_id: Path<String>,
+        endpoint_id: Path<i32>,
     ) -> Result<Json<RpcStatus>> {
         let _auth_data = auth.unwrap()?;
 

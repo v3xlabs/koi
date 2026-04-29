@@ -4,7 +4,7 @@ import { useDeleteNetworkEndpoint } from "#/api/network";
 
 import { Modal } from "../../dialog";
 
-export const NetworkEndpointDelete: Component<{ network_id: number; endpoint_id: string; children?: JSX.Element; }> = ({ network_id, endpoint_id, children }) => {
+export const NetworkEndpointDelete: Component<{ network_id: number; endpoint_id: number; children?: JSX.Element; }> = ({ network_id, endpoint_id, children }) => {
     const deleteNetworkEndpoint = useDeleteNetworkEndpoint(() => ({
         path: {
             network_id,

@@ -83,7 +83,7 @@ export const AccountAssetTable: Component<{ account_id: string; }> = (params) =>
     });
 
     return (
-        <div class="bg-surface px-5 py-2.5 rounded-md w-full border border-border">
+        <div class="bg-surface px-6 py-2.5 rounded-md w-full">
             <table class="w-full">
                 <thead class="border-b border-border">
                     <For each={table.getHeaderGroups()}>

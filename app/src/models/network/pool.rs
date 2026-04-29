@@ -16,7 +16,7 @@ use crate::models::network::{
 
 pub struct RpcPool {
     network_identity: NetworkIdentity,
-    endpoints: Mutex<HashMap<String, Arc<EthProvider>>>,
+    endpoints: Mutex<HashMap<i32, Arc<EthProvider>>>,
 }
 
 impl RpcPool {
@@ -40,7 +40,7 @@ impl RpcPool {
         rpc
     }
 
-    pub async fn get_rpc(&self, endpoint_identity: &str, db: &SqlitePool) -> Arc<EthProvider> {
+    pub async fn get_rpc(&self, endpoint_identity: &i32, db: &SqlitePool) -> Arc<EthProvider> {
         {
             let endpoints = self.endpoints.lock().expect("rpc pool mutex poisoned");
             if let Some(rpc) = endpoints.get(endpoint_identity) {

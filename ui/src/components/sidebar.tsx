@@ -14,10 +14,10 @@ import { Modal } from "./dialog";
 
 export const Sidebar = () => {
     const params = useParams({ from: "/acc/$account" });
-    const account = useAccount(() => ({ path: { account_id: params().account } }));
+    const account = useAccount(() => ({ path: { account_id: Number.parseInt(params().account) } }));
 
     return (
-        <div class="border-r px-1.5 py-2 min-w-56 max-w-64 bg-surface border-r-border h-full space-y-2">
+        <div class="px-1.5 py-2 min-w-56 max-w-64 bg-surface h-full space-y-2">
             <div class="space-y-2 pt-1 w-full">
                 <div class="flex items-center gap-2 pl-1 pr-2 py-2 w-full">
                     <div class="size-9 bg-surface-alt rounded-md">
@@ -65,22 +65,26 @@ export const Sidebar = () => {
                         {
                             icon: FaSolidGear,
                             label: "Settings",
+                            href: "/acc/$account/settings",
                         },
                     ]}
                     >
                         {item => (
-                            <button class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
+                            <Link
+                                to={item.href}
+                                class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer"
+                            >
                                 <item.icon class="w-3.5 h-3.5 text-secondary-foreground" />
-                            </button>
+                            </Link>
                         )}
                     </For>
                 </div>
             </div>
             <div>
                 <Link
-                  to="/acc/$account/new-tx"
-                  params={{ account: params().account }}
-                  class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                    to="/acc/$account/new-tx"
+                    params={{ account: params().account }}
+                    class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
                 >
                     New transaction
                 </Link>
@@ -107,6 +111,11 @@ export const Sidebar = () => {
                             icon: FaSolidGridHorizontal,
                             label: "Apps",
                             href: "/acc/$account/apps",
+                        },
+                        {
+                            icon: FaSolidGear,
+                            label: "Settings",
+                            href: "/acc/$account/settings",
                         }],
                     [
                         {
@@ -127,9 +136,9 @@ export const Sidebar = () => {
                             <For each={group}>
                                 {item => (
                                     <Link
-                                      to={item.href}
-                                      class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt"
-                                      activeOptions={{
+                                        to={item.href}
+                                        class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt"
+                                        activeOptions={{
                                             exact: true,
                                         }}
                                     >

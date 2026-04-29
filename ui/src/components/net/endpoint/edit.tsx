@@ -1,6 +1,7 @@
-import { Component, createMemo, createSignal } from "solid-js";
+import { Component, createMemo, createSignal, Show } from "solid-js";
 
 import { NetworkEndpoint, useNetworkEndpointStatus, useUpdateNetworkEndpoint } from "#/api/network";
+import { narrow } from "#/utils/narrow";
 
 import { NetworkEndpointDelete } from "./delete";
 
@@ -57,6 +58,13 @@ export const NetworkEndpointItem: Component<{ network_id: number; endpoint: Netw
                     </label>
                 </div>
             </div>
+            <Show when={narrow(() => status.data, x => x.status === "Dead")}>
+                {data => (
+                    <div class="text-sm text-primary border border-primary rounded-md p-2 text-start">
+                        <span>{data().error}</span>
+                    </div>
+                )}
+            </Show>
             <div class="flex justify-end gap-2">
                 <button
                   class="btn btn-primary"
