@@ -1,9 +1,9 @@
+import { Toast, toaster } from "@kobalte/core/toast";
 import { createFileRoute, useParams } from "@tanstack/solid-router";
 import { Accessor, Component, createMemo, createSignal, Show, Suspense } from "solid-js";
 
 import { Account, useAccount, useUpdateAccount } from "#/api/account";
 import { NetworkSelect } from "#/components/net/input";
-import { Toast, toaster } from "@kobalte/core/toast";
 
 export const Route = createFileRoute("/acc/$account/settings/")({
   component: () => {

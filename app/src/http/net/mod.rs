@@ -146,7 +146,12 @@ impl NetworkApi {
         method = "get",
         tag = "ApiTags::Network"
     )]
-    async fn get_network_endpoint_next_id(&self, auth: Auth, state: Data<&AppState>, network_id: Path<NetworkIdentity>) -> Result<Json<i32>> {
+    async fn get_network_endpoint_next_id(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_id: Path<NetworkIdentity>,
+    ) -> Result<Json<i32>> {
         let _auth_data = auth.unwrap()?;
         let _network_id = network_id.0;
         Ok(Json(NetworkEndpoint::get_next_id(&state).await?))

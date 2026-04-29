@@ -38,9 +38,7 @@ impl Network {
 }
 
 impl NetworkEndpoint {
-    pub async fn get_next_id(
-        state: &AppState,
-    ) -> Result<i32, KoiError> {
+    pub async fn get_next_id(state: &AppState) -> Result<i32, KoiError> {
         query_scalar::<_, i32>("SELECT MAX(endpoint_identity) + 1 FROM network_endpoints")
             .fetch_one(&state.database)
             .await

@@ -71,8 +71,8 @@ export const Sidebar = () => {
                     >
                         {item => (
                             <Link
-                                to={item.href}
-                                class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer"
+                              to={item.href}
+                              class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer"
                             >
                                 <item.icon class="w-3.5 h-3.5 text-secondary-foreground" />
                             </Link>
@@ -82,9 +82,9 @@ export const Sidebar = () => {
             </div>
             <div>
                 <Link
-                    to="/acc/$account/new-tx"
-                    params={{ account: params().account }}
-                    class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                  to="/acc/$account/new-tx"
+                  params={{ account: params().account }}
+                  class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
                 >
                     New transaction
                 </Link>
@@ -136,9 +136,9 @@ export const Sidebar = () => {
                             <For each={group}>
                                 {item => (
                                     <Link
-                                        to={item.href}
-                                        class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt"
-                                        activeOptions={{
+                                      to={item.href}
+                                      class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt"
+                                      activeOptions={{
                                             exact: true,
                                         }}
                                     >
