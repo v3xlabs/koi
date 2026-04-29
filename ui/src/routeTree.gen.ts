@@ -23,6 +23,7 @@ import { Route as AccNewIndexRouteImport } from "./routes/acc/new/index"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
 import { Route as AccNewKeyRouteImport } from "./routes/acc/new/key"
 import { Route as AccImportViewRouteImport } from "./routes/acc/import/view"
+import { Route as AccImportSafeRouteImport } from "./routes/acc/import/safe"
 import { Route as AccImportKeyRouteImport } from "./routes/acc/import/key"
 import { Route as AccAccountNewTxRouteImport } from "./routes/acc/$account/new-tx"
 import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/assets"
@@ -97,6 +98,11 @@ const AccImportViewRoute = AccImportViewRouteImport.update({
   path: "/acc/import/view",
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccImportSafeRoute = AccImportSafeRouteImport.update({
+  id: "/acc/import/safe",
+  path: "/acc/import/safe",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccImportKeyRoute = AccImportKeyRouteImport.update({
   id: "/acc/import/key",
   path: "/acc/import/key",
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/import/key": typeof AccImportKeyRoute
+  "/acc/import/safe": typeof AccImportSafeRoute
   "/acc/import/view": typeof AccImportViewRoute
   "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account/": typeof AccAccountIndexRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/import/key": typeof AccImportKeyRoute
+  "/acc/import/safe": typeof AccImportSafeRoute
   "/acc/import/view": typeof AccImportViewRoute
   "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account": typeof AccAccountIndexRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
   "/acc/import/key": typeof AccImportKeyRoute
+  "/acc/import/safe": typeof AccImportSafeRoute
   "/acc/import/view": typeof AccImportViewRoute
   "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account/": typeof AccAccountIndexRoute
@@ -184,6 +193,7 @@ export interface FileRouteTypes {
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
     | "/acc/import/key"
+    | "/acc/import/safe"
     | "/acc/import/view"
     | "/acc/new/key"
     | "/acc/$account/"
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
     | "/acc/import/key"
+    | "/acc/import/safe"
     | "/acc/import/view"
     | "/acc/new/key"
     | "/acc/$account"
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | "/acc/$account/assets"
     | "/acc/$account/new-tx"
     | "/acc/import/key"
+    | "/acc/import/safe"
     | "/acc/import/view"
     | "/acc/new/key"
     | "/acc/$account/"
@@ -231,6 +243,7 @@ export interface RootRouteChildren {
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
   AccImportKeyRoute: typeof AccImportKeyRoute
+  AccImportSafeRoute: typeof AccImportSafeRoute
   AccImportViewRoute: typeof AccImportViewRoute
   AccNewKeyRoute: typeof AccNewKeyRoute
   AccNewIndexRoute: typeof AccNewIndexRoute
@@ -336,6 +349,13 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof AccImportViewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    "/acc/import/safe": {
+      id: "/acc/import/safe"
+      path: "/acc/import/safe"
+      fullPath: "/acc/import/safe"
+      preLoaderRoute: typeof AccImportSafeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/acc/import/key": {
       id: "/acc/import/key"
       path: "/acc/import/key"
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
   AccImportKeyRoute: AccImportKeyRoute,
+  AccImportSafeRoute: AccImportSafeRoute,
   AccImportViewRoute: AccImportViewRoute,
   AccNewKeyRoute: AccNewKeyRoute,
   AccNewIndexRoute: AccNewIndexRoute,

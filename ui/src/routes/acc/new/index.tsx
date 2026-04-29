@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/solid-router";
 import { FaSolidEye, FaSolidKey, FaSolidShield } from "solid-icons/fa";
 import { For } from "solid-js";
 
+import SafeIcon from "#/assets/safe-icon.svg";
+
 const ACC_OPTIONS = [
   {
     label: "New Account",
@@ -18,7 +20,7 @@ const ACC_OPTIONS = [
       },
       {
         label: "Multisig",
-        icon: FaSolidKey,
+        icon: () => <img src={SafeIcon} alt="Safe Multisig" class="size-3.5" />,
         disabled: true,
       },
       {
@@ -48,8 +50,8 @@ const ACC_OPTIONS = [
       },
       {
         label: "Multisig",
-        icon: FaSolidKey,
-        disabled: true,
+        icon: () => <img src={SafeIcon} alt="Safe Multisig" class="size-3.5" />,
+        href: "/acc/import/safe",
       },
       {
         label: "Frost",

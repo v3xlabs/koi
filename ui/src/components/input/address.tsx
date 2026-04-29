@@ -9,6 +9,8 @@ export const AddressInput: Component<AddressInputProperties> = props => (
     <input
       {...props}
       type="text"
+      value={props.value?.()}
+      onChange={e => props.onChange?.(e.target.value)}
       classList={Object.assign({
             input: true,
             [props.class ?? ""]: !!props.class,

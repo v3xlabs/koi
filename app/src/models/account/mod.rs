@@ -67,10 +67,11 @@ impl Account {
 
     pub async fn create(state: &AppState, account: Account) -> Result<Account, KoiError> {
         query_as::<_, Account>(
-            "INSERT INTO accounts (account_id, name, metadata) VALUES (?, ?, ?) RETURNING *",
+            "INSERT INTO accounts (account_id, name, networks, metadata) VALUES (?, ?, ?, ?) RETURNING *",
         )
         .bind(account.account_id)
         .bind(account.name)
+        .bind(serde_json::to_string(&account.networks).map_err(|x| sqlx::Error::Encode(Box::new(x)))?)
         .bind(account.metadata)
         .fetch_one(&state.database)
         .await

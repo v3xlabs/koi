@@ -100,6 +100,96 @@ export type paths = {
                 };
             };
         };
+        /**
+         * Update an account by ID
+         * @description PUT /api/acc/:account_id
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    account_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["AccountUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Account"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /**
+         * Delete an account by ID
+         * @description DELETE /api/acc/:account_id
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    account_id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/next-id": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the next account ID
+         * @description GET /api/acc/next-id
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": number;
+                    };
+                };
+            };
+        };
         put?: never;
         post?: never;
         delete?: never;
@@ -711,6 +801,12 @@ export type components = {
             name: string;
             networks: number[];
             metadata: components["schemas"]["WalletType"];
+        };
+        /** AccountUpdate */
+        AccountUpdate: {
+            name?: string;
+            networks?: number[];
+            metadata?: components["schemas"]["WalletType"];
         };
         /** AccountsResponse */
         AccountsResponse: {
