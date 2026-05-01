@@ -177,3 +177,13 @@ body {
 .switch:not(:disabled) .switch-control {
     cursor: pointer;
 }
+
+::-webkit-scrollbar {
+    @apply w-1;
+}
+::-webkit-scrollbar-track {
+    @apply bg-surface-alt;
+}
+::-webkit-scrollbar-thumb {
+    @apply bg-primary;
+}

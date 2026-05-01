@@ -38,7 +38,7 @@ export const AccountAssetLink: Component<{ account_identity: number; }> = ({ acc
                                 <input type="text" placeholder="Search for an asset" class="input w-full" />
                             </div>
                             <div>
-                                <ul>
+                                <ul class="max-h-[60vh] overflow-y-auto">
                                     <For each={filteredAssets()} fallback={<div class="text-center text-muted">No assets remain</div>}>
                                         {asset => (
                                             <li class="hover:bg-surface-alt cursor-pointer p-2 rounded-md flex items-center justify-between">
