@@ -10,7 +10,9 @@ export const Route = createFileRoute("/settings/assets")({
   component: () => {
     const assetsQuery = useAssets();
 
-    const assets = createMemo(() => assetsQuery.data?.assets ?? []);
+    const assets = createMemo(() => (assetsQuery.data?.assets ?? []).toSorted((a, b) => (
+      b.asset_identity.localeCompare(a.asset_identity)
+    )));
 
     return (
       <div class="w-full space-y-2">
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/settings/assets")({
             <ul>
               <For each={assets()}>
                 {asset => (
-                  <div>
+                  <div class="py-2 px-4 hover:bg-surface-alt cursor-pointer rounded-md flex items-center justify-between">
                     <AssetPreview asset_identity={asset.asset_identity} />
                   </div>
                 )}

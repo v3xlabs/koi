@@ -17,22 +17,22 @@ export const AccountAssetLink: Component<{ account_identity: number; }> = ({ acc
     return (
         <Modal>
             <Modal.Trigger class="btn btn-primary">
-                Add tokens
+                Add Assets
             </Modal.Trigger>
             <Modal.Portal>
                 <Modal.Overlay />
                 <div class="fixed inset-0">
                     <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24">
                         <Modal.Title>
-                            Link Asset
+                            Link Assets
                         </Modal.Title>
-                        <div>
-                            <div>
-                                <input type="text" placeholder="Search for a token" />
+                        <div class="p-4 space-y-4">
+                            <div class="w-full">
+                                <input type="text" placeholder="Search for a token" class="input w-full" />
                             </div>
                             <div>
                                 <ul>
-                                    <For each={filteredAssets()} fallback={<div>No assets remain</div>}>
+                                    <For each={filteredAssets()} fallback={<div class="text-center text-muted">No assets remain</div>}>
                                         {asset => (
                                             <li class="hover:bg-surface-alt cursor-pointer p-2 rounded-md flex items-center justify-between">
                                                 <AssetPreview asset_identity={asset.asset_identity} />

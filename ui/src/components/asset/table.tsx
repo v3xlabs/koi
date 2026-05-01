@@ -45,7 +45,7 @@ const columns = [
             <div class="space-y-1">
                 <Skeleton visible={row.original.balance === undefined} class="skeleton">
                     <span class="tabular-nums">
-                        {row.original.balance === undefined ? "-" : formatUnits(row.original.balance, row.original.asset.asset_decimals)}
+                        {row.original.balance === undefined ? "-" : formatUnits(row.original.balance, row.original.asset.asset_decimals, 2, "short")}
                     </span>
                     {" "}
                     {row.original.asset.asset_symbol}

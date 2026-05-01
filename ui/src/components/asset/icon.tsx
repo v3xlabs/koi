@@ -2,11 +2,20 @@ import { Component, createMemo, Show } from "solid-js";
 
 import { Asset, useAsset } from "#/api/asset";
 
-type AssetIconProps = { asset: Asset; } | { asset_identity: string; };
+type AssetIconProps = { asset: Asset; class?: string; } | { asset_identity: string; class?: string; };
 
-export const AssetIconImage: Component<{ asset?: Asset; }> = props => (
+export const AssetIconImage: Component<{ asset?: Asset; class?: string; }> = props => (
     <Show when={props.asset?.asset_icon_url}>
-        {icon => <img src={icon()} alt={props.asset?.asset_name} class="size-4 aspect-square rounded-full" />}
+        {icon => (
+            <img
+              src={icon()}
+              alt={props.asset?.asset_name}
+              classList={{
+                    [props.class ?? "size-6"]: true,
+                    "aspect-square rounded-full": true,
+                }}
+            />
+        )}
     </Show>
 );
 
@@ -15,6 +24,6 @@ export const AssetIcon: Component<AssetIconProps> = (props) => {
     const asset = createMemo(() => ("asset" in props ? props.asset : assetQuery?.data));
 
     return (
-        <AssetIconImage asset={asset()} />
+        <AssetIconImage asset={asset()} class={props.class} />
     );
 };
