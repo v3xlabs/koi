@@ -10,13 +10,18 @@ export const Route = createFileRoute("/acc/$account/settings")({
           <ul class="flex gap-2">
             <For each={[
               { label: "Main", href: "/acc/$account/settings" },
-              { label: "Tokens", href: "/acc/$account/settings/tokens" },
+              { label: "Assets", href: "/acc/$account/settings/assets" },
               { label: "Danger", href: "/acc/$account/settings/danger" },
             ]}
             >
               {item => (
                 <li class="text-sm">
-                  <Link to={item.href} class="h-full hover:bg-surface-alt rounded-md px-2 py-1" activeProps={{ class: "bg-surface-alt" }} activeOptions={{ exact: true }}>
+                  <Link
+                    to={item.href}
+                    class="h-full hover:bg-surface-alt rounded-md px-2 py-1"
+                    activeProps={{ class: "bg-surface-alt" }}
+                    activeOptions={{ exact: true }}
+                  >
                     {item.label}
                   </Link>
                 </li>

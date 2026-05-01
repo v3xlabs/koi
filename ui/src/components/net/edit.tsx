@@ -92,11 +92,21 @@ export const NetworkEdit: Component<{ network_id: number; }> = ({ network_id }) 
                             <div class="flex gap-2 w-full">
                                 <div class="grow">
                                     <div>Name</div>
-                                    <input type="text" class="input w-full" value={networkQuery.data?.network_name} disabled />
+                                    <input
+                                      type="text"
+                                      class="input w-full"
+                                      value={networkQuery.data?.network_name}
+                                      disabled
+                                    />
                                 </div>
                                 <div>
                                     <div>Network Id</div>
-                                    <input type="text" class="input w-full" value={networkQuery.data?.network_identity?.toString()} disabled />
+                                    <input
+                                      type="text"
+                                      class="input w-full"
+                                      value={networkQuery.data?.network_identity?.toString()}
+                                      disabled
+                                    />
                                 </div>
                             </div>
 
@@ -106,7 +116,12 @@ export const NetworkEdit: Component<{ network_id: number; }> = ({ network_id }) 
                                 </Show>
                                 <div class="grow">
                                     <div>Icon</div>
-                                    <input type="text" class="input w-full" value={networkQuery.data?.network_icon_url} disabled />
+                                    <input
+                                      type="text"
+                                      class="input w-full"
+                                      value={networkQuery.data?.network_icon_url}
+                                      disabled
+                                    />
                                 </div>
                             </div>
 

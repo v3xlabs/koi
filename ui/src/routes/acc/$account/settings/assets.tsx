@@ -2,7 +2,7 @@ import { createFileRoute, useParams } from "@tanstack/solid-router";
 
 import { useAssets } from "#/api/asset";
 
-export const Route = createFileRoute("/acc/$account/settings/tokens")({
+export const Route = createFileRoute("/acc/$account/settings/assets")({
   component: () => {
     const params = useParams({ from: "/acc/$account" });
 

@@ -40,21 +40,41 @@ export const NetworkEndpointItem: Component<{ network_id: number; endpoint: Netw
                 <div class="flex gap-2 w-full">
                     <label class="w-full">
                         <span class="text-sm">Label</span>
-                        <input type="text" value={label()} onChange={e => setLabel(e.target.value)} class="input w-full" />
+                        <input
+                          type="text"
+                          value={label()}
+                          onChange={e => setLabel(e.target.value)}
+                          class="input w-full"
+                        />
                     </label>
                     <label class="">
                         <span class="text-sm">Enabled</span>
-                        <input type="checkbox" checked={!disabled()} onChange={e => setDisabled(!e.target.checked)} class="input w-full" />
+                        <input
+                          type="checkbox"
+                          checked={!disabled()}
+                          onChange={e => setDisabled(!e.target.checked)}
+                          class="input w-full"
+                        />
                     </label>
                 </div>
                 <div class="flex gap-2 w-full">
                     <label class="w-full max-w-xs">
                         <span class="text-sm">Type</span>
-                        <input type="text" value={type()} onChange={e => setType(e.target.value)} class="input w-full" />
+                        <input
+                          type="text"
+                          value={type()}
+                          onChange={e => setType(e.target.value)}
+                          class="input w-full"
+                        />
                     </label>
                     <label class="w-full">
                         <span class="text-sm">URL</span>
-                        <input type="text" value={url()} onChange={e => setUrl(e.target.value)} class="input w-full" />
+                        <input
+                          type="text"
+                          value={url()}
+                          onChange={e => setUrl(e.target.value)}
+                          class="input w-full"
+                        />
                     </label>
                 </div>
             </div>

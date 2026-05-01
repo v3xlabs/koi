@@ -24,7 +24,13 @@ export const ConnectionButton = () => {
             <Popover.Portal>
                 <Popover.Content class="bg-surface p-3 rounded-md border border-border outline-none w-full max-w-md">
                     <div class="space-y-2">
-                        <input type="text" class="input w-full" value={url()} onChange={e => setUrl(e.target.value)} placeholder="openlv://..." />
+                        <input
+                          type="text"
+                          class="input w-full"
+                          value={url()}
+                          onChange={e => setUrl(e.target.value)}
+                          placeholder="openlv://..."
+                        />
                         <div class="flex justify-end">
                             <button class="btn btn-primary" onClick={connect}>Connect</button>
                         </div>

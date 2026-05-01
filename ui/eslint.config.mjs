@@ -18,6 +18,15 @@ export default defineConfig([
             "@stylistic/type-named-tuple-spacing": "off",
             "import/no-default-export": "off",
             "unicorn/no-null": "off",
+            "@stylistic/jsx-max-props-per-line": [
+                "error",
+                {
+                    maximum: {
+                        single: 3,
+                        multi: 1,
+                    },
+                },
+            ],
         },
     },
 ]);

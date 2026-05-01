@@ -198,6 +198,112 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/acc/{account_identity}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the assets of an account
+         * @description GET /api/acc/:account_identity/assets
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    account_identity: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": string[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/{account_identity}/asset/{asset_identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add an asset to an account
+         * @description POST /api/acc/:account_identity/asset/:asset_identity
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    account_identity: number;
+                    asset_identity: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        /**
+         * Remove an asset from an account
+         * @description DELETE /api/acc/:account_identity/asset/:asset_identity
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    account_identity: number;
+                    asset_identity: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/net": {
         parameters: {
             query?: never;

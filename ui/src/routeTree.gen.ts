@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from "./routes/index"
 import { Route as SettingsIndexRouteImport } from "./routes/settings/index"
 import { Route as OnboardingIndexRouteImport } from "./routes/onboarding/index"
 import { Route as SettingsNetworksRouteImport } from "./routes/settings/networks"
+import { Route as SettingsAssetsRouteImport } from "./routes/settings/assets"
 import { Route as OnboardingVendorsRouteImport } from "./routes/onboarding/vendors"
 import { Route as OnboardingNetworksRouteImport } from "./routes/onboarding/networks"
 import { Route as OnboardingAccountsRouteImport } from "./routes/onboarding/accounts"
@@ -29,8 +30,8 @@ import { Route as AccAccountNewTxRouteImport } from "./routes/acc/$account/new-t
 import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/assets"
 import { Route as AccAccountSettingsRouteRouteImport } from "./routes/acc/$account/settings/route"
 import { Route as AccAccountSettingsIndexRouteImport } from "./routes/acc/$account/settings/index"
-import { Route as AccAccountSettingsTokensRouteImport } from "./routes/acc/$account/settings/tokens"
 import { Route as AccAccountSettingsDangerRouteImport } from "./routes/acc/$account/settings/danger"
+import { Route as AccAccountSettingsAssetsRouteImport } from "./routes/acc/$account/settings/assets"
 
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
   id: "/settings",
@@ -60,6 +61,11 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
 const SettingsNetworksRoute = SettingsNetworksRouteImport.update({
   id: "/networks",
   path: "/networks",
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsAssetsRoute = SettingsAssetsRouteImport.update({
+  id: "/assets",
+  path: "/assets",
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const OnboardingVendorsRoute = OnboardingVendorsRouteImport.update({
@@ -132,16 +138,16 @@ const AccAccountSettingsIndexRoute = AccAccountSettingsIndexRouteImport.update({
   path: "/",
   getParentRoute: () => AccAccountSettingsRouteRoute,
 } as any)
-const AccAccountSettingsTokensRoute =
-  AccAccountSettingsTokensRouteImport.update({
-    id: "/tokens",
-    path: "/tokens",
-    getParentRoute: () => AccAccountSettingsRouteRoute,
-  } as any)
 const AccAccountSettingsDangerRoute =
   AccAccountSettingsDangerRouteImport.update({
     id: "/danger",
     path: "/danger",
+    getParentRoute: () => AccAccountSettingsRouteRoute,
+  } as any)
+const AccAccountSettingsAssetsRoute =
+  AccAccountSettingsAssetsRouteImport.update({
+    id: "/assets",
+    path: "/assets",
     getParentRoute: () => AccAccountSettingsRouteRoute,
   } as any)
 
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
   "/onboarding/vendors": typeof OnboardingVendorsRoute
+  "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
   "/onboarding/": typeof OnboardingIndexRoute
   "/settings/": typeof SettingsIndexRoute
@@ -165,8 +172,8 @@ export interface FileRoutesByFullPath {
   "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account/": typeof AccAccountIndexRoute
   "/acc/new/": typeof AccNewIndexRoute
+  "/acc/$account/settings/assets": typeof AccAccountSettingsAssetsRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
-  "/acc/$account/settings/tokens": typeof AccAccountSettingsTokensRoute
   "/acc/$account/settings/": typeof AccAccountSettingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
   "/onboarding/vendors": typeof OnboardingVendorsRoute
+  "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
   "/onboarding": typeof OnboardingIndexRoute
   "/settings": typeof SettingsIndexRoute
@@ -185,8 +193,8 @@ export interface FileRoutesByTo {
   "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account": typeof AccAccountIndexRoute
   "/acc/new": typeof AccNewIndexRoute
+  "/acc/$account/settings/assets": typeof AccAccountSettingsAssetsRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
-  "/acc/$account/settings/tokens": typeof AccAccountSettingsTokensRoute
   "/acc/$account/settings": typeof AccAccountSettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
   "/onboarding/vendors": typeof OnboardingVendorsRoute
+  "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
   "/onboarding/": typeof OnboardingIndexRoute
   "/settings/": typeof SettingsIndexRoute
@@ -210,8 +219,8 @@ export interface FileRoutesById {
   "/acc/new/key": typeof AccNewKeyRoute
   "/acc/$account/": typeof AccAccountIndexRoute
   "/acc/new/": typeof AccNewIndexRoute
+  "/acc/$account/settings/assets": typeof AccAccountSettingsAssetsRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
-  "/acc/$account/settings/tokens": typeof AccAccountSettingsTokensRoute
   "/acc/$account/settings/": typeof AccAccountSettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | "/onboarding/accounts"
     | "/onboarding/networks"
     | "/onboarding/vendors"
+    | "/settings/assets"
     | "/settings/networks"
     | "/onboarding/"
     | "/settings/"
@@ -236,8 +246,8 @@ export interface FileRouteTypes {
     | "/acc/new/key"
     | "/acc/$account/"
     | "/acc/new/"
+    | "/acc/$account/settings/assets"
     | "/acc/$account/settings/danger"
-    | "/acc/$account/settings/tokens"
     | "/acc/$account/settings/"
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | "/onboarding/accounts"
     | "/onboarding/networks"
     | "/onboarding/vendors"
+    | "/settings/assets"
     | "/settings/networks"
     | "/onboarding"
     | "/settings"
@@ -256,8 +267,8 @@ export interface FileRouteTypes {
     | "/acc/new/key"
     | "/acc/$account"
     | "/acc/new"
+    | "/acc/$account/settings/assets"
     | "/acc/$account/settings/danger"
-    | "/acc/$account/settings/tokens"
     | "/acc/$account/settings"
   id:
     | "__root__"
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | "/onboarding/accounts"
     | "/onboarding/networks"
     | "/onboarding/vendors"
+    | "/settings/assets"
     | "/settings/networks"
     | "/onboarding/"
     | "/settings/"
@@ -280,8 +292,8 @@ export interface FileRouteTypes {
     | "/acc/new/key"
     | "/acc/$account/"
     | "/acc/new/"
+    | "/acc/$account/settings/assets"
     | "/acc/$account/settings/danger"
-    | "/acc/$account/settings/tokens"
     | "/acc/$account/settings/"
   fileRoutesById: FileRoutesById
 }
@@ -339,6 +351,13 @@ declare module "@tanstack/solid-router" {
       path: "/networks"
       fullPath: "/settings/networks"
       preLoaderRoute: typeof SettingsNetworksRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    "/settings/assets": {
+      id: "/settings/assets"
+      path: "/assets"
+      fullPath: "/settings/assets"
+      preLoaderRoute: typeof SettingsAssetsRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     "/onboarding/vendors": {
@@ -439,18 +458,18 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof AccAccountSettingsIndexRouteImport
       parentRoute: typeof AccAccountSettingsRouteRoute
     }
-    "/acc/$account/settings/tokens": {
-      id: "/acc/$account/settings/tokens"
-      path: "/tokens"
-      fullPath: "/acc/$account/settings/tokens"
-      preLoaderRoute: typeof AccAccountSettingsTokensRouteImport
-      parentRoute: typeof AccAccountSettingsRouteRoute
-    }
     "/acc/$account/settings/danger": {
       id: "/acc/$account/settings/danger"
       path: "/danger"
       fullPath: "/acc/$account/settings/danger"
       preLoaderRoute: typeof AccAccountSettingsDangerRouteImport
+      parentRoute: typeof AccAccountSettingsRouteRoute
+    }
+    "/acc/$account/settings/assets": {
+      id: "/acc/$account/settings/assets"
+      path: "/assets"
+      fullPath: "/acc/$account/settings/assets"
+      preLoaderRoute: typeof AccAccountSettingsAssetsRouteImport
       parentRoute: typeof AccAccountSettingsRouteRoute
     }
   }
@@ -475,11 +494,13 @@ const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
 )
 
 interface SettingsRouteRouteChildren {
+  SettingsAssetsRoute: typeof SettingsAssetsRoute
   SettingsNetworksRoute: typeof SettingsNetworksRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
+  SettingsAssetsRoute: SettingsAssetsRoute,
   SettingsNetworksRoute: SettingsNetworksRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
@@ -489,15 +510,15 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
 )
 
 interface AccAccountSettingsRouteRouteChildren {
+  AccAccountSettingsAssetsRoute: typeof AccAccountSettingsAssetsRoute
   AccAccountSettingsDangerRoute: typeof AccAccountSettingsDangerRoute
-  AccAccountSettingsTokensRoute: typeof AccAccountSettingsTokensRoute
   AccAccountSettingsIndexRoute: typeof AccAccountSettingsIndexRoute
 }
 
 const AccAccountSettingsRouteRouteChildren: AccAccountSettingsRouteRouteChildren =
   {
+    AccAccountSettingsAssetsRoute: AccAccountSettingsAssetsRoute,
     AccAccountSettingsDangerRoute: AccAccountSettingsDangerRoute,
-    AccAccountSettingsTokensRoute: AccAccountSettingsTokensRoute,
     AccAccountSettingsIndexRoute: AccAccountSettingsIndexRoute,
   }
 

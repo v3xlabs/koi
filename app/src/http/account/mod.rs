@@ -1,6 +1,6 @@
 use crate::{
     http::auth::Auth,
-    models::account::{Account, AccountUpdate, identity::AccountIdentity},
+    models::{account::{Account, AccountUpdate, identity::AccountIdentity}, asset::identity::AssetIdentity},
     state::AppState,
 };
 
@@ -115,5 +115,52 @@ impl AccountApi {
         Ok(Json(
             Account::update(&state, account_identity.0, payload.0).await?,
         ))
+    }
+
+    /// Get the assets of an account
+    ///
+    /// GET /api/acc/:account_identity/assets
+    #[oai(path = "/acc/:account_identity/assets", method = "get", tag = "ApiTags::Account")]
+    async fn get_assets_of_account(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        account_identity: Path<AccountIdentity>,
+    ) -> Result<Json<Vec<AssetIdentity>>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(Account::get_assets(&state, account_identity.0).await?))
+    }
+
+    /// Add an asset to an account
+    ///
+    /// POST /api/acc/:account_identity/asset/:asset_identity
+    #[oai(path = "/acc/:account_identity/asset/:asset_identity", method = "post", tag = "ApiTags::Account")]
+    async fn add_asset_to_account(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        account_identity: Path<AccountIdentity>,
+        asset_identity: Path<AssetIdentity>,
+    ) -> Result<Json<()>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(Account::add_asset(&state, account_identity.0, asset_identity.0).await?))
+    }
+
+    /// Remove an asset from an account
+    ///
+    /// DELETE /api/acc/:account_identity/asset/:asset_identity
+    #[oai(path = "/acc/:account_identity/asset/:asset_identity", method = "delete", tag = "ApiTags::Account")]
+    async fn remove_asset_from_account(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        account_identity: Path<AccountIdentity>,
+        asset_identity: Path<AssetIdentity>,
+    ) -> Result<Json<()>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(Account::remove_asset(&state, account_identity.0, asset_identity.0).await?))
     }
 }

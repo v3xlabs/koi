@@ -15,7 +15,12 @@ export const Route = createFileRoute("/onboarding")({
           >
             {item => (
               <li class="text-sm">
-                <Link to={item.href} class="h-full hover:bg-surface-alt rounded-md px-2 py-1" activeProps={{ class: "bg-surface-alt" }} activeOptions={{ exact: true }}>
+                <Link
+                  to={item.href}
+                  class="h-full hover:bg-surface-alt rounded-md px-2 py-1"
+                  activeProps={{ class: "bg-surface-alt" }}
+                  activeOptions={{ exact: true }}
+                >
                   {item.label}
                 </Link>
               </li>

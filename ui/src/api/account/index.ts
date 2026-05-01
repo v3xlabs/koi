@@ -27,3 +27,15 @@ export const useUpdateAccount = createApiMutation("/acc/{account_identity}", "pu
         queryClient.invalidateQueries({ queryKey: ["account", x.account_identity.toString()] });
     },
 });
+
+export const useAccountAssets = createApi("/acc/{account_identity}/assets", "get", options => ["account", options.path.account_identity.toString(), "assets"]);
+export const useAddAccountAsset = createApiMutation("/acc/{account_identity}/asset/{asset_identity}", "post", {
+    onSuccess: (x) => {
+        queryClient.invalidateQueries({ queryKey: ["account", x.account_identity, "assets"] });
+    },
+});
+export const useRemoveAccountAsset = createApiMutation("/acc/{account_identity}/asset/{asset_identity}", "delete", {
+    onSuccess: (x) => {
+        queryClient.invalidateQueries({ queryKey: ["account", x.account_identity, "assets"] });
+    },
+});

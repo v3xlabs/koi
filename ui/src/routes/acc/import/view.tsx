@@ -37,11 +37,21 @@ export const Route = createFileRoute("/acc/import/view")({
           <div class="space-y-4">
             <label class="space-y-1 block">
               <span class="block">Name</span>
-              <input type="text" class="input w-full" value={name()} onChange={e => setName(e.target.value)} />
+              <input
+                type="text"
+                class="input w-full"
+                value={name()}
+                onChange={e => setName(e.target.value)}
+              />
             </label>
             <label class="space-y-1 block">
               <span class="block">Address</span>
-              <AddressInput placeholder="0x123...456" class="w-full" value={address} onChange={setAddress} />
+              <AddressInput
+                placeholder="0x123...456"
+                class="w-full"
+                value={address}
+                onChange={setAddress}
+              />
             </label>
             <label class="space-y-1 block">
               <span class="block">Networks</span>

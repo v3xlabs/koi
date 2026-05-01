@@ -5,8 +5,7 @@ use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
 use crate::{
     error::KoiError,
     models::{
-        account::{identity::AccountIdentity, metadata::WalletType},
-        network::identity::NetworkIdentity,
+        account::{identity::AccountIdentity, metadata::WalletType}, asset::identity::AssetIdentity, network::identity::NetworkIdentity
     },
     state::AppState,
 };
@@ -107,6 +106,34 @@ impl Account {
             .bind(serde_json::to_string(&account.metadata.unwrap_or(original.metadata)).map_err(|x| sqlx::Error::Encode(Box::new(x)))?)
             .bind(account_identity.0 as i64)
             .fetch_one(&state.database)
+            .await
+            .map_err(KoiError::from)
+    }
+
+    pub async fn add_asset(state: &AppState, account_identity: AccountIdentity, asset_identity: AssetIdentity) -> Result<(), KoiError> {
+        query("INSERT INTO account_assets (account_identity, asset_identity) VALUES (?, ?)")
+            .bind(account_identity)
+            .bind(asset_identity)
+            .execute(&state.database)
+            .await
+            .map_err(KoiError::from)
+            .map(|_| ())
+    }
+
+    pub async fn remove_asset(state: &AppState, account_identity: AccountIdentity, asset_identity: AssetIdentity) -> Result<(), KoiError> {
+        query("DELETE FROM account_assets WHERE account_identity = ? AND asset_identity = ?")
+            .bind(account_identity)
+            .bind(asset_identity)
+            .execute(&state.database)
+            .await
+            .map_err(KoiError::from)
+            .map(|_| ())
+    }
+
+    pub async fn get_assets(state: &AppState, account_identity: AccountIdentity) -> Result<Vec<AssetIdentity>, KoiError> {
+        query_as::<_, AssetIdentity>("SELECT asset_identity FROM account_assets WHERE account_identity = ?")
+            .bind(account_identity)
+            .fetch_all(&state.database)
             .await
             .map_err(KoiError::from)
     }

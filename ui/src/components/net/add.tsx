@@ -44,11 +44,21 @@ export const NetworkAdd = () => {
                                 <div class="w-full">
                                     <label class="space-y-1 block w-full">
                                         <span>Chain Id</span>
-                                        <input type="text" class="input w-full" value={chainId()} onChange={e => setChainId(e.target.value)} />
+                                        <input
+                                          type="text"
+                                          class="input w-full"
+                                          value={chainId()}
+                                          onChange={e => setChainId(e.target.value)}
+                                        />
                                     </label>
                                     <label class="space-y-1 block w-full">
                                         <span>Name</span>
-                                        <input type="text" class="input w-full" value={name()} onChange={e => setName(e.target.value)} />
+                                        <input
+                                          type="text"
+                                          class="input w-full"
+                                          value={name()}
+                                          onChange={e => setName(e.target.value)}
+                                        />
                                     </label>
                                     <div class="flex justify-end">
                                         <button class="btn btn-primary" onClick={() => createNetwork.mutate({ data: { network_identity: Number.parseInt(chainId()), network_name: name() } })}>

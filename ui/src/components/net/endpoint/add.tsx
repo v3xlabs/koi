@@ -37,19 +37,39 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
                         <div class="w-full">
                             <label class="space-y-1 block w-full">
                                 <span>Name</span>
-                                <input type="text" class="input w-full" value={name()} onChange={e => setName(e.target.value)} />
+                                <input
+                                  type="text"
+                                  class="input w-full"
+                                  value={name()}
+                                  onChange={e => setName(e.target.value)}
+                                />
                             </label>
                             <label class="space-y-1 block w-full">
                                 <span>URL</span>
-                                <input type="text" class="input w-full" value={url()} onChange={e => setUrl(e.target.value)} />
+                                <input
+                                  type="text"
+                                  class="input w-full"
+                                  value={url()}
+                                  onChange={e => setUrl(e.target.value)}
+                                />
                             </label>
                             <label class="space-y-1 block w-full">
                                 <span>Type</span>
-                                <input type="text" class="input w-full" value={type()} onChange={e => setType(e.target.value)} />
+                                <input
+                                  type="text"
+                                  class="input w-full"
+                                  value={type()}
+                                  onChange={e => setType(e.target.value)}
+                                />
                             </label>
                             <label class="space-y-1 block w-full">
                                 <span>Enabled</span>
-                                <input type="checkbox" class="input w-full" checked={!disabled()} onChange={e => setDisabled(!e.target.checked)} />
+                                <input
+                                  type="checkbox"
+                                  class="input w-full"
+                                  checked={!disabled()}
+                                  onChange={e => setDisabled(!e.target.checked)}
+                                />
                             </label>
                             <div class="flex justify-end">
                                 <button

@@ -61,7 +61,12 @@ const AccountEdit: Component<{ account: Accessor<Account>; }> = ({ account }) =>
     <div class="bg-surface p-4 rounded-md w-full space-y-4">
       <div>
         <div>Name</div>
-        <input type="text" class="input w-full" value={chosenName()} onChange={e => setName(e.target.value)} />
+        <input
+          type="text"
+          class="input w-full"
+          value={chosenName()}
+          onChange={e => setName(e.target.value)}
+        />
       </div>
       <div>
         <div>Networks</div>
