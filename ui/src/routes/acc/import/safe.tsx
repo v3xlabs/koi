@@ -9,4 +9,3 @@ export const Route = createFileRoute("/acc/import/safe")({
     </div>
   ),
 });
-

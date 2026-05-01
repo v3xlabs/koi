@@ -5,8 +5,8 @@ import { match } from "ts-pattern";
 import { Asset, useCreateAsset } from "#/api/asset";
 
 import { Modal } from "../dialog";
-import { NetworkSelect } from "../net/input";
 import { AddressInput } from "../input/address";
+import { NetworkSelect } from "../net/input";
 
 const PLACEHOLDERS: Record<string, {
     name: string;

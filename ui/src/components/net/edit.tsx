@@ -1,7 +1,7 @@
 import { Tabs } from "@kobalte/core/tabs";
 import { Component, For, Show, Suspense } from "solid-js";
 
-import { useNetwork, useNetworkEndpoints, useUpdateNetwork } from "#/api/network";
+import { useNetwork, useNetworkEndpoints } from "#/api/network";
 
 import { NetworkDelete } from "./delete";
 import { NetworkEndpointAdd } from "./endpoint/add";

@@ -1,6 +1,9 @@
 use crate::{
     http::auth::Auth,
-    models::{account::{Account, AccountUpdate, identity::AccountIdentity}, asset::identity::AssetIdentity},
+    models::{
+        account::{Account, AccountUpdate, identity::AccountIdentity},
+        asset::identity::AssetIdentity,
+    },
     state::AppState,
 };
 
@@ -41,7 +44,11 @@ impl AccountApi {
     /// Get an account by ID
     ///
     /// GET /api/acc/:account_identity
-    #[oai(path = "/acc/:account_identity", method = "get", tag = "ApiTags::Account")]
+    #[oai(
+        path = "/acc/:account_identity",
+        method = "get",
+        tag = "ApiTags::Account"
+    )]
     async fn get_account_by_id(
         &self,
         auth: Auth,
@@ -87,7 +94,11 @@ impl AccountApi {
     /// Delete an account by ID
     ///
     /// DELETE /api/acc/:account_identity
-    #[oai(path = "/acc/:account_identity", method = "delete", tag = "ApiTags::Account")]
+    #[oai(
+        path = "/acc/:account_identity",
+        method = "delete",
+        tag = "ApiTags::Account"
+    )]
     async fn delete_account_by_id(
         &self,
         auth: Auth,
@@ -102,7 +113,11 @@ impl AccountApi {
     /// Update an account by ID
     ///
     /// PUT /api/acc/:account_identity
-    #[oai(path = "/acc/:account_identity", method = "put", tag = "ApiTags::Account")]
+    #[oai(
+        path = "/acc/:account_identity",
+        method = "put",
+        tag = "ApiTags::Account"
+    )]
     async fn update_account_by_id(
         &self,
         auth: Auth,
@@ -120,7 +135,11 @@ impl AccountApi {
     /// Get the assets of an account
     ///
     /// GET /api/acc/:account_identity/assets
-    #[oai(path = "/acc/:account_identity/assets", method = "get", tag = "ApiTags::Account")]
+    #[oai(
+        path = "/acc/:account_identity/assets",
+        method = "get",
+        tag = "ApiTags::Account"
+    )]
     async fn get_assets_of_account(
         &self,
         auth: Auth,
@@ -135,7 +154,11 @@ impl AccountApi {
     /// Add an asset to an account
     ///
     /// POST /api/acc/:account_identity/asset/:asset_identity
-    #[oai(path = "/acc/:account_identity/asset/:asset_identity", method = "post", tag = "ApiTags::Account")]
+    #[oai(
+        path = "/acc/:account_identity/asset/:asset_identity",
+        method = "post",
+        tag = "ApiTags::Account"
+    )]
     async fn add_asset_to_account(
         &self,
         auth: Auth,
@@ -145,13 +168,19 @@ impl AccountApi {
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Account::add_asset(&state, account_identity.0, asset_identity.0).await?))
+        Ok(Json(
+            Account::add_asset(&state, account_identity.0, asset_identity.0).await?,
+        ))
     }
 
     /// Remove an asset from an account
     ///
     /// DELETE /api/acc/:account_identity/asset/:asset_identity
-    #[oai(path = "/acc/:account_identity/asset/:asset_identity", method = "delete", tag = "ApiTags::Account")]
+    #[oai(
+        path = "/acc/:account_identity/asset/:asset_identity",
+        method = "delete",
+        tag = "ApiTags::Account"
+    )]
     async fn remove_asset_from_account(
         &self,
         auth: Auth,
@@ -161,6 +190,8 @@ impl AccountApi {
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Account::remove_asset(&state, account_identity.0, asset_identity.0).await?))
+        Ok(Json(
+            Account::remove_asset(&state, account_identity.0, asset_identity.0).await?,
+        ))
     }
 }

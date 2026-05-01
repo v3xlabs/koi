@@ -33,7 +33,10 @@ impl Asset {
             .map_err(KoiError::from)
     }
 
-    pub async fn get_by_id(state: &AppState, asset_identity: &AssetIdentity) -> Result<Asset, KoiError> {
+    pub async fn get_by_id(
+        state: &AppState,
+        asset_identity: &AssetIdentity,
+    ) -> Result<Asset, KoiError> {
         query_as::<_, Asset>("SELECT * FROM assets WHERE asset_identity = ?")
             .bind(asset_identity)
             .fetch_one(&state.database)

@@ -5,7 +5,9 @@ use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
 use crate::{
     error::KoiError,
     models::{
-        account::{identity::AccountIdentity, metadata::WalletType}, asset::identity::AssetIdentity, network::identity::NetworkIdentity
+        account::{identity::AccountIdentity, metadata::WalletType},
+        asset::identity::AssetIdentity,
+        network::identity::NetworkIdentity,
     },
     state::AppState,
 };
@@ -84,7 +86,10 @@ impl Account {
             .map_err(KoiError::from)
     }
 
-    pub async fn delete(state: &AppState, account_identity: AccountIdentity) -> Result<(), KoiError> {
+    pub async fn delete(
+        state: &AppState,
+        account_identity: AccountIdentity,
+    ) -> Result<(), KoiError> {
         query("DELETE FROM accounts WHERE account_identity = ?")
             .bind(account_identity)
             .execute(&state.database)
@@ -110,7 +115,11 @@ impl Account {
             .map_err(KoiError::from)
     }
 
-    pub async fn add_asset(state: &AppState, account_identity: AccountIdentity, asset_identity: AssetIdentity) -> Result<(), KoiError> {
+    pub async fn add_asset(
+        state: &AppState,
+        account_identity: AccountIdentity,
+        asset_identity: AssetIdentity,
+    ) -> Result<(), KoiError> {
         query("INSERT INTO account_assets (account_identity, asset_identity) VALUES (?, ?)")
             .bind(account_identity)
             .bind(asset_identity)
@@ -120,7 +129,11 @@ impl Account {
             .map(|_| ())
     }
 
-    pub async fn remove_asset(state: &AppState, account_identity: AccountIdentity, asset_identity: AssetIdentity) -> Result<(), KoiError> {
+    pub async fn remove_asset(
+        state: &AppState,
+        account_identity: AccountIdentity,
+        asset_identity: AssetIdentity,
+    ) -> Result<(), KoiError> {
         query("DELETE FROM account_assets WHERE account_identity = ? AND asset_identity = ?")
             .bind(account_identity)
             .bind(asset_identity)
@@ -130,11 +143,16 @@ impl Account {
             .map(|_| ())
     }
 
-    pub async fn get_assets(state: &AppState, account_identity: AccountIdentity) -> Result<Vec<AssetIdentity>, KoiError> {
-        query_as::<_, AssetIdentity>("SELECT asset_identity FROM account_assets WHERE account_identity = ?")
-            .bind(account_identity)
-            .fetch_all(&state.database)
-            .await
-            .map_err(KoiError::from)
+    pub async fn get_assets(
+        state: &AppState,
+        account_identity: AccountIdentity,
+    ) -> Result<Vec<AssetIdentity>, KoiError> {
+        query_as::<_, AssetIdentity>(
+            "SELECT asset_identity FROM account_assets WHERE account_identity = ?",
+        )
+        .bind(account_identity)
+        .fetch_all(&state.database)
+        .await
+        .map_err(KoiError::from)
     }
 }

@@ -72,7 +72,11 @@ impl NetworkApi {
     /// Get a network by ID
     ///
     /// GET /api/net/:network_identity
-    #[oai(path = "/net/:network_identity", method = "get", tag = "ApiTags::Network")]
+    #[oai(
+        path = "/net/:network_identity",
+        method = "get",
+        tag = "ApiTags::Network"
+    )]
     async fn get_network_by_id(
         &self,
         auth: Auth,
@@ -87,7 +91,11 @@ impl NetworkApi {
     /// Update a network by ID
     ///
     /// PUT /api/net/:network_identity
-    #[oai(path = "/net/:network_identity", method = "put", tag = "ApiTags::Network")]
+    #[oai(
+        path = "/net/:network_identity",
+        method = "put",
+        tag = "ApiTags::Network"
+    )]
     async fn update_network_by_id(
         &self,
         auth: Auth,
@@ -105,7 +113,11 @@ impl NetworkApi {
     /// Delete a network by ID
     ///
     /// DELETE /api/net/:network_identity
-    #[oai(path = "/net/:network_identity", method = "delete", tag = "ApiTags::Network")]
+    #[oai(
+        path = "/net/:network_identity",
+        method = "delete",
+        tag = "ApiTags::Network"
+    )]
     async fn delete_network_by_id(
         &self,
         auth: Auth,
@@ -199,7 +211,8 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::get_by_id(&state.database, &network_identity.0, &endpoint_identity.0).await?,
+            NetworkEndpoint::get_by_id(&state.database, &network_identity.0, &endpoint_identity.0)
+                .await?,
         ))
     }
 
@@ -222,7 +235,8 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         let updated_endpoint =
-            NetworkEndpoint::update(&state, &network_identity, &endpoint_identity, payload.0).await?;
+            NetworkEndpoint::update(&state, &network_identity, &endpoint_identity, payload.0)
+                .await?;
 
         // Notify the running rpc
         state

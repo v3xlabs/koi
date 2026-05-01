@@ -33,7 +33,10 @@ impl Network {
             .map_err(KoiError::from)
     }
 
-    pub async fn get_by_id(state: &AppState, network_identity: &NetworkIdentity) -> Result<Network, KoiError> {
+    pub async fn get_by_id(
+        state: &AppState,
+        network_identity: &NetworkIdentity,
+    ) -> Result<Network, KoiError> {
         query_as::<_, Network>("SELECT * FROM networks WHERE network_identity = ?")
             .bind(network_identity)
             .fetch_one(&state.database)
@@ -73,7 +76,10 @@ impl Network {
             .map_err(KoiError::from)
     }
 
-    pub async fn delete(state: &AppState, network_identity: &NetworkIdentity) -> Result<(), KoiError> {
+    pub async fn delete(
+        state: &AppState,
+        network_identity: &NetworkIdentity,
+    ) -> Result<(), KoiError> {
         query("DELETE FROM networks WHERE network_identity = ?")
             .bind(network_identity)
             .execute(&state.database)

@@ -52,7 +52,11 @@ impl AssetApi {
     /// Get an asset by ID
     ///
     /// GET /api/asset/:asset_identity
-    #[oai(path = "/asset/:asset_identity", method = "get", tag = "ApiTags::Asset")]
+    #[oai(
+        path = "/asset/:asset_identity",
+        method = "get",
+        tag = "ApiTags::Asset"
+    )]
     async fn get_asset_by_id(
         &self,
         auth: Auth,
@@ -67,7 +71,11 @@ impl AssetApi {
     /// Update an asset by ID
     ///
     /// PUT /api/asset/:asset_identity
-    #[oai(path = "/asset/:asset_identity", method = "put", tag = "ApiTags::Asset")]
+    #[oai(
+        path = "/asset/:asset_identity",
+        method = "put",
+        tag = "ApiTags::Asset"
+    )]
     async fn update_asset_by_id(
         &self,
         auth: Auth,
@@ -77,13 +85,19 @@ impl AssetApi {
     ) -> Result<Json<Asset>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Asset::update(&state, &asset_identity, payload.0).await?))
+        Ok(Json(
+            Asset::update(&state, &asset_identity, payload.0).await?,
+        ))
     }
 
     /// Delete an asset by ID
     ///
     /// DELETE /api/asset/:asset_identity
-    #[oai(path = "/asset/:asset_identity", method = "delete", tag = "ApiTags::Asset")]
+    #[oai(
+        path = "/asset/:asset_identity",
+        method = "delete",
+        tag = "ApiTags::Asset"
+    )]
     async fn delete_asset_by_id(
         &self,
         auth: Auth,

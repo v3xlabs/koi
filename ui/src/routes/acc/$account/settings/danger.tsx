@@ -16,4 +16,3 @@ export const Route = createFileRoute("/acc/$account/settings/danger")({
     </div>
   ),
 });
-
