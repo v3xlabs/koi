@@ -56,9 +56,9 @@ impl<'q> Encode<'q, Sqlite> for AssetIdentity {
 impl Display for AssetIdentity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            AssetIdentity::Native(network_id) => write!(f, "native:{}", network_id),
-            AssetIdentity::ERC20(network_id, address) => {
-                write!(f, "erc20:{}:{}", network_id, address)
+            AssetIdentity::Native(network_identity) => write!(f, "native:{}", network_identity),
+            AssetIdentity::ERC20(network_identity, address) => {
+                write!(f, "erc20:{}:{}", network_identity, address)
             }
             AssetIdentity::Fiat(code) => write!(f, "fiat:{}", code),
         }
@@ -74,8 +74,8 @@ impl FromStr for AssetIdentity {
             ["native", network_id] => Ok(AssetIdentity::Native(NetworkIdentity::from_str(
                 network_id,
             )?)),
-            ["erc20", network_id, address] => Ok(AssetIdentity::ERC20(
-                NetworkIdentity::from_str(network_id)?,
+            ["erc20", network_identity, address] => Ok(AssetIdentity::ERC20(
+                NetworkIdentity::from_str(network_identity)?,
                 Address::from_str(address)?,
             )),
             ["fiat", code] => Ok(AssetIdentity::Fiat(code.to_string())),
