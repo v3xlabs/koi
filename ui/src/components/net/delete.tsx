@@ -5,7 +5,7 @@ import { useDeleteNetwork } from "#/api/network";
 import { Modal } from "../dialog";
 
 export const NetworkDelete: Component<{ network_identity: number; children?: JSX.Element; }> = ({ network_identity, children }) => {
-    const deleteNetwork = useDeleteNetwork(() => ({
+    const deleteNetwork = useDeleteNetwork<{ network_identity: number; }>(({ network_identity }) => ({
         path: {
             network_identity,
         },
@@ -32,7 +32,7 @@ export const NetworkDelete: Component<{ network_identity: number; children?: JSX
                             . This action cannot be undone.
                         </div>
                         <div class="w-full flex justify-end gap-2 p-4">
-                            <button class="btn btn-primary" onClick={() => deleteNetwork.mutate({})}>Delete</button>
+                            <button class="btn btn-primary" onClick={() => deleteNetwork.mutate({ network_identity })}>Delete</button>
                             <Modal.CloseButton class="btn btn-secondary">
                                 Cancel
                             </Modal.CloseButton>

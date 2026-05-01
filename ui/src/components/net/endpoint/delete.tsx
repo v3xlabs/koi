@@ -5,7 +5,7 @@ import { useDeleteNetworkEndpoint } from "#/api/network";
 import { Modal } from "../../dialog";
 
 export const NetworkEndpointDelete: Component<{ network_identity: number; endpoint_identity: number; children?: JSX.Element; }> = ({ network_identity, endpoint_identity, children }) => {
-    const deleteNetworkEndpoint = useDeleteNetworkEndpoint(() => ({
+    const deleteNetworkEndpoint = useDeleteNetworkEndpoint<{ network_identity: number; endpoint_identity: number; }>(({ network_identity, endpoint_identity }) => ({
         path: {
             network_identity,
             endpoint_identity,
@@ -33,7 +33,7 @@ export const NetworkEndpointDelete: Component<{ network_identity: number; endpoi
                             . This action cannot be undone.
                         </div>
                         <div class="w-full flex justify-end gap-2 p-4">
-                            <button class="btn btn-primary" onClick={() => deleteNetworkEndpoint.mutate({})}>Delete</button>
+                            <button class="btn btn-primary" onClick={() => deleteNetworkEndpoint.mutate({ network_identity, endpoint_identity })}>Delete</button>
                             <Modal.CloseButton class="btn btn-secondary">
                                 Cancel
                             </Modal.CloseButton>

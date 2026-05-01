@@ -1,18 +1,25 @@
 import { Skeleton } from "@kobalte/core/skeleton";
+import { createQueries } from "@tanstack/solid-query";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel } from "@tanstack/solid-table";
-import { Component, For } from "solid-js";
+import { Component, createMemo, For } from "solid-js";
 
-type Data = { name: string; price: bigint; balance: bigint; };
+import { api } from "#/api";
+import { useAccountAssets } from "#/api/account";
+import { Asset } from "#/api/asset";
+
+import { AssetIcon } from "./icon";
+
+type Data = { asset: Asset; price: bigint; balance: bigint; };
 const helper = createColumnHelper<Data>();
 
 const columns = [
-    helper.accessor("name", {
+    helper.accessor("asset.asset_name", {
         header: "Name",
         cell: ({ row }) => (
             <div class="flex items-center gap-2 py-3.5">
-                <div class="size-10 bg-surface-alt border border-border rounded-full aspect-square" />
-                <Skeleton visible={!row.original.name || row.original.name === "placeholder"} class="skeleton animate-spin">
-                    {row.original.name}
+                <AssetIcon asset_identity={row.original.asset.asset_identity} />
+                <Skeleton visible={!row.original.asset.asset_name || row.original.asset.asset_name === "placeholder"} class="skeleton animate-spin">
+                    {row.original.asset.asset_name}
                 </Skeleton>
             </div>
         ),
@@ -35,7 +42,7 @@ const columns = [
                 <Skeleton visible={!row.original.price} class="skeleton animate-spin">
                     {row.original.balance?.toString()}
                     {" "}
-                    {row.original.name}
+                    {row.original.asset.asset_symbol}
                 </Skeleton>
                 <Skeleton visible={!row.original.price || !row.original.balance} class="skeleton animate-spin text-muted">
                     $
@@ -46,38 +53,61 @@ const columns = [
     }),
 ];
 
-export const AccountAssetTable: Component<{ account_identity: string; }> = (params) => {
-    const data = [{
-        name: "ETH",
+export const AccountAssetTable: Component<{ account_identity: number; }> = ({ account_identity }) => {
+    const accountAssetsQuery = useAccountAssets(() => ({ path: { account_identity } }));
+
+    const bulk = createQueries(() => ({
+        queries: accountAssetsQuery.data?.map(asset => ({
+            queryKey: ["asset", asset],
+            queryFn: async () => {
+                const request = await api("/asset/{asset_identity}", "get", {
+                    path: {
+                        asset_identity: asset,
+                    },
+                });
+
+                return request.data;
+            },
+        })) ?? [],
+    }));
+
+    const data = createMemo(() => bulk?.map(asset => ({
+        asset: asset.data,
         price: 1000n,
         balance: 100n,
-    }, {
-        name: "USDC",
-        price: 1000n,
-        balance: 100n,
-    }, {
-        name: "USDT",
-        price: 1000n,
-        balance: 100n,
-    }, {
-        name: "DAI",
-        price: 1000n,
-        balance: 100n,
-    }, {
-        name: "WBTC",
-        price: 1000n,
-        balance: 100n,
-    },
-    {
-        name: "placeholder",
-        price: undefined,
-        balance: undefined,
-    }];
+    }))?.filter(asset => asset.asset !== undefined) ?? []);
+
+    // const data = [{
+    //     name: "ETH",
+    //     price: 1000n,
+    //     balance: 100n,
+    // }, {
+    //     name: "USDC",
+    //     price: 1000n,
+    //     balance: 100n,
+    // }, {
+    //     name: "USDT",
+    //     price: 1000n,
+    //     balance: 100n,
+    // }, {
+    //     name: "DAI",
+    //     price: 1000n,
+    //     balance: 100n,
+    // }, {
+    //     name: "WBTC",
+    //     price: 1000n,
+    //     balance: 100n,
+    // },
+    // {
+    //     name: "placeholder",
+    //     price: undefined,
+    //     balance: undefined,
+    // }];
 
     const table = createSolidTable({
         columns,
         get data() {
-            return data;
+            return data();
         },
         getCoreRowModel: getCoreRowModel(),
     });

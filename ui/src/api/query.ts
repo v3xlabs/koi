@@ -7,26 +7,27 @@ import { paths } from "./schema.gen";
 
 export type CreateApiOptions<T> = () => T;
 
+export type ApiQueryKey = readonly unknown[];
+
 type QT<T, Q, R> = T extends undefined ? R : Q extends undefined ? R : (R | undefined);
 
 type ApiPropsTwo<TOptions, QueryKeyFn> = QT<TOptions, QueryKeyFn, () => TOptions>;
+
+type ApiQueryOptions<TData> = Omit<Partial<QueryOptions<TData, Error, any, any>>, "queryKey" | "queryFn">;
 
 export const createApi = <
     TPath extends keyof paths,
     TMethod extends PathMethods<paths, TPath>,
     TOptions extends Parameters<typeof api<TPath, TMethod>>[2],
     TData extends Awaited<ReturnType<typeof api<TPath, TMethod>>>["data"],
-    QueryKeyFn extends ((options: TOptions) => string[]) | undefined = ((options: TOptions) => string[]),
->(path: TPath, method: TMethod, queryKeygen?: QueryKeyFn) => {
-    console.log("setup");
-
-    return (propstwo: ApiPropsTwo<TOptions, QueryKeyFn> = undefined as ApiPropsTwo<TOptions, QueryKeyFn>, extraOptions: Partial<QueryOptions<TData, Error, any, any>> = {}) => createQuery(() => {
+    QueryKeyFn extends ((options: TOptions) => ApiQueryKey) | undefined = ((options: TOptions) => ApiQueryKey),
+>(path: TPath, method: TMethod, queryKeygen?: QueryKeyFn) =>
+    (propstwo: ApiPropsTwo<TOptions, QueryKeyFn> = undefined as ApiPropsTwo<TOptions, QueryKeyFn>, extraOptions: ApiQueryOptions<TData> = {}) => createQuery(() => {
         const options: TOptions = propstwo ? propstwo() : {} as TOptions;
 
         const queryKey = queryKeygen?.(options);
 
         if (!queryKey) {
-            console.log("query key is required");
             throw new Error("Query key is required");
         }
 
@@ -40,7 +41,6 @@ export const createApi = <
             ...extraOptions,
         };
     });
-};
 
 type ApiPropsThree<TOptions, TTOptions> = (props: TTOptions) => TOptions;
 

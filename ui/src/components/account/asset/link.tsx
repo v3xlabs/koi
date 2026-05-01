@@ -1,7 +1,7 @@
-import { FiPlus, FiRefreshCcw } from "solid-icons/fi";
+import { FiPlus, FiRefreshCcw, FiX } from "solid-icons/fi";
 import { Component, createMemo, For } from "solid-js";
 
-import { useAccountAssets, useAddAccountAsset } from "#/api/account";
+import { useAccountAssets, useAddAccountAsset, useRemoveAccountAsset } from "#/api/account";
 import { useAssets } from "#/api/asset";
 import { AssetPreview } from "#/components/asset/preview";
 import { Modal } from "#/components/dialog";
@@ -9,12 +9,7 @@ import { Modal } from "#/components/dialog";
 export const AccountAssetLink: Component<{ account_identity: number; }> = ({ account_identity }) => {
     const assetsQuery = useAssets();
     const accountAssetsQuery = useAccountAssets(() => ({ path: { account_identity } }));
-    const linkAsset = useAddAccountAsset<{ asset_identity: string; }>(({ asset_identity }) => ({ path: { account_identity, asset_identity } }), {
-        onSuccess(data, variables, onMutateResult, context) {
-            console.log("f", data, variables, onMutateResult, context);
-            context.client.invalidateQueries({ queryKey: ["account", account_identity, "assets"] });
-        },
-    });
+    const linkAsset = useAddAccountAsset<{ account_identity: number; asset_identity: string; }>(({ account_identity, asset_identity }) => ({ path: { account_identity, asset_identity } }));
 
     // Filters out assets already linked, and fiat assets (as linking a fiat asset to an evm wallet should not be done)
     const filteredAssets = createMemo(() => assetsQuery.data?.assets?.filter(asset => !asset.asset_identity.startsWith("fiat:") && !accountAssetsQuery.data?.includes(asset.asset_identity)));
@@ -47,7 +42,7 @@ export const AccountAssetLink: Component<{ account_identity: number; }> = ({ acc
                                                     </button>
                                                     <button
                                                       class="btn btn-primary aspect-square flex items-center justify-center"
-                                                      onClick={() => linkAsset.mutate({ asset_identity: asset.asset_identity })}
+                                                      onClick={() => linkAsset.mutate({ account_identity, asset_identity: asset.asset_identity })}
                                                     >
                                                         <FiPlus />
                                                     </button>
@@ -62,5 +57,15 @@ export const AccountAssetLink: Component<{ account_identity: number; }> = ({ acc
                 </div>
             </Modal.Portal>
         </Modal>
+    );
+};
+
+export const AssetUnlink: Component<{ account_identity: number; asset_identity: string; }> = ({ account_identity, asset_identity }) => {
+    const unlinkAsset = useRemoveAccountAsset<{ account_identity: number; asset_identity: string; }>(({ account_identity, asset_identity }) => ({ path: { account_identity, asset_identity } }));
+
+    return (
+        <button class="btn btn-secondary aspect-square flex items-center justify-center" onClick={() => unlinkAsset.mutate({ account_identity, asset_identity })}>
+            <FiX />
+        </button>
     );
 };
