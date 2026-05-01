@@ -1,7 +1,7 @@
 use crate::{
     http::auth::Auth,
     models::{
-        account::{Account, AccountUpdate, identity::AccountIdentity},
+        account::{Account, AccountUpdate, balances::AccountBalances, identity::AccountIdentity},
         asset::identity::AssetIdentity,
     },
     state::AppState,
@@ -193,5 +193,26 @@ impl AccountApi {
         Ok(Json(
             Account::remove_asset(&state, account_identity.0, asset_identity.0).await?,
         ))
+    }
+
+    /// Get the balances of an account
+    ///
+    /// GET /api/acc/:account_identity/balances
+    #[oai(
+        path = "/acc/:account_identity/balances",
+        method = "get",
+        tag = "ApiTags::Account"
+    )]
+    async fn get_balances_of_account(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        account_identity: Path<AccountIdentity>,
+    ) -> Result<Json<AccountBalances>> {
+        let _auth_data = auth.unwrap()?;
+
+        let account = Account::get_by_id(&state, account_identity.0).await?;
+
+        Ok(Json(account.get_balances(&state).await?))
     }
 }

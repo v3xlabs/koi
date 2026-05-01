@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use alloy::primitives::Address;
 use poem_openapi::{Object, Union};
 use serde::{Deserialize, Serialize};
 use sqlx::{
@@ -87,5 +88,18 @@ impl FromStr for WalletType {
 impl ToString for WalletType {
     fn to_string(&self) -> String {
         serde_json::to_string(self).unwrap()
+    }
+}
+
+impl WalletType {
+    pub fn unwrap_address(&self) -> Option<Address> {
+        let address = match self {
+            WalletType::EOA(EOAWallet { evm_address }) => Some(evm_address),
+            WalletType::Safe(SafeWallet { evm_address }) => Some(evm_address),
+            WalletType::View(ViewWallet { evm_address }) => Some(evm_address),
+            WalletType::Railgun(RailgunWallet { railgun_address }) => Some(railgun_address),
+        };
+
+        address.map(|address| Address::from_str(address).unwrap())
     }
 }

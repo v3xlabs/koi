@@ -125,14 +125,16 @@ body {
     content: "";
     inset: 0;
     z-index: 10;
-    background-color: white;
+    background-color: var(--color-surface-alt);
+    border-radius: 4px;
 }
 .skeleton[data-visible="true"]::after {
     position: absolute;
     content: "";
     inset: 0;
     z-index: 11;
-    background-color: gray;
+    background-color: var(--color-muted);
+    border-radius: 4px;
 }
 
 .toast {

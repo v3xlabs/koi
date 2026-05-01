@@ -1,4 +1,5 @@
 import { SegmentedControl } from "@kobalte/core/segmented-control";
+import { FiPlus } from "solid-icons/fi";
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import { match } from "ts-pattern";
 
@@ -132,8 +133,10 @@ export const AssetAdd = () => {
 
     return (
         <Modal>
-            <Modal.Trigger class="btn btn-primary">
-                Add Asset
+            <Modal.Trigger class="btn btn-primary flex items-center gap-2">
+                Add
+                {" "}
+                <FiPlus />
             </Modal.Trigger>
             <Modal.Portal>
                 <Modal.Overlay />

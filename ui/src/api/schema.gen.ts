@@ -304,6 +304,46 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/acc/{account_identity}/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the balances of an account
+         * @description GET /api/acc/:account_identity/balances
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    account_identity: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountBalances"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/net": {
         parameters: {
             query?: never;
@@ -987,6 +1027,17 @@ export type components = {
             name: string;
             networks: number[];
             metadata: components["schemas"]["WalletType"];
+        };
+        /** AccountBalance */
+        AccountBalance: {
+            asset_identity: string;
+            balance: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /** AccountBalances */
+        AccountBalances: {
+            balances: components["schemas"]["AccountBalance"][];
         };
         /** AccountUpdate */
         AccountUpdate: {

@@ -1,3 +1,4 @@
+use alloy::primitives::Address;
 use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
@@ -14,6 +15,7 @@ use crate::{
 
 pub mod identity;
 pub mod metadata;
+pub mod balances;
 
 #[derive(Serialize, Deserialize, Object, Clone)]
 pub struct Account {

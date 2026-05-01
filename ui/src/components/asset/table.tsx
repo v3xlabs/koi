@@ -3,12 +3,13 @@ import { createQueries } from "@tanstack/solid-query";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel } from "@tanstack/solid-table";
 import { Component, createMemo, For } from "solid-js";
 
-import { useAccountAssets } from "#/api/account";
+import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
+import { formatUnits } from "#/utils/units";
 
 import { AssetIcon } from "./icon";
 
-type Data = { asset: Asset; price: bigint; balance: bigint; };
+type Data = { asset: Asset; price: bigint | undefined; balance: bigint | undefined; };
 const helper = createColumnHelper<Data>();
 
 const columns = [
@@ -27,12 +28,14 @@ const columns = [
         header: "Price",
         cell: ({ row }) => (
             <div class="flex items-center gap-2 py-3.5">
-                <Skeleton visible={!row.original.price} class="skeleton animate-spin">
-                    $
-                    <span class="tabular-nums">
-                        {row.original.price?.toString()}
-                    </span>
-                </Skeleton>
+                <span class="min-w-4">
+                    <Skeleton visible={!row.original.price} class="skeleton">
+                        $
+                        <span class="tabular-nums">
+                            {row.original.price?.toString()}
+                        </span>
+                    </Skeleton>
+                </span>
             </div>
         ),
     }),
@@ -40,14 +43,14 @@ const columns = [
         header: "Balance",
         cell: ({ row }) => (
             <div class="space-y-1">
-                <Skeleton visible={!row.original.price} class="skeleton animate-spin">
+                <Skeleton visible={row.original.balance === undefined} class="skeleton">
                     <span class="tabular-nums">
-                        {row.original.balance?.toString()}
+                        {row.original.balance === undefined ? "-" : formatUnits(row.original.balance, row.original.asset.asset_decimals)}
                     </span>
                     {" "}
                     {row.original.asset.asset_symbol}
                 </Skeleton>
-                <Skeleton visible={!row.original.price || !row.original.balance} class="skeleton animate-spin text-muted">
+                <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton text-muted max-w-24 max-h-4 rounded-md">
                     $
                     <span class="tabular-nums">
                         {(Number(row.original.balance) * Number(row.original.price)).toFixed(2)}
@@ -66,42 +69,20 @@ export const AccountAssetTable: Component<{ account_identity: number; }> = ({ ac
         queries: assetQueries(),
     }));
 
+    const accountBalancesQuery = useAccountBalances(() => ({ path: { account_identity } }));
+    const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
+
     const data = createMemo(() => bulk.flatMap((asset): Data[] => {
         if (!asset.data) return [];
 
+        const balance = balances().find(balance => balance.asset_identity === asset.data.asset_identity);
+
         return [{
             asset: asset.data,
-            price: 1000n,
-            balance: 100n,
+            price: undefined,
+            balance: balance ? BigInt(balance.balance) : undefined,
         }];
     }));
-
-    // const data = [{
-    //     name: "ETH",
-    //     price: 1000n,
-    //     balance: 100n,
-    // }, {
-    //     name: "USDC",
-    //     price: 1000n,
-    //     balance: 100n,
-    // }, {
-    //     name: "USDT",
-    //     price: 1000n,
-    //     balance: 100n,
-    // }, {
-    //     name: "DAI",
-    //     price: 1000n,
-    //     balance: 100n,
-    // }, {
-    //     name: "WBTC",
-    //     price: 1000n,
-    //     balance: 100n,
-    // },
-    // {
-    //     name: "placeholder",
-    //     price: undefined,
-    //     balance: undefined,
-    // }];
 
     const table = createSolidTable({
         columns,
