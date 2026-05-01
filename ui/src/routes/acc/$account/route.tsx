@@ -6,7 +6,7 @@ export const Route = createFileRoute("/acc/$account")({
   component: () => (
     <div class="flex h-full w-full">
       <Sidebar />
-      <div class="overflow-y-auto w-full">
+      <div class="overflow-y-auto w-full h-full">
         <Outlet />
       </div>
     </div>
