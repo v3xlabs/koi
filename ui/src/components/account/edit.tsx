@@ -18,7 +18,7 @@ export const AccountEdit: Component = () => {
                         <div>
                             <For each={data().accounts}>
                                 {account => (
-                                    <AccountPreview account_id={account.account_id} />
+                                    <AccountPreview account_identity={account.account_identity} />
                                 )}
                             </For>
                         </div>

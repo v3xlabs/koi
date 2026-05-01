@@ -14,7 +14,7 @@ export const Route = createFileRoute("/acc/$account/assets")({
               Assets
             </div>
           </div>
-          <AccountAssetTable account_id={params().account} />
+          <AccountAssetTable account_identity={params().account} />
         </div>
       </div>
     );

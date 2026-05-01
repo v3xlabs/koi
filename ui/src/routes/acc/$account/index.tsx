@@ -14,7 +14,7 @@ export const Route = createFileRoute("/acc/$account/")({
   component: () => {
     const params = useParams({ from: "/acc/$account" });
     const balance = useAccountBalance(params().account);
-    const account = useAccount(() => ({ path: { account_id: Number.parseInt(params().account) } }));
+    const account = useAccount(() => ({ path: { account_identity: Number.parseInt(params().account) } }));
 
     return (
       <div class="p-4 space-y-4">
@@ -79,7 +79,7 @@ export const Route = createFileRoute("/acc/$account/")({
               </div>
             </div>
             <div class="w-full">
-              <AccountAssetTable account_id={params().account} />
+              <AccountAssetTable account_identity={params().account} />
             </div>
           </div>
           <div class="bg-surface p-4 xl:col-span-2 rounded-md max-h-128">

@@ -29,6 +29,7 @@ import { Route as AccAccountNewTxRouteImport } from "./routes/acc/$account/new-t
 import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/assets"
 import { Route as AccAccountSettingsRouteRouteImport } from "./routes/acc/$account/settings/route"
 import { Route as AccAccountSettingsIndexRouteImport } from "./routes/acc/$account/settings/index"
+import { Route as AccAccountSettingsTokensRouteImport } from "./routes/acc/$account/settings/tokens"
 import { Route as AccAccountSettingsDangerRouteImport } from "./routes/acc/$account/settings/danger"
 
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
@@ -131,6 +132,12 @@ const AccAccountSettingsIndexRoute = AccAccountSettingsIndexRouteImport.update({
   path: "/",
   getParentRoute: () => AccAccountSettingsRouteRoute,
 } as any)
+const AccAccountSettingsTokensRoute =
+  AccAccountSettingsTokensRouteImport.update({
+    id: "/tokens",
+    path: "/tokens",
+    getParentRoute: () => AccAccountSettingsRouteRoute,
+  } as any)
 const AccAccountSettingsDangerRoute =
   AccAccountSettingsDangerRouteImport.update({
     id: "/danger",
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   "/acc/$account/": typeof AccAccountIndexRoute
   "/acc/new/": typeof AccNewIndexRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
+  "/acc/$account/settings/tokens": typeof AccAccountSettingsTokensRoute
   "/acc/$account/settings/": typeof AccAccountSettingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   "/acc/$account": typeof AccAccountIndexRoute
   "/acc/new": typeof AccNewIndexRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
+  "/acc/$account/settings/tokens": typeof AccAccountSettingsTokensRoute
   "/acc/$account/settings": typeof AccAccountSettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   "/acc/$account/": typeof AccAccountIndexRoute
   "/acc/new/": typeof AccNewIndexRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
+  "/acc/$account/settings/tokens": typeof AccAccountSettingsTokensRoute
   "/acc/$account/settings/": typeof AccAccountSettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | "/acc/$account/"
     | "/acc/new/"
     | "/acc/$account/settings/danger"
+    | "/acc/$account/settings/tokens"
     | "/acc/$account/settings/"
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | "/acc/$account"
     | "/acc/new"
     | "/acc/$account/settings/danger"
+    | "/acc/$account/settings/tokens"
     | "/acc/$account/settings"
   id:
     | "__root__"
@@ -269,6 +281,7 @@ export interface FileRouteTypes {
     | "/acc/$account/"
     | "/acc/new/"
     | "/acc/$account/settings/danger"
+    | "/acc/$account/settings/tokens"
     | "/acc/$account/settings/"
   fileRoutesById: FileRoutesById
 }
@@ -426,6 +439,13 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof AccAccountSettingsIndexRouteImport
       parentRoute: typeof AccAccountSettingsRouteRoute
     }
+    "/acc/$account/settings/tokens": {
+      id: "/acc/$account/settings/tokens"
+      path: "/tokens"
+      fullPath: "/acc/$account/settings/tokens"
+      preLoaderRoute: typeof AccAccountSettingsTokensRouteImport
+      parentRoute: typeof AccAccountSettingsRouteRoute
+    }
     "/acc/$account/settings/danger": {
       id: "/acc/$account/settings/danger"
       path: "/danger"
@@ -470,12 +490,14 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
 
 interface AccAccountSettingsRouteRouteChildren {
   AccAccountSettingsDangerRoute: typeof AccAccountSettingsDangerRoute
+  AccAccountSettingsTokensRoute: typeof AccAccountSettingsTokensRoute
   AccAccountSettingsIndexRoute: typeof AccAccountSettingsIndexRoute
 }
 
 const AccAccountSettingsRouteRouteChildren: AccAccountSettingsRouteRouteChildren =
   {
     AccAccountSettingsDangerRoute: AccAccountSettingsDangerRoute,
+    AccAccountSettingsTokensRoute: AccAccountSettingsTokensRoute,
     AccAccountSettingsIndexRoute: AccAccountSettingsIndexRoute,
   }
 

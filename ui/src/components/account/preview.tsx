@@ -9,12 +9,12 @@ import { AccountIcon } from "./icon";
 import { AccountTypeIcon } from "./type";
 
 export type AccountPreviewProperties = {
-    account_id: number;
+    account_identity: number;
 };
 
 export const AccountPreview: Component<AccountPreviewProperties> = (props) => {
-    const account_id = props.account_id;
-    const accountQuery = useAccount(() => ({ path: { account_id } }));
+    const account_identity = props.account_identity;
+    const accountQuery = useAccount(() => ({ path: { account_identity } }));
 
     return (
         <div class="w-full">

@@ -5,7 +5,7 @@ import { components } from "../schema.gen";
 export type Account = components["schemas"]["Account"];
 export type WalletType = components["schemas"]["WalletType"];
 
-export const useAccount = createApi("/acc/{account_id}", "get", options => ["account", options.path.account_id.toString()]);
+export const useAccount = createApi("/acc/{account_identity}", "get", options => ["account", options.path.account_identity.toString()]);
 export const useAccounts = createApi("/acc", "get", () => ["accounts"]);
 
 export const useNextAccountId = createApi("/acc/next-id", "get", () => ["next-account-id"]);
@@ -15,15 +15,15 @@ export const useCreateAccount = createApiMutation("/acc", "post", {
     },
 });
 
-export const useDeleteAccount = createApiMutation("/acc/{account_id}", "delete", {
+export const useDeleteAccount = createApiMutation("/acc/{account_identity}", "delete", {
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["accounts"] });
     },
 });
 
-export const useUpdateAccount = createApiMutation("/acc/{account_id}", "put", {
+export const useUpdateAccount = createApiMutation("/acc/{account_identity}", "put", {
     onSuccess: (x) => {
         queryClient.invalidateQueries({ queryKey: ["accounts"] });
-        queryClient.invalidateQueries({ queryKey: ["account", x.account_id.toString()] });
+        queryClient.invalidateQueries({ queryKey: ["account", x.account_identity.toString()] });
     },
 });

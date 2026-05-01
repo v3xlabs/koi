@@ -6,8 +6,8 @@ import { createStore } from "solid-js/store";
 export type Connection = {
     connection_id: string;
     status: SessionState;
-    account_id: string;
-    network_id: string;
+    account_identity: string;
+    network_identity: string;
     session: Session;
 };
 
@@ -17,7 +17,7 @@ export const useConnections = () => createMemo(() => connections[0]);
 export const removeConnection = (connection_id: string) => {
     connections[1](prev => prev.filter(c => c.connection_id !== connection_id));
 };
-export const addConnection = async (url: string, account_id: string, network_id: string) => {
+export const addConnection = async (url: string, account_identity: string, network_identity: string) => {
     const session = await connectSession(url, async (msg) => {
         console.log("SMSG", msg);
 
@@ -27,8 +27,8 @@ export const addConnection = async (url: string, account_id: string, network_id:
     const connection: Connection = {
         connection_id: crypto.randomUUID(),
         status: session.getState().status,
-        account_id,
-        network_id,
+        account_identity,
+        network_identity,
         session,
     };
 

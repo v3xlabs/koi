@@ -46,7 +46,7 @@ const columns = [
     }),
 ];
 
-export const AccountAssetTable: Component<{ account_id: string; }> = (params) => {
+export const AccountAssetTable: Component<{ account_identity: string; }> = (params) => {
     const data = [{
         name: "ETH",
         price: 1000n,

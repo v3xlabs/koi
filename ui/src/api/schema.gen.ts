@@ -68,7 +68,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/acc/{account_id}": {
+    "/acc/{account_identity}": {
         parameters: {
             query?: never;
             header?: never;
@@ -77,14 +77,14 @@ export type paths = {
         };
         /**
          * Get an account by ID
-         * @description GET /api/acc/:account_id
+         * @description GET /api/acc/:account_identity
          */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    account_id: number;
+                    account_identity: number;
                 };
                 cookie?: never;
             };
@@ -102,14 +102,14 @@ export type paths = {
         };
         /**
          * Update an account by ID
-         * @description PUT /api/acc/:account_id
+         * @description PUT /api/acc/:account_identity
          */
         put: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    account_id: number;
+                    account_identity: number;
                 };
                 cookie?: never;
             };
@@ -132,14 +132,14 @@ export type paths = {
         post?: never;
         /**
          * Delete an account by ID
-         * @description DELETE /api/acc/:account_id
+         * @description DELETE /api/acc/:account_identity
          */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    account_id: number;
+                    account_identity: number;
                 };
                 cookie?: never;
             };
@@ -476,7 +476,7 @@ export type paths = {
                 query?: never;
                 header?: never;
                 path: {
-                    _network_id: number;
+                    network_id: number;
                 };
                 cookie?: never;
             };
@@ -487,7 +487,7 @@ export type paths = {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json; charset=utf-8": string;
+                        "application/json; charset=utf-8": number;
                     };
                 };
             };
@@ -837,7 +837,7 @@ export type components = {
         /** Account */
         Account: {
             /** Format: uint64 */
-            account_id: number;
+            account_identity: number;
             name: string;
             networks: number[];
             metadata: components["schemas"]["WalletType"];

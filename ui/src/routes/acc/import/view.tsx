@@ -11,19 +11,19 @@ export const Route = createFileRoute("/acc/import/view")({
     const [address, setAddress] = createSignal("");
     const [name, setName] = createSignal("");
     const [networks, setNetworks] = createSignal<number[]>([]);
-    const createAccount = useCreateAccount(({ data: { account_id, name, networks, address } }: { data: { account_id: number; name: string; networks: number[]; address: string; }; }) => ({
+    const createAccount = useCreateAccount(({ data: { account_identity, name, networks, address } }: { data: { account_identity: number; name: string; networks: number[]; address: string; }; }) => ({
       contentType: "application/json; charset=utf-8",
-      data: { account_id, name, networks, metadata: { type: "view", evm_address: address } },
+      data: { account_identity, name, networks, metadata: { type: "view", evm_address: address } },
     }));
 
     const handleClick = () => {
-      const account_id = nextAccountId.data;
+      const account_identity = nextAccountId.data;
 
-      if (!account_id || account_id <= 0) return;
+      if (!account_identity || account_identity <= 0) return;
 
       if (networks().length === 0) return;
 
-      createAccount.mutate({ data: { account_id, name: name(), networks: networks(), address: address() } });
+      createAccount.mutate({ data: { account_identity, name: name(), networks: networks(), address: address() } });
     };
 
     const disabled = createMemo(() => createAccount.isPending || !address() || !name() || networks().length === 0);

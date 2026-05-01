@@ -40,17 +40,17 @@ impl AccountApi {
 
     /// Get an account by ID
     ///
-    /// GET /api/acc/:account_id
-    #[oai(path = "/acc/:account_id", method = "get", tag = "ApiTags::Account")]
+    /// GET /api/acc/:account_identity
+    #[oai(path = "/acc/:account_identity", method = "get", tag = "ApiTags::Account")]
     async fn get_account_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        account_id: Path<AccountIdentity>,
+        account_identity: Path<AccountIdentity>,
     ) -> Result<Json<Account>> {
         let _auth_data = auth.unwrap()?;
 
-        let account = Account::get_by_id(&state, account_id.0).await?;
+        let account = Account::get_by_id(&state, account_identity.0).await?;
 
         Ok(Json(account))
     }
@@ -74,46 +74,46 @@ impl AccountApi {
     ///
     /// GET /api/acc/next-id
     #[oai(path = "/acc/next-id", method = "get", tag = "ApiTags::Account")]
-    async fn get_next_account_id(
+    async fn get_next_account_identity(
         &self,
         auth: Auth,
         state: Data<&AppState>,
     ) -> Result<Json<AccountIdentity>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Account::get_next_id(&state).await?))
+        Ok(Json(Account::get_next_identity(&state).await?))
     }
 
     /// Delete an account by ID
     ///
-    /// DELETE /api/acc/:account_id
-    #[oai(path = "/acc/:account_id", method = "delete", tag = "ApiTags::Account")]
+    /// DELETE /api/acc/:account_identity
+    #[oai(path = "/acc/:account_identity", method = "delete", tag = "ApiTags::Account")]
     async fn delete_account_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        account_id: Path<AccountIdentity>,
+        account_identity: Path<AccountIdentity>,
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Account::delete(&state, account_id.0).await?))
+        Ok(Json(Account::delete(&state, account_identity.0).await?))
     }
 
     /// Update an account by ID
     ///
-    /// PUT /api/acc/:account_id
-    #[oai(path = "/acc/:account_id", method = "put", tag = "ApiTags::Account")]
+    /// PUT /api/acc/:account_identity
+    #[oai(path = "/acc/:account_identity", method = "put", tag = "ApiTags::Account")]
     async fn update_account_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        account_id: Path<AccountIdentity>,
+        account_identity: Path<AccountIdentity>,
         payload: Json<AccountUpdate>,
     ) -> Result<Json<Account>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            Account::update(&state, account_id.0, payload.0).await?,
+            Account::update(&state, account_identity.0, payload.0).await?,
         ))
     }
 }
