@@ -7,6 +7,7 @@ use crate::{error::KoiError, state::AppState};
 
 pub mod identity;
 pub mod metadata;
+pub mod erc20;
 
 #[derive(Debug, Serialize, Deserialize, Object, FromRow)]
 pub struct Asset {
