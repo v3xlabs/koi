@@ -146,3 +146,12 @@ impl ParseFromParameter for AssetIdentity {
         Ok(value.parse()?)
     }
 }
+
+impl AssetIdentity {
+    pub fn unwrap_address(&self) -> Option<(NetworkIdentity, Address)> {
+        match self {
+            AssetIdentity::ERC20(network, address) => Some((network.clone(), address.clone())),
+            _ => None,
+        }
+    }
+}

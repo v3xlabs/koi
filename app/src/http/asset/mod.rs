@@ -1,6 +1,6 @@
 use crate::{
     http::auth::Auth,
-    models::asset::{Asset, AssetUpdate, identity::AssetIdentity},
+    models::asset::{Asset, AssetUpdate, identity::AssetIdentity, metadata::AssetMetadataDiscovery},
     state::AppState,
 };
 
@@ -66,6 +66,20 @@ impl AssetApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(Asset::get_by_id(&state, &asset_identity).await?))
+    }
+
+    /// Discover metadata for an asset
+    ///
+    /// GET /api/asset/:asset_identity/metadata
+    #[oai(
+        path = "/asset/:asset_identity/metadata",
+        method = "get",
+        tag = "ApiTags::Asset"
+    )]
+    async fn discover_metadata_for_asset(&self, auth: Auth, state: Data<&AppState>, asset_identity: Path<AssetIdentity>) -> Result<Json<AssetMetadataDiscovery>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(Asset::fetch_metadata(&state, &asset_identity).await?))
     }
 
     /// Update an asset by ID

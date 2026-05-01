@@ -13,7 +13,9 @@ export const accountKeys = {
 };
 
 export const useAccount = createApi("/acc/{account_identity}", "get", options => accountKeys.detail(options.path.account_identity));
-export const useAccounts = createApi("/acc", "get", () => accountKeys.all);
+export const useAccounts = createApi("/acc", "get", () => accountKeys.all, {
+    onData: data => data.accounts.forEach(account => queryClient.setQueryData(accountKeys.detail(account.account_identity), account)),
+});
 
 export const useNextAccountId = createApi("/acc/next-id", "get", () => accountKeys.nextId);
 export const useCreateAccount = createApiMutation("/acc", "post", {

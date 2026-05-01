@@ -2,7 +2,7 @@ import { SegmentedControl } from "@kobalte/core/segmented-control";
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import { match } from "ts-pattern";
 
-import { Asset, useCreateAsset } from "#/api/asset";
+import { Asset, useAssetMetadataDiscovery, useCreateAsset } from "#/api/asset";
 
 import { Modal } from "../dialog";
 import { AddressInput } from "../input/address";
@@ -70,6 +70,57 @@ export const AssetAdd = () => {
     createEffect(() => {
         console.log(asset());
     });
+
+    const discoveryQuery = useAssetMetadataDiscovery(() => ({ path: { asset_identity: `erc20:${networkId()}:${assetAddress()}` } }), {
+        enabled: () => !!assetAddress() && assetType() === "erc20" && networkId() !== 0,
+    });
+
+    createEffect(() => {
+        console.log(JSON.stringify(discoveryQuery.data?.options));
+    });
+
+    const nameSuggestions = createMemo(() => Object.entries(discoveryQuery.data?.options ?? {}).map(
+        ([source, value]) => {
+            if (value.name) {
+                return [value.name, source];
+            }
+
+            return null;
+        })
+        .filter(s => !!s),
+    );
+    const symbolSuggestions = createMemo(() => Object.entries(discoveryQuery.data?.options ?? {}).map(
+        ([source, value]) => {
+            if (value.symbol) {
+                return [value.symbol, source];
+            }
+
+            return null;
+        })
+        .filter(s => !!s),
+    );
+    const decimalsSuggestions = createMemo(() => Object.entries(discoveryQuery.data?.options ?? {}).map(
+        ([source, value]) => {
+            if (value.decimals) {
+                return [value.decimals, source];
+            }
+
+            return null;
+        })
+        .filter(s => !!s),
+    );
+    const iconSuggestions = createMemo(() => Object.entries(discoveryQuery.data?.options ?? {}).map(
+        ([source, value]) => {
+            console.log(source, value);
+
+            if (value.icon_url) {
+                return [value.icon_url, source];
+            }
+
+            return null;
+        })
+        .filter(s => !!s),
+    );
 
     return (
         <Modal>
@@ -141,6 +192,15 @@ export const AssetAdd = () => {
                                   onChange={e => setAssetName(e.target.value)}
                                   placeholder={PLACEHOLDERS[assetType()].name}
                                 />
+                                <div>
+                                    <For each={nameSuggestions()}>
+                                        {([name, source]) => (
+                                            <li>
+                                                <button onClick={() => setAssetName(name)}>{name}</button>
+                                            </li>
+                                        )}
+                                    </For>
+                                </div>
                             </label>
                             <div class="w-full flex flex-col gap-2 md:flex-row">
                                 <label class="space-y-1 block w-full">
@@ -152,6 +212,15 @@ export const AssetAdd = () => {
                                       onChange={e => setAssetSymbol(e.target.value)}
                                       placeholder={PLACEHOLDERS[assetType()].symbol}
                                     />
+                                    <div>
+                                        <For each={symbolSuggestions()}>
+                                            {([symbol, source]) => (
+                                                <li>
+                                                    <button onClick={() => setAssetSymbol(symbol)}>{symbol}</button>
+                                                </li>
+                                            )}
+                                        </For>
+                                    </div>
                                 </label>
                                 <label class="space-y-1 block w-full">
                                     <span>Decimals</span>
@@ -162,6 +231,15 @@ export const AssetAdd = () => {
                                       onChange={e => setAssetDecimals(Number(e.target.value))}
                                       placeholder={PLACEHOLDERS[assetType()].decimals.toString()}
                                     />
+                                    <div>
+                                        <For each={decimalsSuggestions()}>
+                                            {([decimals, source]) => (
+                                                <li>
+                                                    <button onClick={() => setAssetDecimals(decimals)}>{decimals}</button>
+                                                </li>
+                                            )}
+                                        </For>
+                                    </div>
                                 </label>
                             </div>
                             <label class="space-y-1 block w-full">
@@ -173,13 +251,25 @@ export const AssetAdd = () => {
                                   onChange={e => setAssetIconUrl(e.target.value)}
                                   placeholder={PLACEHOLDERS[assetType()].iconUrl}
                                 />
+                                <ul>
+                                    <For each={iconSuggestions()}>
+                                        {([iconUrl, source]) => (
+                                            <li>
+                                                <button onClick={() => setAssetIconUrl(iconUrl)}>
+                                                    <img src={iconUrl} alt={source} class="size-8 aspect-square rounded-full" />
+                                                    {source}
+                                                </button>
+                                            </li>
+                                        )}
+                                    </For>
+                                </ul>
                             </label>
                         </div>
                         <div>
                             <Show when={asset()}>
                                 {asset => (
                                     <div>
-                                        <div>
+                                        <div class="text-sm wrap-anywhere">
                                             {JSON.stringify(asset())}
                                         </div>
                                     </div>
@@ -189,7 +279,7 @@ export const AssetAdd = () => {
                         <div class="w-full flex justify-end gap-2 p-4">
                             <button
                               class="btn btn-primary"
-                              onClick={() => assetCreate.mutate({ data: asset() })}
+                              onClick={() => assetCreate.mutate({ data: asset()! })}
                               disabled={!asset()}
                             >
                                 Create

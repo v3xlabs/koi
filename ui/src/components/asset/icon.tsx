@@ -1,13 +1,20 @@
-import { Component, Show } from "solid-js";
+import { Component, createMemo, Show } from "solid-js";
 
-import { useAsset } from "#/api/asset";
+import { Asset, useAsset } from "#/api/asset";
 
-export const AssetIcon: Component<{ asset_identity: string; }> = ({ asset_identity }) => {
-    const assetQuery = useAsset(() => ({ path: { asset_identity } }));
+type AssetIconProps = { asset: Asset; } | { asset_identity: string; };
+
+export const AssetIconImage: Component<{ asset?: Asset; }> = props => (
+    <Show when={props.asset?.asset_icon_url}>
+        {icon => <img src={icon()} alt={props.asset?.asset_name} class="size-4 aspect-square rounded-full" />}
+    </Show>
+);
+
+export const AssetIcon: Component<AssetIconProps> = (props) => {
+    const assetQuery = "asset_identity" in props ? useAsset(() => ({ path: { asset_identity: props.asset_identity } })) : undefined;
+    const asset = createMemo(() => ("asset" in props ? props.asset : assetQuery?.data));
 
     return (
-        <Show when={assetQuery.data?.asset_icon_url}>
-            {icon => <img src={icon()} alt={assetQuery.data?.asset_name} class="size-4 aspect-square rounded-full" />}
-        </Show>
+        <AssetIconImage asset={asset()} />
     );
 };

@@ -35,7 +35,7 @@ impl RpcPool {
         self.endpoints
             .lock()
             .expect("rpc pool mutex poisoned")
-            .insert(endpoint.endpoint_identity.clone(), rpc.clone());
+            .insert(endpoint.endpoint_identity, rpc.clone());
 
         rpc
     }
@@ -56,13 +56,15 @@ impl RpcPool {
     }
 
     pub fn get_first_rpc(&self) -> Option<Arc<EthProvider>> {
-        let endpoints = self.endpoints.lock().expect("rpc pool mutex poisoned");
+        {
+            let endpoints = self.endpoints.lock().expect("rpc pool mutex poisoned");
 
-        for endpoint in endpoints.values() {
-            match &endpoint.get_state() {
-                RpcState::Alive { .. } => return Some(endpoint.clone()),
-                RpcState::Dead { .. } => continue,
-                RpcState::Disabled => continue,
+            for endpoint in endpoints.values() {
+                match &endpoint.get_state() {
+                    RpcState::Alive { .. } => return Some(endpoint.clone()),
+                    RpcState::Dead { .. } => continue,
+                    RpcState::Disabled => continue,
+                }
             }
         }
 

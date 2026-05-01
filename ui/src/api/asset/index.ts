@@ -8,9 +8,12 @@ export type AssetUpdate = components["schemas"]["AssetUpdate"];
 export const assetKeys = {
     all: ["assets"] as const,
     detail: (asset_identity: string) => ["assets", asset_identity] as const,
+    discovery: (asset_identity: string) => ["asset-discovery", asset_identity] as const,
 };
 
-export const useAssets = createApi("/asset", "get", () => assetKeys.all);
+export const useAssets = createApi("/asset", "get", () => assetKeys.all, {
+    onData: data => data.assets.forEach(asset => queryClient.setQueryData(assetKeys.detail(asset.asset_identity), asset)),
+});
 export const useAsset = createApi("/asset/{asset_identity}", "get", options => assetKeys.detail(options.path.asset_identity));
 export const useCreateAsset = createApiMutation("/asset", "post", {
     onSuccess: (asset) => {
@@ -30,3 +33,5 @@ export const useDeleteAsset = createApiMutation("/asset/{asset_identity}", "dele
         queryClient.removeQueries({ queryKey: assetKeys.detail(variables.asset_identity) });
     },
 });
+
+export const useAssetMetadataDiscovery = createApi("/asset/{asset_identity}/metadata", "get", options => assetKeys.discovery(options.path.asset_identity));

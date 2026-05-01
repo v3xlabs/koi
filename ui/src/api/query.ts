@@ -16,6 +16,9 @@ type ApiPropsTwo<TOptions, QueryKeyFn> = QT<TOptions, QueryKeyFn, () => TOptions
 
 type ApiQueryOptions<TData> = Omit<Partial<SolidQueryOptions<TData, Error, TData, ApiQueryKey>>, "queryKey" | "queryFn" | "initialData">;
 type ApiQueryConfig<TData> = SolidQueryOptions<TData, Error, TData, ApiQueryKey>;
+type ApiConfig<TOptions, TData> = {
+    onData?: (data: TData, options: TOptions) => void;
+};
 
 type ApiQueryResult<TOptions, TData, QueryKeyFn> = {
     (propstwo?: ApiPropsTwo<TOptions, QueryKeyFn>, extraOptions?: ApiQueryOptions<TData>): UseQueryResult<TData, Error>;
@@ -29,7 +32,7 @@ export const createApi = <
     TOptions extends Parameters<typeof api<TPath, TMethod>>[2],
     TData extends Awaited<ReturnType<typeof api<TPath, TMethod>>>["data"],
     QueryKeyFn extends ((options: TOptions) => ApiQueryKey) | undefined = ((options: TOptions) => ApiQueryKey),
->(path: TPath, method: TMethod, queryKeygen?: QueryKeyFn): ApiQueryResult<TOptions, TData, QueryKeyFn> => {
+>(path: TPath, method: TMethod, queryKeygen?: QueryKeyFn, config: ApiConfig<TOptions, TData> = {}): ApiQueryResult<TOptions, TData, QueryKeyFn> => {
     const options = (options: TOptions, extraOptions: ApiQueryOptions<TData> = {}) => {
         const queryKey = queryKeygen?.(options);
 
@@ -41,8 +44,11 @@ export const createApi = <
             queryKey,
             queryFn: async () => {
                 const response = await api(path, method, options as any);
+                const data = response.data as TData;
 
-                return response.data as TData;
+                config.onData?.(data, options);
+
+                return data;
             },
             ...extraOptions,
         };

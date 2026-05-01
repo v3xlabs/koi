@@ -898,6 +898,46 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/asset/{asset_identity}/metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Discover metadata for an asset
+         * @description GET /api/asset/:asset_identity/metadata
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    asset_identity: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AssetMetadataDiscovery"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -966,6 +1006,21 @@ export type components = {
             /** Format: uint8 */
             asset_decimals: number;
             asset_icon_url?: string;
+        };
+        /** AssetMetadataDiscovery */
+        AssetMetadataDiscovery: {
+            asset_identity: string;
+            options: {
+                [key: string]: components["schemas"]["AssetMetadataOption"];
+            };
+        };
+        /** AssetMetadataOption */
+        AssetMetadataOption: {
+            name?: string;
+            symbol?: string;
+            /** Format: uint8 */
+            decimals?: number;
+            icon_url?: string;
         };
         /** AssetUpdate */
         AssetUpdate: {

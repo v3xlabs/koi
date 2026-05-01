@@ -16,7 +16,7 @@ const columns = [
         header: "Name",
         cell: ({ row }) => (
             <div class="flex items-center gap-2 py-3.5">
-                <AssetIcon asset_identity={row.original.asset.asset_identity} />
+                <AssetIcon asset={row.original.asset} />
                 <Skeleton visible={!row.original.asset.asset_name || row.original.asset.asset_name === "placeholder"} class="skeleton animate-spin">
                     {row.original.asset.asset_name}
                 </Skeleton>
@@ -60,9 +60,10 @@ const columns = [
 
 export const AccountAssetTable: Component<{ account_identity: number; }> = ({ account_identity }) => {
     const accountAssetsQuery = useAccountAssets(() => ({ path: { account_identity } }));
+    const assetQueries = createMemo(() => accountAssetsQuery.data?.map(asset_identity => useAsset.options({ path: { asset_identity } })) ?? []);
 
     const bulk = createQueries(() => ({
-        queries: accountAssetsQuery.data?.map(asset_identity => useAsset.options({ path: { asset_identity } })) ?? [],
+        queries: assetQueries(),
     }));
 
     const data = createMemo(() => bulk.flatMap((asset): Data[] => {

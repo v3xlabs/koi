@@ -17,12 +17,13 @@ export const networkKeys = {
 };
 
 export const useNetwork = createApi("/net/{network_identity}", "get", options => networkKeys.detail(options.path.network_identity));
-export const useNetworks = createApi("/net", "get", () => networkKeys.all);
+export const useNetworks = createApi("/net", "get", () => networkKeys.all, {
+    onData: data => data.networks.forEach(network => queryClient.setQueryData(networkKeys.detail(network.network_identity), network)),
+});
 export const useNetworkPresets = createApi("/net/presets", "get", () => networkKeys.presets);
 export const useCreateNetwork = createApiMutation("/net", "post", {
     onSuccess: (network) => {
         queryClient.invalidateQueries({ queryKey: networkKeys.all });
-        queryClient.invalidateQueries({ queryKey: networkKeys.presets });
         queryClient.invalidateQueries({ queryKey: networkKeys.detail(network.network_identity) });
     },
 });
@@ -35,7 +36,6 @@ export const useUpdateNetwork = createApiMutation("/net/{network_identity}", "pu
 export const useDeleteNetwork = createApiMutation("/net/{network_identity}", "delete", {
     onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: networkKeys.all });
-        queryClient.invalidateQueries({ queryKey: networkKeys.presets });
         queryClient.removeQueries({ queryKey: networkKeys.detail(variables.network_identity) });
         queryClient.removeQueries({ queryKey: networkKeys.endpoints(variables.network_identity) });
     },
@@ -43,7 +43,9 @@ export const useDeleteNetwork = createApiMutation("/net/{network_identity}", "de
 
 export const useNetworkEndpointNextId = createApi("/net/{network_identity}/endpoints/next-id", "get", options => networkKeys.endpointNextId(options.path.network_identity));
 
-export const useNetworkEndpoints = createApi("/net/{network_identity}/endpoints", "get", options => networkKeys.endpoints(options.path.network_identity));
+export const useNetworkEndpoints = createApi("/net/{network_identity}/endpoints", "get", options => networkKeys.endpoints(options.path.network_identity), {
+    onData: endpoints => endpoints.forEach(endpoint => queryClient.setQueryData(networkKeys.endpoint(endpoint.network_identity, endpoint.endpoint_identity), endpoint)),
+});
 export const useCreateNetworkEndpoint = createApiMutation("/net/{network_identity}/endpoints", "post", {
     onSuccess: (endpoint) => {
         queryClient.invalidateQueries({ queryKey: networkKeys.endpoints(endpoint.network_identity) });
