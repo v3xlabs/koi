@@ -30,12 +30,12 @@ export const useUpdateAccount = createApiMutation("/acc/{account_identity}", "pu
 
 export const useAccountAssets = createApi("/acc/{account_identity}/assets", "get", options => ["account", options.path.account_identity.toString(), "assets"]);
 export const useAddAccountAsset = createApiMutation("/acc/{account_identity}/asset/{asset_identity}", "post", {
-    onSuccess: (x) => {
+    onSuccess: (_, x) => {
         queryClient.invalidateQueries({ queryKey: ["account", x.account_identity, "assets"] });
     },
 });
 export const useRemoveAccountAsset = createApiMutation("/acc/{account_identity}/asset/{asset_identity}", "delete", {
-    onSuccess: (x) => {
+    onSuccess: (_, x) => {
         queryClient.invalidateQueries({ queryKey: ["account", x.account_identity, "assets"] });
     },
 });
