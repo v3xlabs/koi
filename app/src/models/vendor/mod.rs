@@ -74,7 +74,7 @@ impl VendorManager {
 
         query("INSERT INTO vendors (vendor_flag, vendor_status) VALUES (?, ?) ON CONFLICT (vendor_flag) DO UPDATE SET vendor_status = ?")
             .bind(flag.to_string())
-            .bind(enabled)
+            .bind(enabled as i32)
             .execute(database)
             .await
             .map_err(KoiError::from)?;

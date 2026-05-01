@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use alloy::primitives::Address;
 use poem_openapi::{Object, Union};
@@ -85,9 +85,9 @@ impl FromStr for WalletType {
     }
 }
 
-impl ToString for WalletType {
-    fn to_string(&self) -> String {
-        serde_json::to_string(self).unwrap()
+impl Display for WalletType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serde_plain::to_string(self).unwrap())
     }
 }
 

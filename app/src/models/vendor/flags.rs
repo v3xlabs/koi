@@ -42,17 +42,16 @@ pub struct VendorFlagInfo {
 }
 
 impl FromStr for VendorFlag {
-    type Err = serde_json::Error;
+    type Err = serde_plain::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        info!("from_str: {}", s);
-        serde_json::from_str(s)
+        serde_plain::from_str(s)
     }
 }
 
 impl Display for VendorFlag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", serde_json::to_string(self).unwrap())
+        write!(f, "{}", serde_plain::to_string(self).unwrap())
     }
 }
 
