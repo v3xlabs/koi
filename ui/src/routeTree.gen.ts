@@ -18,6 +18,7 @@ import { Route as SettingsNetworksRouteImport } from "./routes/settings/networks
 import { Route as SettingsAssetsRouteImport } from "./routes/settings/assets"
 import { Route as OnboardingVendorsRouteImport } from "./routes/onboarding/vendors"
 import { Route as OnboardingNetworksRouteImport } from "./routes/onboarding/networks"
+import { Route as OnboardingAssetsRouteImport } from "./routes/onboarding/assets"
 import { Route as OnboardingAccountsRouteImport } from "./routes/onboarding/accounts"
 import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
 import { Route as AccNewIndexRouteImport } from "./routes/acc/new/index"
@@ -76,6 +77,11 @@ const OnboardingVendorsRoute = OnboardingVendorsRouteImport.update({
 const OnboardingNetworksRoute = OnboardingNetworksRouteImport.update({
   id: "/networks",
   path: "/networks",
+  getParentRoute: () => OnboardingRouteRoute,
+} as any)
+const OnboardingAssetsRoute = OnboardingAssetsRouteImport.update({
+  id: "/assets",
+  path: "/assets",
   getParentRoute: () => OnboardingRouteRoute,
 } as any)
 const OnboardingAccountsRoute = OnboardingAccountsRouteImport.update({
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
+  "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
   "/onboarding/accounts": typeof OnboardingAccountsRoute
+  "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
+  "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | "/settings"
     | "/acc/$account"
     | "/onboarding/accounts"
+    | "/onboarding/assets"
     | "/onboarding/networks"
     | "/onboarding/vendors"
     | "/settings/assets"
@@ -253,6 +263,7 @@ export interface FileRouteTypes {
   to:
     | "/"
     | "/onboarding/accounts"
+    | "/onboarding/assets"
     | "/onboarding/networks"
     | "/onboarding/vendors"
     | "/settings/assets"
@@ -277,6 +288,7 @@ export interface FileRouteTypes {
     | "/settings"
     | "/acc/$account"
     | "/onboarding/accounts"
+    | "/onboarding/assets"
     | "/onboarding/networks"
     | "/onboarding/vendors"
     | "/settings/assets"
@@ -372,6 +384,13 @@ declare module "@tanstack/solid-router" {
       path: "/networks"
       fullPath: "/onboarding/networks"
       preLoaderRoute: typeof OnboardingNetworksRouteImport
+      parentRoute: typeof OnboardingRouteRoute
+    }
+    "/onboarding/assets": {
+      id: "/onboarding/assets"
+      path: "/assets"
+      fullPath: "/onboarding/assets"
+      preLoaderRoute: typeof OnboardingAssetsRouteImport
       parentRoute: typeof OnboardingRouteRoute
     }
     "/onboarding/accounts": {
@@ -477,6 +496,7 @@ declare module "@tanstack/solid-router" {
 
 interface OnboardingRouteRouteChildren {
   OnboardingAccountsRoute: typeof OnboardingAccountsRoute
+  OnboardingAssetsRoute: typeof OnboardingAssetsRoute
   OnboardingNetworksRoute: typeof OnboardingNetworksRoute
   OnboardingVendorsRoute: typeof OnboardingVendorsRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
@@ -484,6 +504,7 @@ interface OnboardingRouteRouteChildren {
 
 const OnboardingRouteRouteChildren: OnboardingRouteRouteChildren = {
   OnboardingAccountsRoute: OnboardingAccountsRoute,
+  OnboardingAssetsRoute: OnboardingAssetsRoute,
   OnboardingNetworksRoute: OnboardingNetworksRoute,
   OnboardingVendorsRoute: OnboardingVendorsRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,

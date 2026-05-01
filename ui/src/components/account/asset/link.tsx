@@ -35,7 +35,7 @@ export const AccountAssetLink: Component<{ account_identity: number; }> = ({ acc
                         </Modal.Title>
                         <div class="p-4 space-y-4">
                             <div class="w-full">
-                                <input type="text" placeholder="Search for a token" class="input w-full" />
+                                <input type="text" placeholder="Search for an asset" class="input w-full" />
                             </div>
                             <div>
                                 <ul>

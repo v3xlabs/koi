@@ -9,6 +9,7 @@ export const Route = createFileRoute("/onboarding")({
           <For each={[
             { label: "Main", href: "/onboarding" },
             { label: "Networks", href: "/onboarding/networks" },
+            { label: "Assets", href: "/onboarding/assets" },
             { label: "Accounts", href: "/onboarding/accounts" },
             { label: "Vendors", href: "/onboarding/vendors" },
           ]}
