@@ -24,7 +24,7 @@ export const Route = createFileRoute("/settings/networks")({
             {data => (
               <For each={data().networks}>
                 {network => (
-                  <NetworkEdit network_id={network.network_identity} />
+                  <NetworkEdit network_identity={network.network_identity} />
                 )}
               </For>
             )}

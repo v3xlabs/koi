@@ -1,10 +1,12 @@
-import { createEffect, createMemo, createSignal, Show } from "solid-js";
+import { SegmentedControl } from "@kobalte/core/segmented-control";
+import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import { match } from "ts-pattern";
 
 import { Asset, useCreateAsset } from "#/api/asset";
 
 import { Modal } from "../dialog";
 import { NetworkSelect } from "../net/input";
+import { AddressInput } from "../input/address";
 
 const PLACEHOLDERS: Record<string, {
     name: string;
@@ -82,31 +84,50 @@ export const AssetAdd = () => {
                             Add Asset
                         </Modal.Title>
                         <div class="px-4 pt-4">
-                            <div class="space-y-2">
-                                <label class="space-y-1 block w-full">
-                                    <span>Type</span>
-                                    <select class="input w-full" value={assetType()} onChange={e => setAssetType(e.target.value)}>
-                                        <option value="erc20">ERC20</option>
-                                        <option value="native">Native</option>
-                                        <option value="fiat">Fiat</option>
-                                    </select>
-                                </label>
+                            <div class="w-full flex flex-col gap-2 md:flex-row">
+                                <SegmentedControl
+                                  value={assetType()}
+                                  onChange={setAssetType}
+                                  class=""
+                                >
+                                    <SegmentedControl.Label class="w-full">
+                                        Type
+                                    </SegmentedControl.Label>
+                                    <div class="relative border border-border rounded-md p-1 w-fit" role="presentation">
+                                        <SegmentedControl.Indicator class="absolute top-1 left-1 w-full h-full bg-primary rounded-md transition-all duration-300" />
+                                        <div class="flex gap-2 w-fit relative">
+                                            <For each={Object.keys(PLACEHOLDERS)}>
+                                                {key => (
+                                                    <SegmentedControl.Item
+                                                      value={key}
+                                                      class="px-2"
+                                                    >
+                                                        <SegmentedControl.ItemInput class="" />
+                                                        <SegmentedControl.ItemLabel class="cursor-pointer">
+                                                            {key}
+                                                        </SegmentedControl.ItemLabel>
+                                                    </SegmentedControl.Item>
+                                                )}
+                                            </For>
+                                        </div>
+                                    </div>
+                                </SegmentedControl>
+                                <Show when={assetType() === "erc20" || assetType() === "native"}>
+                                    <label class="space-y-1 block w-full">
+                                        <span>Network</span>
+                                        {/* TODO: make single network select instead of this hack lmao */}
+                                        <NetworkSelect value={() => [networkId()]} onChange={x => (x ? x[0] && setNetworkId(x.at(-1)!) : setNetworkId(0))} />
+                                    </label>
+                                </Show>
                             </div>
-                            <Show when={assetType() === "erc20" || assetType() === "native"}>
-                                <label class="space-y-1 block w-full">
-                                    <span>Network</span>
-                                    {/* TODO: make single network select instead of this hack lmao */}
-                                    <NetworkSelect value={() => [networkId()]} onChange={x => (x ? x[0] && setNetworkId(x.at(-1)!) : setNetworkId(0))} />
-                                </label>
-                            </Show>
                             <Show when={assetType() === "erc20"}>
                                 <label class="space-y-1 block w-full">
                                     <span>Address</span>
-                                    <input
+                                    <AddressInput
                                       type="text"
                                       class="input w-full"
-                                      value={assetAddress()}
-                                      onChange={e => setAssetAddress(e.target.value)}
+                                      value={assetAddress}
+                                      onChange={e => setAssetAddress(e)}
                                       placeholder="0x..."
                                     />
                                 </label>
@@ -121,26 +142,28 @@ export const AssetAdd = () => {
                                   placeholder={PLACEHOLDERS[assetType()].name}
                                 />
                             </label>
-                            <label class="space-y-1 block w-full">
-                                <span>Symbol</span>
-                                <input
-                                  type="text"
-                                  class="input w-full"
-                                  value={assetSymbol()}
-                                  onChange={e => setAssetSymbol(e.target.value)}
-                                  placeholder={PLACEHOLDERS[assetType()].symbol}
-                                />
-                            </label>
-                            <label class="space-y-1 block w-full">
-                                <span>Decimals</span>
-                                <input
-                                  type="number"
-                                  class="input w-full"
-                                  value={assetDecimals()}
-                                  onChange={e => setAssetDecimals(Number(e.target.value))}
-                                  placeholder={PLACEHOLDERS[assetType()].decimals.toString()}
-                                />
-                            </label>
+                            <div class="w-full flex flex-col gap-2 md:flex-row">
+                                <label class="space-y-1 block w-full">
+                                    <span>Symbol</span>
+                                    <input
+                                      type="text"
+                                      class="input w-full"
+                                      value={assetSymbol()}
+                                      onChange={e => setAssetSymbol(e.target.value)}
+                                      placeholder={PLACEHOLDERS[assetType()].symbol}
+                                    />
+                                </label>
+                                <label class="space-y-1 block w-full">
+                                    <span>Decimals</span>
+                                    <input
+                                      type="number"
+                                      class="input w-full"
+                                      value={assetDecimals()}
+                                      onChange={e => setAssetDecimals(Number(e.target.value))}
+                                      placeholder={PLACEHOLDERS[assetType()].decimals.toString()}
+                                    />
+                                </label>
+                            </div>
                             <label class="space-y-1 block w-full">
                                 <span>Icon URL</span>
                                 <input

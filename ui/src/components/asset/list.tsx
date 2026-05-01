@@ -3,6 +3,7 @@ import { Component, For, Show } from "solid-js";
 import { useAssets } from "#/api/asset";
 
 import { AssetAdd } from "./add";
+import { AssetPreview } from "./preview";
 
 export const AssetList: Component = () => {
     const assetsQuery = useAssets();
@@ -16,7 +17,9 @@ export const AssetList: Component = () => {
                 <ul>
                     <For each={assetsQuery.data?.assets} fallback={<div class="text-center text-muted">No assets found</div>}>
                         {asset => (
-                            <div>{asset.asset_name}</div>
+                            <div>
+                                <AssetPreview asset_identity={asset.asset_identity} />
+                            </div>
                         )}
                     </For>
                 </ul>

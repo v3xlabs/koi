@@ -2,8 +2,8 @@ import { Component, Show } from "solid-js";
 
 import { useNetwork } from "#/api/network";
 
-export const NetworkIcon: Component<{ network_id: number; }> = ({ network_id }) => {
-    const networkQuery = useNetwork(() => ({ path: { network_id } }));
+export const NetworkIcon: Component<{ network_identity: number; }> = ({ network_identity }) => {
+    const networkQuery = useNetwork(() => ({ path: { network_identity } }));
 
     return (
         <Show when={networkQuery.data?.network_icon_url}>

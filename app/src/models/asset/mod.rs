@@ -33,9 +33,9 @@ impl Asset {
             .map_err(KoiError::from)
     }
 
-    pub async fn get_by_id(state: &AppState, asset_id: AssetIdentity) -> Result<Asset, KoiError> {
+    pub async fn get_by_id(state: &AppState, asset_identity: &AssetIdentity) -> Result<Asset, KoiError> {
         query_as::<_, Asset>("SELECT * FROM assets WHERE asset_identity = ?")
-            .bind(asset_id)
+            .bind(asset_identity)
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)
@@ -55,7 +55,7 @@ impl Asset {
 
     pub async fn update(
         state: &AppState,
-        asset_id: AssetIdentity,
+        asset_identity: &AssetIdentity,
         asset: AssetUpdate,
     ) -> Result<Asset, KoiError> {
         query_as::<_, Asset>("UPDATE assets SET asset_name = ?, asset_symbol = ?, asset_decimals = ?, asset_icon_url = ? WHERE asset_identity = ? RETURNING *")
@@ -63,15 +63,15 @@ impl Asset {
             .bind(asset.asset_symbol)
             .bind(asset.asset_decimals)
             .bind(asset.asset_icon_url)
-            .bind(asset_id)
+            .bind(asset_identity)
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)
     }
 
-    pub async fn delete(state: &AppState, asset_id: AssetIdentity) -> Result<(), KoiError> {
+    pub async fn delete(state: &AppState, asset_identity: &AssetIdentity) -> Result<(), KoiError> {
         query("DELETE FROM assets WHERE asset_identity = ?")
-            .bind(asset_id)
+            .bind(asset_identity)
             .execute(&state.database)
             .await
             .map_err(KoiError::from)

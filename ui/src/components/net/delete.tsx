@@ -4,10 +4,10 @@ import { useDeleteNetwork } from "#/api/network";
 
 import { Modal } from "../dialog";
 
-export const NetworkDelete: Component<{ network_id: number; children?: JSX.Element; }> = ({ network_id, children }) => {
+export const NetworkDelete: Component<{ network_identity: number; children?: JSX.Element; }> = ({ network_identity, children }) => {
     const deleteNetwork = useDeleteNetwork(() => ({
         path: {
-            network_id,
+            network_identity,
         },
     }));
 
@@ -22,12 +22,12 @@ export const NetworkDelete: Component<{ network_id: number; children?: JSX.Eleme
                     <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24">
                         <Modal.Title>
                             Delete Network #
-                            {network_id.toString()}
+                            {network_identity.toString()}
                         </Modal.Title>
                         <div class="px-4 pt-4">
                             You are about to delete the network
                             <span class="font-bold bg-surface-alt rounded-md p-1">
-                                {network_id}
+                                {network_identity}
                             </span>
                             . This action cannot be undone.
                         </div>

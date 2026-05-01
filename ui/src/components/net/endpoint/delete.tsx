@@ -4,11 +4,11 @@ import { useDeleteNetworkEndpoint } from "#/api/network";
 
 import { Modal } from "../../dialog";
 
-export const NetworkEndpointDelete: Component<{ network_id: number; endpoint_id: number; children?: JSX.Element; }> = ({ network_id, endpoint_id, children }) => {
+export const NetworkEndpointDelete: Component<{ network_identity: number; endpoint_identity: number; children?: JSX.Element; }> = ({ network_identity, endpoint_identity, children }) => {
     const deleteNetworkEndpoint = useDeleteNetworkEndpoint(() => ({
         path: {
-            network_id,
-            endpoint_id,
+            network_identity,
+            endpoint_identity,
         },
     }));
 
@@ -23,12 +23,12 @@ export const NetworkEndpointDelete: Component<{ network_id: number; endpoint_id:
                     <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24">
                         <Modal.Title>
                             Delete Network Endpoint #
-                            {endpoint_id}
+                            {endpoint_identity}
                         </Modal.Title>
                         <div class="px-4 pt-4">
                             You are about to delete the network endpoint
                             <span class="font-bold bg-surface-alt rounded-md p-1">
-                                {endpoint_id}
+                                {endpoint_identity}
                             </span>
                             . This action cannot be undone.
                         </div>

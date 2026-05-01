@@ -4,18 +4,18 @@ import { Component, createSignal } from "solid-js";
 
 import { NetworkEndpoint, useCreateNetworkEndpoint, useNetworkEndpointNextId } from "#/api/network";
 
-export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network_id }) => {
+export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ network_identity }) => {
     const createNetwork = useCreateNetworkEndpoint(({ data }: { data: NetworkEndpoint; }) => ({
         contentType: "application/json; charset=utf-8",
         data,
         path: {
-            network_id,
+            network_identity,
         },
     }));
 
     const nextIdQuery = useNetworkEndpointNextId(() => ({
         path: {
-            network_id: network_id,
+            network_identity,
         },
     }));
 
@@ -81,7 +81,7 @@ export const NetworkEndpointAdd: Component<{ network_id: number; }> = ({ network
                                             endpoint_type: type(),
                                             endpoint_url: url(),
                                             endpoint_disabled: disabled(),
-                                            network_identity: network_id,
+                                            network_identity,
                                         },
                                     })}
                                 >

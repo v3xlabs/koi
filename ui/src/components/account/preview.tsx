@@ -50,7 +50,7 @@ export const AccountPreview: Component<AccountPreviewProperties> = (props) => {
                                         <For each={acc().networks}>
                                             {network => (
                                                 <div class="text-muted text-sm">
-                                                    <NetworkIcon network_id={network} />
+                                                    <NetworkIcon network_identity={network} />
                                                 </div>
                                             )}
                                         </For>

@@ -51,47 +51,47 @@ impl AssetApi {
 
     /// Get an asset by ID
     ///
-    /// GET /api/asset/:asset_id
-    #[oai(path = "/asset/:asset_id", method = "get", tag = "ApiTags::Asset")]
+    /// GET /api/asset/:asset_identity
+    #[oai(path = "/asset/:asset_identity", method = "get", tag = "ApiTags::Asset")]
     async fn get_asset_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        asset_id: Path<AssetIdentity>,
+        asset_identity: Path<AssetIdentity>,
     ) -> Result<Json<Asset>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Asset::get_by_id(&state, asset_id.0).await?))
+        Ok(Json(Asset::get_by_id(&state, &asset_identity).await?))
     }
 
     /// Update an asset by ID
     ///
-    /// PUT /api/asset/:asset_id
-    #[oai(path = "/asset/:asset_id", method = "put", tag = "ApiTags::Asset")]
+    /// PUT /api/asset/:asset_identity
+    #[oai(path = "/asset/:asset_identity", method = "put", tag = "ApiTags::Asset")]
     async fn update_asset_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        asset_id: Path<AssetIdentity>,
+        asset_identity: Path<AssetIdentity>,
         payload: Json<AssetUpdate>,
     ) -> Result<Json<Asset>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Asset::update(&state, asset_id.0, payload.0).await?))
+        Ok(Json(Asset::update(&state, &asset_identity, payload.0).await?))
     }
 
     /// Delete an asset by ID
     ///
-    /// DELETE /api/asset/:asset_id
-    #[oai(path = "/asset/:asset_id", method = "delete", tag = "ApiTags::Asset")]
+    /// DELETE /api/asset/:asset_identity
+    #[oai(path = "/asset/:asset_identity", method = "delete", tag = "ApiTags::Asset")]
     async fn delete_asset_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        asset_id: Path<AssetIdentity>,
+        asset_identity: Path<AssetIdentity>,
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Asset::delete(&state, asset_id.0).await?))
+        Ok(Json(Asset::delete(&state, &asset_identity).await?))
     }
 }

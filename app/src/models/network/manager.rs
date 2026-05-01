@@ -16,16 +16,16 @@ pub struct NetworkManager {
 }
 
 impl NetworkManager {
-    pub fn get_pool(&self, network_id: &NetworkIdentity) -> Arc<RpcPool> {
+    pub fn get_pool(&self, network_identity: &NetworkIdentity) -> Arc<RpcPool> {
         let mut pools = self.clients.lock().unwrap();
 
-        let pool = pools.get(network_id);
+        let pool = pools.get(network_identity);
         if let Some(pool) = pool {
             return pool.clone();
         }
 
-        let pool = Arc::new(RpcPool::new(network_id.clone()));
-        pools.insert(network_id.clone(), pool.clone());
+        let pool = Arc::new(RpcPool::new(network_identity.clone()));
+        pools.insert(network_identity.clone(), pool.clone());
         pool
     }
 }

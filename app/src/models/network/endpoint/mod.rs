@@ -63,10 +63,10 @@ impl NetworkEndpoint {
 
     pub async fn get_by_network_id(
         state: &AppState,
-        network_id: &NetworkIdentity,
+        network_identity: &NetworkIdentity,
     ) -> Result<Vec<NetworkEndpoint>, KoiError> {
         query_as::<_, NetworkEndpoint>("SELECT * FROM network_endpoints WHERE network_identity = ?")
-            .bind(network_id)
+            .bind(network_identity)
             .fetch_all(&state.database)
             .await
             .map_err(KoiError::from)
@@ -74,14 +74,14 @@ impl NetworkEndpoint {
 
     pub async fn get_by_id(
         database: &SqlitePool,
-        network_id: &NetworkIdentity,
-        endpoint_id: &i32,
+        network_identity: &NetworkIdentity,
+        endpoint_identity: &i32,
     ) -> Result<NetworkEndpoint, KoiError> {
         query_as::<_, NetworkEndpoint>(
             "SELECT * FROM network_endpoints WHERE network_identity = ? AND endpoint_identity = ?",
         )
-        .bind(network_id)
-        .bind(endpoint_id)
+        .bind(network_identity)
+        .bind(endpoint_identity)
         .fetch_one(database)
         .await
         .map_err(KoiError::from)
@@ -89,12 +89,12 @@ impl NetworkEndpoint {
 
     pub async fn delete(
         state: &AppState,
-        network_id: &NetworkIdentity,
-        endpoint_id: &i32,
+        network_identity: &NetworkIdentity,
+        endpoint_identity: &i32,
     ) -> Result<(), KoiError> {
         query("DELETE FROM network_endpoints WHERE network_identity = ? AND endpoint_identity = ?")
-            .bind(network_id)
-            .bind(endpoint_id)
+            .bind(network_identity)
+            .bind(endpoint_identity)
             .execute(&state.database)
             .await
             .map_err(KoiError::from)
@@ -103,8 +103,8 @@ impl NetworkEndpoint {
 
     pub async fn update(
         state: &AppState,
-        network_id: &NetworkIdentity,
-        endpoint_id: &i32,
+        network_identity: &NetworkIdentity,
+        endpoint_identity: &i32,
         update: NetworkEndpointUpdate,
     ) -> Result<NetworkEndpoint, KoiError> {
         query_as::<_, NetworkEndpoint>("UPDATE network_endpoints SET endpoint_label = ?, endpoint_type = ?, endpoint_url = ?, endpoint_disabled = ? WHERE network_identity = ? AND endpoint_identity = ? RETURNING *")
@@ -112,8 +112,8 @@ impl NetworkEndpoint {
             .bind(update.endpoint_type)
             .bind(update.endpoint_url)
             .bind(update.endpoint_disabled)
-            .bind(network_id)
-            .bind(endpoint_id)
+            .bind(network_identity)
+            .bind(endpoint_identity)
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)

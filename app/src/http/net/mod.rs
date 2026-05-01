@@ -71,57 +71,57 @@ impl NetworkApi {
 
     /// Get a network by ID
     ///
-    /// GET /api/net/:network_id
-    #[oai(path = "/net/:network_id", method = "get", tag = "ApiTags::Network")]
+    /// GET /api/net/:network_identity
+    #[oai(path = "/net/:network_identity", method = "get", tag = "ApiTags::Network")]
     async fn get_network_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
+        network_identity: Path<NetworkIdentity>,
     ) -> Result<Json<Network>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Network::get_by_id(&state, network_id.0).await?))
+        Ok(Json(Network::get_by_id(&state, &network_identity).await?))
     }
 
     /// Update a network by ID
     ///
-    /// PUT /api/net/:network_id
-    #[oai(path = "/net/:network_id", method = "put", tag = "ApiTags::Network")]
+    /// PUT /api/net/:network_identity
+    #[oai(path = "/net/:network_identity", method = "put", tag = "ApiTags::Network")]
     async fn update_network_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
+        network_identity: Path<NetworkIdentity>,
         payload: Json<NetworkUpdate>,
     ) -> Result<Json<Network>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            Network::update(&state, network_id.0, payload.0).await?,
+            Network::update(&state, &network_identity, payload.0).await?,
         ))
     }
 
     /// Delete a network by ID
     ///
-    /// DELETE /api/net/:network_id
-    #[oai(path = "/net/:network_id", method = "delete", tag = "ApiTags::Network")]
+    /// DELETE /api/net/:network_identity
+    #[oai(path = "/net/:network_identity", method = "delete", tag = "ApiTags::Network")]
     async fn delete_network_by_id(
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<i32>,
+        network_identity: Path<NetworkIdentity>,
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Network::delete(&state, network_id.0).await?))
+        Ok(Json(Network::delete(&state, &network_identity).await?))
     }
 
     /// Get network endpoints
     ///
-    /// GET /api/net/:network_id/endpoints
+    /// GET /api/net/:network_identity/endpoints
     #[oai(
-        path = "/net/:network_id/endpoints",
+        path = "/net/:network_identity/endpoints",
         method = "get",
         tag = "ApiTags::Network"
     )]
@@ -129,20 +129,20 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<NetworkIdentity>,
+        network_identity: Path<NetworkIdentity>,
     ) -> Result<Json<Vec<NetworkEndpoint>>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::get_by_network_id(&state, &network_id.0).await?,
+            NetworkEndpoint::get_by_network_id(&state, &network_identity.0).await?,
         ))
     }
 
     /// Get the next network endpoint ID
     ///
-    /// GET /api/net/:network_id/endpoints/next-id
+    /// GET /api/net/:network_identity/endpoints/next-id
     #[oai(
-        path = "/net/:network_id/endpoints/next-id",
+        path = "/net/:network_identity/endpoints/next-id",
         method = "get",
         tag = "ApiTags::Network"
     )]
@@ -150,18 +150,18 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<NetworkIdentity>,
+        network_identity: Path<NetworkIdentity>,
     ) -> Result<Json<i32>> {
         let _auth_data = auth.unwrap()?;
-        let _network_id = network_id.0;
+        let _network_identity = network_identity.0;
         Ok(Json(NetworkEndpoint::get_next_id(&state).await?))
     }
 
     /// Create a network endpoint
     ///
-    /// POST /api/net/:network_id/endpoints
+    /// POST /api/net/:network_identity/endpoints
     #[oai(
-        path = "/net/:network_id/endpoints",
+        path = "/net/:network_identity/endpoints",
         method = "post",
         tag = "ApiTags::Network"
     )]
@@ -169,12 +169,12 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<NetworkIdentity>,
+        network_identity: Path<NetworkIdentity>,
         payload: Json<NetworkEndpoint>,
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
-        if payload.0.network_identity != network_id.0 {
+        if payload.0.network_identity != network_identity.0 {
             return Err(poem::Error::from_status(StatusCode::BAD_REQUEST));
         }
 
@@ -183,9 +183,9 @@ impl NetworkApi {
 
     /// Get a network endpoint by ID
     ///
-    /// GET /api/net/:network_id/endpoints/:endpoint_id
+    /// GET /api/net/:network_identity/endpoints/:endpoint_identity
     #[oai(
-        path = "/net/:network_id/endpoints/:endpoint_id",
+        path = "/net/:network_identity/endpoints/:endpoint_identity",
         method = "get",
         tag = "ApiTags::Network"
     )]
@@ -193,21 +193,21 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<NetworkIdentity>,
-        endpoint_id: Path<i32>,
+        network_identity: Path<NetworkIdentity>,
+        endpoint_identity: Path<i32>,
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::get_by_id(&state.database, &network_id.0, &endpoint_id.0).await?,
+            NetworkEndpoint::get_by_id(&state.database, &network_identity.0, &endpoint_identity.0).await?,
         ))
     }
 
     /// Update a network endpoint by ID
     ///
-    /// PUT /api/net/:network_id/endpoints/:endpoint_id
+    /// PUT /api/net/:network_identity/endpoints/:endpoint_identity
     #[oai(
-        path = "/net/:network_id/endpoints/:endpoint_id",
+        path = "/net/:network_identity/endpoints/:endpoint_identity",
         method = "put",
         tag = "ApiTags::Network"
     )]
@@ -215,20 +215,20 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<NetworkIdentity>,
-        endpoint_id: Path<i32>,
+        network_identity: Path<NetworkIdentity>,
+        endpoint_identity: Path<i32>,
         payload: Json<NetworkEndpointUpdate>,
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
         let updated_endpoint =
-            NetworkEndpoint::update(&state, &network_id.0, &endpoint_id.0, payload.0).await?;
+            NetworkEndpoint::update(&state, &network_identity, &endpoint_identity, payload.0).await?;
 
         // Notify the running rpc
         state
             .networks
-            .get_pool(&network_id.0)
-            .get_rpc(&endpoint_id.0, &state.database)
+            .get_pool(&network_identity)
+            .get_rpc(&endpoint_identity, &state.database)
             .await
             .update(&updated_endpoint)
             .await
@@ -239,9 +239,9 @@ impl NetworkApi {
 
     /// Delete a network endpoint by ID
     ///
-    /// DELETE /api/net/:network_id/endpoints/:endpoint_id
+    /// DELETE /api/net/:network_identity/endpoints/:endpoint_identity
     #[oai(
-        path = "/net/:network_id/endpoints/:endpoint_id",
+        path = "/net/:network_identity/endpoints/:endpoint_identity",
         method = "delete",
         tag = "ApiTags::Network"
     )]
@@ -249,21 +249,21 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<NetworkIdentity>,
-        endpoint_id: Path<i32>,
+        network_identity: Path<NetworkIdentity>,
+        endpoint_identity: Path<i32>,
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::delete(&state, &network_id.0, &endpoint_id.0).await?,
+            NetworkEndpoint::delete(&state, &network_identity, &endpoint_identity).await?,
         ))
     }
 
     /// Get a network endpoint status
     ///
-    /// GET /api/net/:network_id/endpoints/:endpoint_id/status
+    /// GET /api/net/:network_identity/endpoints/:endpoint_identity/status
     #[oai(
-        path = "/net/:network_id/endpoints/:endpoint_id/status",
+        path = "/net/:network_identity/endpoints/:endpoint_identity/status",
         method = "get",
         tag = "ApiTags::Network"
     )]
@@ -271,14 +271,14 @@ impl NetworkApi {
         &self,
         auth: Auth,
         state: Data<&AppState>,
-        network_id: Path<NetworkIdentity>,
-        endpoint_id: Path<i32>,
+        network_identity: Path<NetworkIdentity>,
+        endpoint_identity: Path<i32>,
     ) -> Result<Json<RpcStatus>> {
         let _auth_data = auth.unwrap()?;
 
-        let pool = state.networks.get_pool(&network_id.0);
+        let pool = state.networks.get_pool(&network_identity);
 
-        let rpc = pool.get_rpc(&endpoint_id, &state.database).await;
+        let rpc = pool.get_rpc(&endpoint_identity, &state.database).await;
 
         Ok(Json(rpc.get_status().await))
     }

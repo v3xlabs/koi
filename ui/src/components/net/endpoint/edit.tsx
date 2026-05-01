@@ -5,11 +5,11 @@ import { narrow } from "#/utils/narrow";
 
 import { NetworkEndpointDelete } from "./delete";
 
-export const NetworkEndpointItem: Component<{ network_id: number; endpoint: NetworkEndpoint; }> = ({ network_id, endpoint }) => {
+export const NetworkEndpointItem: Component<{ network_identity: number; endpoint: NetworkEndpoint; }> = ({ network_identity, endpoint }) => {
     const updateNetworkEndpoint = useUpdateNetworkEndpoint(({ data }: { data: NetworkEndpoint; }) => ({
         path: {
-            network_id,
-            endpoint_id: endpoint.endpoint_identity ?? "",
+            network_identity,
+            endpoint_identity: endpoint.endpoint_identity ?? "",
         },
         contentType: "application/json; charset=utf-8",
         data,
@@ -29,8 +29,8 @@ export const NetworkEndpointItem: Component<{ network_id: number; endpoint: Netw
 
     const status = useNetworkEndpointStatus(() => ({
         path: {
-            network_id,
-            endpoint_id: endpoint.endpoint_identity ?? "",
+            network_identity,
+            endpoint_identity: endpoint.endpoint_identity ?? "",
         },
     }));
 
@@ -92,7 +92,7 @@ export const NetworkEndpointItem: Component<{ network_id: number; endpoint: Netw
                   onClick={() => updateNetworkEndpoint.mutate({
                         data: {
                             endpoint_identity: endpoint.endpoint_identity,
-                            network_identity: network_id,
+                            network_identity,
                             endpoint_label: label(),
                             endpoint_type: type(),
                             endpoint_url: url(),
@@ -102,7 +102,7 @@ export const NetworkEndpointItem: Component<{ network_id: number; endpoint: Netw
                 >
                     Update
                 </button>
-                <NetworkEndpointDelete network_id={network_id} endpoint_id={endpoint.endpoint_identity} />
+                <NetworkEndpointDelete network_identity={network_identity} endpoint_identity={endpoint.endpoint_identity} />
             </div>
         </li>
     );

@@ -406,7 +406,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/net/{network_id}": {
+    "/net/{network_identity}": {
         parameters: {
             query?: never;
             header?: never;
@@ -415,14 +415,14 @@ export type paths = {
         };
         /**
          * Get a network by ID
-         * @description GET /api/net/:network_id
+         * @description GET /api/net/:network_identity
          */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
+                    network_identity: number;
                 };
                 cookie?: never;
             };
@@ -440,14 +440,14 @@ export type paths = {
         };
         /**
          * Update a network by ID
-         * @description PUT /api/net/:network_id
+         * @description PUT /api/net/:network_identity
          */
         put: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
+                    network_identity: number;
                 };
                 cookie?: never;
             };
@@ -470,14 +470,14 @@ export type paths = {
         post?: never;
         /**
          * Delete a network by ID
-         * @description DELETE /api/net/:network_id
+         * @description DELETE /api/net/:network_identity
          */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
+                    network_identity: number;
                 };
                 cookie?: never;
             };
@@ -498,7 +498,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/net/{network_id}/endpoints": {
+    "/net/{network_identity}/endpoints": {
         parameters: {
             query?: never;
             header?: never;
@@ -507,14 +507,14 @@ export type paths = {
         };
         /**
          * Get network endpoints
-         * @description GET /api/net/:network_id/endpoints
+         * @description GET /api/net/:network_identity/endpoints
          */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
+                    network_identity: number;
                 };
                 cookie?: never;
             };
@@ -533,14 +533,14 @@ export type paths = {
         put?: never;
         /**
          * Create a network endpoint
-         * @description POST /api/net/:network_id/endpoints
+         * @description POST /api/net/:network_identity/endpoints
          */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
+                    network_identity: number;
                 };
                 cookie?: never;
             };
@@ -566,7 +566,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/net/{network_id}/endpoints/next-id": {
+    "/net/{network_identity}/endpoints/next-id": {
         parameters: {
             query?: never;
             header?: never;
@@ -575,14 +575,14 @@ export type paths = {
         };
         /**
          * Get the next network endpoint ID
-         * @description GET /api/net/:network_id/endpoints/next-id
+         * @description GET /api/net/:network_identity/endpoints/next-id
          */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
+                    network_identity: number;
                 };
                 cookie?: never;
             };
@@ -606,7 +606,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/net/{network_id}/endpoints/{endpoint_id}": {
+    "/net/{network_identity}/endpoints/{endpoint_identity}": {
         parameters: {
             query?: never;
             header?: never;
@@ -615,15 +615,15 @@ export type paths = {
         };
         /**
          * Get a network endpoint by ID
-         * @description GET /api/net/:network_id/endpoints/:endpoint_id
+         * @description GET /api/net/:network_identity/endpoints/:endpoint_identity
          */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
-                    endpoint_id: number;
+                    network_identity: number;
+                    endpoint_identity: number;
                 };
                 cookie?: never;
             };
@@ -641,15 +641,15 @@ export type paths = {
         };
         /**
          * Update a network endpoint by ID
-         * @description PUT /api/net/:network_id/endpoints/:endpoint_id
+         * @description PUT /api/net/:network_identity/endpoints/:endpoint_identity
          */
         put: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
-                    endpoint_id: number;
+                    network_identity: number;
+                    endpoint_identity: number;
                 };
                 cookie?: never;
             };
@@ -672,15 +672,15 @@ export type paths = {
         post?: never;
         /**
          * Delete a network endpoint by ID
-         * @description DELETE /api/net/:network_id/endpoints/:endpoint_id
+         * @description DELETE /api/net/:network_identity/endpoints/:endpoint_identity
          */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
-                    endpoint_id: number;
+                    network_identity: number;
+                    endpoint_identity: number;
                 };
                 cookie?: never;
             };
@@ -701,7 +701,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/net/{network_id}/endpoints/{endpoint_id}/status": {
+    "/net/{network_identity}/endpoints/{endpoint_identity}/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -710,15 +710,15 @@ export type paths = {
         };
         /**
          * Get a network endpoint status
-         * @description GET /api/net/:network_id/endpoints/:endpoint_id/status
+         * @description GET /api/net/:network_identity/endpoints/:endpoint_identity/status
          */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    network_id: number;
-                    endpoint_id: number;
+                    network_identity: number;
+                    endpoint_identity: number;
                 };
                 cookie?: never;
             };
@@ -806,7 +806,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/asset/{asset_id}": {
+    "/asset/{asset_identity}": {
         parameters: {
             query?: never;
             header?: never;
@@ -815,14 +815,14 @@ export type paths = {
         };
         /**
          * Get an asset by ID
-         * @description GET /api/asset/:asset_id
+         * @description GET /api/asset/:asset_identity
          */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    asset_id: string;
+                    asset_identity: string;
                 };
                 cookie?: never;
             };
@@ -840,14 +840,14 @@ export type paths = {
         };
         /**
          * Update an asset by ID
-         * @description PUT /api/asset/:asset_id
+         * @description PUT /api/asset/:asset_identity
          */
         put: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    asset_id: string;
+                    asset_identity: string;
                 };
                 cookie?: never;
             };
@@ -870,14 +870,14 @@ export type paths = {
         post?: never;
         /**
          * Delete an asset by ID
-         * @description DELETE /api/asset/:asset_id
+         * @description DELETE /api/asset/:asset_identity
          */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    asset_id: string;
+                    asset_identity: string;
                 };
                 cookie?: never;
             };
@@ -1032,7 +1032,7 @@ export type components = {
             /** Format: uint64 */
             block_number: number;
             /** Format: uint64 */
-            chain_id: number;
+            network_identity: number;
             /** Format: uint64 */
             timestamp: number;
         };

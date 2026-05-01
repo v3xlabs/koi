@@ -33,9 +33,9 @@ impl Network {
             .map_err(KoiError::from)
     }
 
-    pub async fn get_by_id(state: &AppState, network_id: i32) -> Result<Network, KoiError> {
+    pub async fn get_by_id(state: &AppState, network_identity: &NetworkIdentity) -> Result<Network, KoiError> {
         query_as::<_, Network>("SELECT * FROM networks WHERE network_identity = ?")
-            .bind(network_id)
+            .bind(network_identity)
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)
@@ -53,10 +53,10 @@ impl Network {
 
     pub async fn update(
         state: &AppState,
-        network_id: i32,
+        network_identity: &NetworkIdentity,
         network: NetworkUpdate,
     ) -> Result<Network, KoiError> {
-        let original = Self::get_by_id(state, network_id).await?;
+        let original = Self::get_by_id(state, &network_identity).await?;
 
         let network_name = network.network_name.unwrap_or(original.network_name);
         let network_icon_url = match network.network_icon_url {
@@ -67,15 +67,15 @@ impl Network {
         query_as::<_, Network>("UPDATE networks SET network_name = ?, network_icon_url = ? WHERE network_identity = ? RETURNING *")
             .bind(network_name)
             .bind(network_icon_url)
-            .bind(network_id)
+            .bind(network_identity)
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)
     }
 
-    pub async fn delete(state: &AppState, network_id: i32) -> Result<(), KoiError> {
+    pub async fn delete(state: &AppState, network_identity: &NetworkIdentity) -> Result<(), KoiError> {
         query("DELETE FROM networks WHERE network_identity = ?")
-            .bind(network_id)
+            .bind(network_identity)
             .execute(&state.database)
             .await
             .map_err(KoiError::from)

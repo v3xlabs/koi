@@ -7,10 +7,10 @@ import { NetworkDelete } from "./delete";
 import { NetworkEndpointAdd } from "./endpoint/add";
 import { NetworkEndpointCollapsible } from "./endpoint/collapsible";
 
-const NetworkEndpoints: Component<{ network_id: number; }> = ({ network_id }) => {
+const NetworkEndpoints: Component<{ network_identity: number; }> = ({ network_identity }) => {
     const networkEndpointsQuery = useNetworkEndpoints(() => ({
         path: {
-            network_id,
+            network_identity,
         },
     }));
 
@@ -18,7 +18,7 @@ const NetworkEndpoints: Component<{ network_id: number; }> = ({ network_id }) =>
         <div class="space-y-2">
             <div class="flex justify-between items-end">
                 <div>Endpoints</div>
-                <NetworkEndpointAdd network_id={network_id} />
+                <NetworkEndpointAdd network_identity={network_identity} />
             </div>
             <ul class="border border-border rounded-md">
                 <Suspense fallback={<div>Loading...</div>}>
@@ -26,7 +26,7 @@ const NetworkEndpoints: Component<{ network_id: number; }> = ({ network_id }) =>
                         {data => (
                             <For each={data()}>
                                 {endpoint => (
-                                    <NetworkEndpointCollapsible network_id={network_id} endpoint_id={endpoint.endpoint_identity} />
+                                    <NetworkEndpointCollapsible network_identity={network_identity} endpoint_identity={endpoint.endpoint_identity} />
                                 )}
                             </For>
                         )}
@@ -42,19 +42,21 @@ const NetworkEndpoints: Component<{ network_id: number; }> = ({ network_id }) =>
     );
 };
 
-export const NetworkEdit: Component<{ network_id: number; }> = ({ network_id }) => {
+export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_identity }) => {
     const networkQuery = useNetwork(() => ({
         path: {
-            network_id,
+            network_identity,
         },
     }));
 
     // TODO: Implement name editing (and icon)
-    const updateNetwork = useUpdateNetwork(() => ({
-        path: {
-            network_id,
-        },
-    }));
+    // const updateNetwork = useUpdateNetwork(() => ({
+    //     path: {
+    //         network_identity,
+    //     },
+    //     contentType: "application/json; charset=utf-8",
+    //     data,
+    // }));
 
     return (
         <div>
@@ -85,7 +87,7 @@ export const NetworkEdit: Component<{ network_id: number; }> = ({ network_id }) 
                 </div>
                 <div class="bg-surface p-4 rounded-md w-full">
                     <Tabs.Content value="endpoints">
-                        <NetworkEndpoints network_id={network_id} />
+                        <NetworkEndpoints network_identity={network_identity} />
                     </Tabs.Content>
                     <Tabs.Content value="details">
                         <div class="w-full space-y-2">
@@ -126,7 +128,7 @@ export const NetworkEdit: Component<{ network_id: number; }> = ({ network_id }) 
                             </div>
 
                             <div class="flex w-full justify-end">
-                                <NetworkDelete network_id={network_id} />
+                                <NetworkDelete network_identity={network_identity} />
                             </div>
                         </div>
                     </Tabs.Content>

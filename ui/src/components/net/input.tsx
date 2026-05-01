@@ -30,7 +30,7 @@ export const NetworkSelect: Component<NetworkSelectProperties> = (props) => {
           placeholder="Select networks..."
           itemComponent={props => (
                 <Select.Item item={props.item} class="flex items-center gap-2 hover:bg-surface-alt cursor-pointer">
-                    <NetworkIcon network_id={props.item.rawValue} />
+                    <NetworkIcon network_identity={props.item.rawValue} />
 
                     <Select.ItemLabel>
                         <Show when={allNetworks().find(network => network.network_identity === props.item.rawValue)} fallback={props.item.rawValue}>
@@ -59,7 +59,7 @@ export const NetworkSelect: Component<NetworkSelectProperties> = (props) => {
                                 <For each={state.selectedOptions()}>
                                     {option => (
                                         <span onPointerDown={e => e.stopPropagation()} class="flex items-center gap-2 border border-border rounded-md px-2 py-1">
-                                            <NetworkIcon network_id={Number(option)} />
+                                            <NetworkIcon network_identity={Number(option)} />
                                             <Show when={allNetworks().find(network => network.network_identity === Number(option))} fallback={option}>
                                                 {network => (
                                                     <span>

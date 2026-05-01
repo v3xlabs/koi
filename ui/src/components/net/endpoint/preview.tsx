@@ -6,17 +6,17 @@ import { narrow } from "#/utils/narrow";
 
 import { NetworkEndpointStatus } from "./status";
 
-export const NetworkEndpointPreview: Component<{ network_id: number; endpoint_id: string; }> = ({ network_id, endpoint_id }) => {
+export const NetworkEndpointPreview: Component<{ network_identity: number; endpoint_identity: number; }> = ({ network_identity, endpoint_identity }) => {
     const endpointQuery = useNetworkEndpoint(() => ({
         path: {
-            network_id,
-            endpoint_id,
+            network_identity,
+            endpoint_identity,
         },
     }));
     const statusQuery = useNetworkEndpointStatus(() => ({
         path: {
-            network_id,
-            endpoint_id,
+            network_identity,
+            endpoint_identity,
         },
     }));
 

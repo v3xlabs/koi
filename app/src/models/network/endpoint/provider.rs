@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
 pub struct EthProvider {
-    network_id: NetworkIdentity,
-    endpoint_id: i32,
+    network_identity: NetworkIdentity,
+    endpoint_identity: i32,
     state: Arc<Mutex<RpcState>>,
 }
 
@@ -60,7 +60,7 @@ pub enum RpcError {
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct RpcStatusAlive {
     block_number: u64,
-    chain_id: NetworkIdentity,
+    network_identity: NetworkIdentity,
     timestamp: u64,
 }
 
@@ -87,8 +87,8 @@ impl EthProvider {
         )));
 
         let me = Self {
-            network_id: endpoint.network_identity.clone(),
-            endpoint_id: endpoint.endpoint_identity,
+            network_identity: endpoint.network_identity.clone(),
+            endpoint_identity: endpoint.endpoint_identity,
             state,
         };
 
@@ -131,7 +131,7 @@ impl EthProvider {
         info!("Endpoint connected, checking chain_id");
 
         // Verify chain id matches with the desired network
-        let chain_id = match provider.get_chain_id().await {
+        let network_identity = match provider.get_chain_id().await {
             Ok(chain_id) => chain_id,
             Err(e) => {
                 let error = RpcError::ProviderError(Arc::new(e));
@@ -141,20 +141,20 @@ impl EthProvider {
                 return Err(error);
             }
         };
-        if chain_id != self.network_id.0 {
+        if network_identity != self.network_identity.0 {
             self.set_state(RpcState::Dead {
                 error: RpcError::ChainIdMismatch(
-                    NetworkIdentity(chain_id),
-                    self.network_id.clone(),
+                    NetworkIdentity(network_identity),
+                    self.network_identity.clone(),
                 ),
             });
             return Err(RpcError::ChainIdMismatch(
-                NetworkIdentity(chain_id),
-                self.network_id.clone(),
+                NetworkIdentity(network_identity),
+                self.network_identity.clone(),
             ));
         }
 
-        info!("Chain id matches, RPC started");
+        info!("Network identity matches, RPC started");
 
         self.set_state(RpcState::Alive {
             inner: DynProvider::new(provider),
@@ -182,7 +182,7 @@ impl EthProvider {
 
                 RpcStatus::Alive(RpcStatusAlive {
                     block_number,
-                    chain_id: self.network_id.clone(),
+                    network_identity: self.network_identity.clone(),
                     timestamp: Utc::now().timestamp_millis() as u64,
                 })
             }

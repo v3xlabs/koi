@@ -3,7 +3,7 @@ import { Accessor, Component, JSX } from "solid-js";
 export type AddressInputProperties = {
     value?: Accessor<string>;
     onChange?: (value: string) => void;
-} & JSX.InputHTMLAttributes<HTMLInputElement>;
+} & Omit<JSX.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange">;
 
 export const AddressInput: Component<AddressInputProperties> = props => (
     <input
