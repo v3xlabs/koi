@@ -11,19 +11,21 @@ export const VendorFlagToggle: Component<{ info: VendorFlagInfo; state: Accessor
     const disableMutation = useVendorFlagDisable(() => ({ path: { flag: info.flag } }));
 
     return (
-        <Toggle
-          value={() => enabled()}
-          description={info.flag}
-          label={info.comment}
-          onChange={() => {
-                if (enabled()) {
-                    disableMutation.mutate({});
-                }
-                else {
-                    enableMutation.mutate({});
-                }
-            }}
-        />
+        <div class={info.unfinished ? "opacity-50 w-full" : "w-full"}>
+            <Toggle
+              value={() => enabled()}
+              label={info.comment + (info.unfinished ? "*" : "")}
+              description={info.flag}
+              onChange={() => {
+                    if (enabled()) {
+                        disableMutation.mutate({});
+                    }
+                    else {
+                        enableMutation.mutate({});
+                    }
+                }}
+            />
+        </div>
     );
 };
 

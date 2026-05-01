@@ -22,23 +22,48 @@ pub enum VendorFlag {
     #[strum(props(comment = "Asset Icon Discovery"))]
     ZerionTokenLogos,
 
-    #[strum(props(comment = "Asset Icon Discovery"))]
+    #[strum(props(comment = "Asset Icon Discovery", unfinished = "true"))]
     EtherscanTokenLogos,
 
-    #[strum(props(comment = "Link-out to Etherscan for Transaction Hashes"))]
-    EtherscanLinksTxHash,
+    #[strum(props(
+        comment = "Link-out to Etherscan for Transaction Hashes",
+        unfinished = "true"
+    ))]
+    EtherscanLinkTxHash,
 
-    #[strum(props(comment = "Link-out to Etherscan for Addresses"))]
-    EtherscanLinksAddress,
+    #[strum(props(comment = "Link-out to Etherscan for Addresses", unfinished = "true"))]
+    EtherscanLinkAddress,
 
-    #[strum(props(comment = "Link-out to Etherscan for Blocks"))]
-    EtherscanLinksBlock,
+    #[strum(props(comment = "Link-out to Etherscan for Blocks", unfinished = "true"))]
+    EtherscanLinkBlock,
+
+    #[strum(props(comment = "Link-out to Etherscan for Contracts", unfinished = "true"))]
+    EtherscanLinkContracts,
+
+    #[strum(props(comment = "Asset Icon Discovery", unfinished = "true"))]
+    BlockscoutTokenLogos,
+
+    #[strum(props(
+        comment = "Link-out to Blockscout for Transaction Hashes",
+        unfinished = "true"
+    ))]
+    BlockscoutLinkTxHash,
+
+    #[strum(props(comment = "Link-out to Blockscout for Addresses", unfinished = "true"))]
+    BlockscoutLinkAddress,
+
+    #[strum(props(comment = "Link-out to Blockscout for Blocks", unfinished = "true"))]
+    BlockscoutLinkBlock,
+
+    #[strum(props(comment = "Link-out to Blockscout for Contracts", unfinished = "true"))]
+    BlockscoutLinkContracts,
 }
 
 #[derive(Debug, Serialize, Deserialize, Object)]
 pub struct VendorFlagInfo {
     pub flag: VendorFlag,
     pub comment: String,
+    pub unfinished: bool,
 }
 
 impl FromStr for VendorFlag {
@@ -60,6 +85,11 @@ impl VendorFlag {
         Self::iter()
             .map(|flag| VendorFlagInfo {
                 comment: flag.get_str("comment").unwrap_or_default().to_string(),
+                unfinished: flag
+                    .get_str("unfinished")
+                    .unwrap_or_default()
+                    .parse::<bool>()
+                    .unwrap_or_default(),
                 flag,
             })
             .collect()

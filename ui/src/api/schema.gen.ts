@@ -1314,11 +1314,12 @@ export type components = {
             evm_address: string;
         };
         /** @enum {string} */
-        VendorFlag: "avara_token_logos" | "zerion_token_logos" | "etherscan_token_logos" | "etherscan_links_tx_hash" | "etherscan_links_address" | "etherscan_links_block";
+        VendorFlag: "avara_token_logos" | "zerion_token_logos" | "etherscan_token_logos" | "etherscan_link_tx_hash" | "etherscan_link_address" | "etherscan_link_block" | "etherscan_link_contracts" | "blockscout_token_logos" | "blockscout_link_tx_hash" | "blockscout_link_address" | "blockscout_link_block" | "blockscout_link_contracts";
         /** VendorFlagInfo */
         VendorFlagInfo: {
             flag: components["schemas"]["VendorFlag"];
             comment: string;
+            unfinished: boolean;
         };
         /** VendorFlagInfoResponse */
         VendorFlagInfoResponse: {
