@@ -3,9 +3,8 @@ import { createQueries } from "@tanstack/solid-query";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel } from "@tanstack/solid-table";
 import { Component, createMemo, For } from "solid-js";
 
-import { api } from "#/api";
 import { useAccountAssets } from "#/api/account";
-import { Asset } from "#/api/asset";
+import { Asset, useAsset } from "#/api/asset";
 
 import { AssetIcon } from "./icon";
 
@@ -63,25 +62,18 @@ export const AccountAssetTable: Component<{ account_identity: number; }> = ({ ac
     const accountAssetsQuery = useAccountAssets(() => ({ path: { account_identity } }));
 
     const bulk = createQueries(() => ({
-        queries: accountAssetsQuery.data?.map(asset => ({
-            queryKey: ["asset", asset],
-            queryFn: async () => {
-                const request = await api("/asset/{asset_identity}", "get", {
-                    path: {
-                        asset_identity: asset,
-                    },
-                });
-
-                return request.data;
-            },
-        })) ?? [],
+        queries: accountAssetsQuery.data?.map(asset_identity => useAsset.options({ path: { asset_identity } })) ?? [],
     }));
 
-    const data = createMemo(() => bulk?.map(asset => ({
-        asset: asset.data,
-        price: 1000n,
-        balance: 100n,
-    }))?.filter(asset => asset.asset !== undefined) ?? []);
+    const data = createMemo(() => bulk.flatMap((asset): Data[] => {
+        if (!asset.data) return [];
+
+        return [{
+            asset: asset.data,
+            price: 1000n,
+            balance: 100n,
+        }];
+    }));
 
     // const data = [{
     //     name: "ETH",
