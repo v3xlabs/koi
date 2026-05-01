@@ -72,9 +72,12 @@ impl VendorManager {
             vendors.insert(flag.clone(), enabled);
         }
 
+        let enabled_str = if enabled { "true" } else { "false" };
+
         query("INSERT INTO vendors (vendor_flag, vendor_status) VALUES (?, ?) ON CONFLICT (vendor_flag) DO UPDATE SET vendor_status = ?")
             .bind(flag.to_string())
-            .bind(enabled as i32)
+            .bind(enabled_str)
+            .bind(enabled_str)
             .execute(database)
             .await
             .map_err(KoiError::from)?;

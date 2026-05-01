@@ -40,7 +40,7 @@ pub enum VendorFlag {
     #[strum(props(comment = "Link-out to Etherscan for Contracts", unfinished = "true"))]
     EtherscanLinkContracts,
 
-    #[strum(props(comment = "Asset Icon Discovery", unfinished = "true"))]
+    #[strum(props(comment = "Asset Icon Discovery"))]
     BlockscoutTokenLogos,
 
     #[strum(props(

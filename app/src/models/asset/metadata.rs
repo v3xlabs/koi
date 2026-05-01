@@ -9,7 +9,7 @@ use crate::error::KoiError;
 use crate::models::asset::identity::AssetIdentity;
 use crate::models::vendor::flags::VendorFlag;
 use crate::state::AppState;
-use crate::vendor::{avara, zerion};
+use crate::vendor::{avara, blockscout, zerion};
 
 use super::Asset;
 
@@ -46,6 +46,13 @@ impl Asset {
                 true => Some((
                     zerion::fetch_icon_zerion(asset_identity).await,
                     "zerion".to_string(),
+                )),
+                false => None,
+            },
+            match state.vendors.has_flag(VendorFlag::BlockscoutTokenLogos) {
+                true => Some((
+                    blockscout::fetch_icon_blockscout(asset_identity).await,
+                    "blockscout".to_string(),
                 )),
                 false => None,
             },
