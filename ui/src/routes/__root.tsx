@@ -7,9 +7,9 @@ export const Route = createRootRoute({
   component: () => (
     <>
       <div class="w-full min-h-screen bg-background h-screen">
-        <div class="h-screen flex flex-col">
+        <div class="h-screen flex flex-col justify-stretch">
           <Navbar />
-          <div class="flex h-[calc(100vh - 56px)] overflow-y-auto">
+          <div class="flex h-[calc(100vh - 56px)] overflow-y-auto grow">
             <Suspense fallback={<div>Loading...</div>}>
               <Outlet />
             </Suspense>
