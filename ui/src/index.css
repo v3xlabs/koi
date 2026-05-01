@@ -140,3 +140,40 @@ body {
 .toast {
     @apply bg-surface border border-border rounded-md p-4;
 }
+
+.switch {
+    display: inline-flex;
+    align-items: center;
+}
+.switch-control {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    width: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 0 2px;
+    background-color: var(--color-surface-alt);
+    transition: 250ms background-color;
+}
+.switch-input:focus-visible + .switch-control {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+.switch-control[data-checked] {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+}
+.switch-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 10px;
+    background-color: white;
+    transition: 250ms transform;
+}
+.switch-thumb[data-checked] {
+    transform: translateX(calc(100% - 1px));
+}
+.switch:not(:disabled) .switch-control {
+    cursor: pointer;
+}

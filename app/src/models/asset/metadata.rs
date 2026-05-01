@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
+use eth_prices::token::erc20;
 use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
 use crate::error::KoiError;
 use crate::models::asset::identity::AssetIdentity;
+use crate::models::vendor::flags::VendorFlag;
 use crate::state::AppState;
 use crate::vendor::{avara, zerion};
 
@@ -31,37 +33,42 @@ impl Asset {
         asset_identity: &AssetIdentity,
     ) -> Result<AssetMetadataDiscovery, KoiError> {
         let erc20_option = Self::fetch_erc20_metadata(state, asset_identity).await;
-        let avara_option = avara::fetch_icon_avara(asset_identity).await;
-        let zerion_option = zerion::fetch_icon_zerion(asset_identity).await;
+
+        let icon_options: Vec<Option<(Result<String, KoiError>, String)>> = vec![
+            match state.vendors.has_flag(VendorFlag::AvaraTokenLogos) {
+                true => Some((
+                    avara::fetch_icon_avara(asset_identity).await,
+                    "avara".to_string(),
+                )),
+                false => None,
+            },
+            match state.vendors.has_flag(VendorFlag::ZerionTokenLogos) {
+                true => Some((
+                    zerion::fetch_icon_zerion(asset_identity).await,
+                    "zerion".to_string(),
+                )),
+                false => None,
+            },
+        ];
 
         let mut options = HashMap::new();
 
         if let Ok(option) = erc20_option {
             options.insert("erc20".to_string(), option);
-        } else {
-            return Err(KoiError::Internal("Failed to fetch ERC20 metadata".to_string()));
         }
-        if let Ok(url) = avara_option {
-            options.insert(
-                "avara".to_string(),
-                AssetMetadataOption {
-                    name: None,
-                    symbol: None,
-                    decimals: None,
-                    icon_url: Some(url),
-                },
-            );
-        }
-        if let Ok(url) = zerion_option {
-            options.insert(
-                "zerion".to_string(),
-                AssetMetadataOption {
-                    name: None,
-                    symbol: None,
-                    decimals: None,
-                    icon_url: Some(url),
-                },
-            );
+
+        for option in icon_options {
+            if let Some((Ok(url), name)) = option {
+                options.insert(
+                    name.to_string(),
+                    AssetMetadataOption {
+                        icon_url: Some(url),
+                        name: None,
+                        symbol: None,
+                        decimals: None,
+                    },
+                );
+            }
         }
 
         Ok(AssetMetadataDiscovery {

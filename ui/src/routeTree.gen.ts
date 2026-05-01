@@ -14,6 +14,7 @@ import { Route as OnboardingRouteRouteImport } from "./routes/onboarding/route"
 import { Route as IndexRouteImport } from "./routes/index"
 import { Route as SettingsIndexRouteImport } from "./routes/settings/index"
 import { Route as OnboardingIndexRouteImport } from "./routes/onboarding/index"
+import { Route as SettingsVendorsRouteImport } from "./routes/settings/vendors"
 import { Route as SettingsNetworksRouteImport } from "./routes/settings/networks"
 import { Route as SettingsAssetsRouteImport } from "./routes/settings/assets"
 import { Route as OnboardingVendorsRouteImport } from "./routes/onboarding/vendors"
@@ -58,6 +59,11 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => OnboardingRouteRoute,
+} as any)
+const SettingsVendorsRoute = SettingsVendorsRouteImport.update({
+  id: "/vendors",
+  path: "/vendors",
+  getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsNetworksRoute = SettingsNetworksRouteImport.update({
   id: "/networks",
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/settings/vendors": typeof SettingsVendorsRoute
   "/onboarding/": typeof OnboardingIndexRoute
   "/settings/": typeof SettingsIndexRoute
   "/acc/$account/settings": typeof AccAccountSettingsRouteRouteWithChildren
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/settings/vendors": typeof SettingsVendorsRoute
   "/onboarding": typeof OnboardingIndexRoute
   "/settings": typeof SettingsIndexRoute
   "/acc/$account/assets": typeof AccAccountAssetsRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/settings/vendors": typeof SettingsVendorsRoute
   "/onboarding/": typeof OnboardingIndexRoute
   "/settings/": typeof SettingsIndexRoute
   "/acc/$account/settings": typeof AccAccountSettingsRouteRouteWithChildren
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | "/onboarding/vendors"
     | "/settings/assets"
     | "/settings/networks"
+    | "/settings/vendors"
     | "/onboarding/"
     | "/settings/"
     | "/acc/$account/settings"
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | "/onboarding/vendors"
     | "/settings/assets"
     | "/settings/networks"
+    | "/settings/vendors"
     | "/onboarding"
     | "/settings"
     | "/acc/$account/assets"
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | "/onboarding/vendors"
     | "/settings/assets"
     | "/settings/networks"
+    | "/settings/vendors"
     | "/onboarding/"
     | "/settings/"
     | "/acc/$account/settings"
@@ -357,6 +369,13 @@ declare module "@tanstack/solid-router" {
       fullPath: "/onboarding/"
       preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof OnboardingRouteRoute
+    }
+    "/settings/vendors": {
+      id: "/settings/vendors"
+      path: "/vendors"
+      fullPath: "/settings/vendors"
+      preLoaderRoute: typeof SettingsVendorsRouteImport
+      parentRoute: typeof SettingsRouteRoute
     }
     "/settings/networks": {
       id: "/settings/networks"
@@ -517,12 +536,14 @@ const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
 interface SettingsRouteRouteChildren {
   SettingsAssetsRoute: typeof SettingsAssetsRoute
   SettingsNetworksRoute: typeof SettingsNetworksRoute
+  SettingsVendorsRoute: typeof SettingsVendorsRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAssetsRoute: SettingsAssetsRoute,
   SettingsNetworksRoute: SettingsNetworksRoute,
+  SettingsVendorsRoute: SettingsVendorsRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 

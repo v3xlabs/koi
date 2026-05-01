@@ -46,8 +46,10 @@ impl State {
 
         let database = SqlitePool::connect(&config.database_url).await?;
 
+        let vendors = VendorManager::init(&database).await?;
+
         Ok(Arc::new(State {
-            vendors: VendorManager::default(),
+            vendors,
             networks: NetworkManager::default(),
             database,
             config,

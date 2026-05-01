@@ -978,6 +978,146 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/vendor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List enabled vendors
+         * @description GET /api/vendor
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["VendorsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vendor/all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all vendors
+         * @description GET /api/vendor/all
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["VendorFlagInfoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vendor/{flag}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a vendor flag
+         * @description POST /api/vendor/:flag
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    flag: components["schemas"]["VendorFlag"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        /**
+         * Disable a vendor flag
+         * @description POST /api/vendor/:flag
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    flag: components["schemas"]["VendorFlag"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1172,6 +1312,21 @@ export type components = {
         /** SafeWallet */
         SafeWallet: {
             evm_address: string;
+        };
+        /** @enum {string} */
+        VendorFlag: "avara_token_logos" | "zerion_token_logos" | "etherscan_token_logos" | "etherscan_links_tx_hash" | "etherscan_links_address" | "etherscan_links_block";
+        /** VendorFlagInfo */
+        VendorFlagInfo: {
+            flag: components["schemas"]["VendorFlag"];
+            comment: string;
+        };
+        /** VendorFlagInfoResponse */
+        VendorFlagInfoResponse: {
+            vendors: components["schemas"]["VendorFlagInfo"][];
+        };
+        /** VendorsResponse */
+        VendorsResponse: {
+            vendors: components["schemas"]["VendorFlag"][];
         };
         /** ViewWallet */
         ViewWallet: {

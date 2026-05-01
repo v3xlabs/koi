@@ -13,9 +13,9 @@ use crate::{
     state::AppState,
 };
 
+pub mod balances;
 pub mod identity;
 pub mod metadata;
-pub mod balances;
 
 #[derive(Serialize, Deserialize, Object, Clone)]
 pub struct Account {

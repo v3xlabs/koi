@@ -12,6 +12,7 @@ mod asset;
 mod auth;
 mod health;
 mod net;
+mod vendor;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -34,7 +35,13 @@ pub enum ApiTags {
 }
 
 fn get_api() -> impl OpenApi {
-    (account::api(), net::api(), asset::api(), health::api())
+    (
+        account::api(),
+        net::api(),
+        asset::api(),
+        vendor::api(),
+        health::api(),
+    )
 }
 
 #[derive(RustEmbed)]
