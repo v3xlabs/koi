@@ -79,47 +79,55 @@ export const AssetAdd = () => {
         console.log(JSON.stringify(discoveryQuery.data?.options));
     });
 
-    const nameSuggestions = createMemo(() => Object.entries(discoveryQuery.data?.options ?? {}).map(
-        ([source, value]) => {
-            if (value.name) {
-                return [value.name, source];
-            }
+    const nameSuggestions = createMemo(() => (assetName().length > 0
+        ? []
+        : Object.entries(discoveryQuery.data?.options ?? {}).map(
+            ([source, value]) => {
+                if (value.name) {
+                    return [value.name, source];
+                }
 
-            return null;
-        })
-        .filter(s => !!s),
+                return null;
+            })
+            .filter(s => !!s)),
     );
-    const symbolSuggestions = createMemo(() => Object.entries(discoveryQuery.data?.options ?? {}).map(
-        ([source, value]) => {
-            if (value.symbol) {
-                return [value.symbol, source];
-            }
+    const symbolSuggestions = createMemo(() => (assetSymbol().length > 0
+        ? []
+        : Object.entries(discoveryQuery.data?.options ?? {}).map(
+            ([source, value]) => {
+                if (value.symbol) {
+                    return [value.symbol, source];
+                }
 
-            return null;
-        })
-        .filter(s => !!s),
+                return null;
+            })
+            .filter(s => !!s)),
     );
-    const decimalsSuggestions = createMemo(() => Object.entries(discoveryQuery.data?.options ?? {}).map(
-        ([source, value]) => {
-            if (value.decimals) {
-                return [value.decimals, source];
-            }
+    const decimalsSuggestions = createMemo(() => (assetDecimals() !== undefined && assetDecimals() !== 0
+        ? []
+        : Object.entries(discoveryQuery.data?.options ?? {}).map(
+            ([source, value]) => {
+                if (value.decimals) {
+                    return [value.decimals, source];
+                }
 
-            return null;
-        })
-        .filter(s => !!s),
+                return null;
+            })
+            .filter(s => !!s)),
     );
-    const iconSuggestions = createMemo(() => Object.entries(discoveryQuery.data?.options ?? {}).map(
-        ([source, value]) => {
-            console.log(source, value);
+    const iconSuggestions = createMemo(() => (assetIconUrl().length > 0
+        ? []
+        : Object.entries(discoveryQuery.data?.options ?? {}).map(
+            ([source, value]) => {
+                console.log(source, value);
 
-            if (value.icon_url) {
-                return [value.icon_url, source];
-            }
+                if (value.icon_url) {
+                    return [value.icon_url, source];
+                }
 
-            return null;
-        })
-        .filter(s => !!s),
+                return null;
+            })
+            .filter(s => !!s)),
     );
 
     return (
@@ -192,14 +200,16 @@ export const AssetAdd = () => {
                                   onChange={e => setAssetName(e.target.value)}
                                   placeholder={PLACEHOLDERS[assetType()].name}
                                 />
-                                <div>
-                                    <For each={nameSuggestions()}>
-                                        {([name, source]) => (
-                                            <li>
-                                                <button onClick={() => setAssetName(name)}>{name}</button>
-                                            </li>
-                                        )}
-                                    </For>
+                                <div class="flex justify-end text-end">
+                                    <ul>
+                                        <For each={nameSuggestions()}>
+                                            {([name, source]) => (
+                                                <li>
+                                                    <button onClick={() => setAssetName(name)} class="text-sm text-muted hover:text-foreground cursor-pointer">{name}</button>
+                                                </li>
+                                            )}
+                                        </For>
+                                    </ul>
                                 </div>
                             </label>
                             <div class="w-full flex flex-col gap-2 md:flex-row">
@@ -213,13 +223,15 @@ export const AssetAdd = () => {
                                       placeholder={PLACEHOLDERS[assetType()].symbol}
                                     />
                                     <div>
-                                        <For each={symbolSuggestions()}>
-                                            {([symbol, source]) => (
-                                                <li>
-                                                    <button onClick={() => setAssetSymbol(symbol)}>{symbol}</button>
-                                                </li>
-                                            )}
-                                        </For>
+                                        <ul class="flex justify-end text-end">
+                                            <For each={symbolSuggestions()}>
+                                                {([symbol, source]) => (
+                                                    <li>
+                                                        <button onClick={() => setAssetSymbol(symbol)} class="text-sm text-muted hover:text-foreground cursor-pointer">{symbol}</button>
+                                                    </li>
+                                                )}
+                                            </For>
+                                        </ul>
                                     </div>
                                 </label>
                                 <label class="space-y-1 block w-full">
@@ -232,13 +244,15 @@ export const AssetAdd = () => {
                                       placeholder={PLACEHOLDERS[assetType()].decimals.toString()}
                                     />
                                     <div>
-                                        <For each={decimalsSuggestions()}>
-                                            {([decimals, source]) => (
-                                                <li>
-                                                    <button onClick={() => setAssetDecimals(decimals)}>{decimals}</button>
-                                                </li>
-                                            )}
-                                        </For>
+                                        <ul class="flex justify-end text-end">
+                                            <For each={decimalsSuggestions()}>
+                                                {([decimals, source]) => (
+                                                    <li>
+                                                        <button onClick={() => setAssetDecimals(decimals)} class="text-sm text-muted hover:text-foreground cursor-pointer">{decimals}</button>
+                                                    </li>
+                                                )}
+                                            </For>
+                                        </ul>
                                     </div>
                                 </label>
                             </div>
@@ -251,7 +265,7 @@ export const AssetAdd = () => {
                                   onChange={e => setAssetIconUrl(e.target.value)}
                                   placeholder={PLACEHOLDERS[assetType()].iconUrl}
                                 />
-                                <ul>
+                                <ul class="flex justify-end text-end gap-2">
                                     <For each={iconSuggestions()}>
                                         {([iconUrl, source]) => (
                                             <li>
@@ -264,17 +278,6 @@ export const AssetAdd = () => {
                                     </For>
                                 </ul>
                             </label>
-                        </div>
-                        <div>
-                            <Show when={asset()}>
-                                {asset => (
-                                    <div>
-                                        <div class="text-sm wrap-anywhere">
-                                            {JSON.stringify(asset())}
-                                        </div>
-                                    </div>
-                                )}
-                            </Show>
                         </div>
                         <div class="w-full flex justify-end gap-2 p-4">
                             <button
