@@ -30,7 +30,9 @@ const columns = [
             <div class="flex items-center gap-2 py-3.5">
                 <Skeleton visible={!row.original.price} class="skeleton animate-spin">
                     $
-                    {row.original.price?.toString()}
+                    <span class="tabular-nums">
+                        {row.original.price?.toString()}
+                    </span>
                 </Skeleton>
             </div>
         ),
@@ -40,13 +42,17 @@ const columns = [
         cell: ({ row }) => (
             <div class="space-y-1">
                 <Skeleton visible={!row.original.price} class="skeleton animate-spin">
-                    {row.original.balance?.toString()}
+                    <span class="tabular-nums">
+                        {row.original.balance?.toString()}
+                    </span>
                     {" "}
                     {row.original.asset.asset_symbol}
                 </Skeleton>
                 <Skeleton visible={!row.original.price || !row.original.balance} class="skeleton animate-spin text-muted">
                     $
-                    {(Number(row.original.balance) * Number(row.original.price)).toFixed(2)}
+                    <span class="tabular-nums">
+                        {(Number(row.original.balance) * Number(row.original.price)).toFixed(2)}
+                    </span>
                 </Skeleton>
             </div>
         ),
