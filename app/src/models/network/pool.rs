@@ -6,12 +6,16 @@ use std::{
 use sqlx::SqlitePool;
 use tracing::info;
 
-use crate::models::network::{
-    endpoint::{
-        NetworkEndpoint,
-        provider::{EthProvider, RpcState},
+use crate::{
+    error::KoiError,
+    models::network::{
+        endpoint::{
+            NetworkEndpoint,
+            provider::{EthProvider, RpcState},
+        },
+        identity::NetworkIdentity,
     },
-    identity::NetworkIdentity,
+    state::AppState,
 };
 
 pub struct RpcPool {
@@ -55,19 +59,36 @@ impl RpcPool {
         self.start_endpoint(&endpoint).await
     }
 
-    pub fn get_first_rpc(&self) -> Option<Arc<EthProvider>> {
+    pub async fn get_first_rpc(&self, state: &AppState) -> Result<Arc<EthProvider>, KoiError> {
         {
             let endpoints = self.endpoints.lock().expect("rpc pool mutex poisoned");
 
             for endpoint in endpoints.values() {
                 match &endpoint.get_state() {
-                    RpcState::Alive { .. } => return Some(endpoint.clone()),
+                    RpcState::Alive { .. } => return Ok(endpoint.clone()),
                     RpcState::Dead { .. } => continue,
                     RpcState::Disabled => continue,
                 }
             }
         }
 
-        None
+        let endpoints = NetworkEndpoint::get_by_network_id(state, &self.network_identity).await;
+
+        if let Ok(endpoints) = endpoints {
+            for endpoint in endpoints {
+                if endpoint.endpoint_disabled {
+                    continue;
+                }
+                let rpc = self.start_endpoint(&endpoint).await;
+
+                if let RpcState::Alive { inner: _ } = rpc.get_state() {
+                    return Ok(rpc);
+                } else {
+                    continue;
+                }
+            }
+        }
+
+        Err(KoiError::Internal("No RPC found for network".to_string()))
     }
 }

@@ -56,8 +56,8 @@ impl Asset {
         let rpc = state
             .networks
             .get_pool(network_identity)
-            .get_first_rpc()
-            .ok_or(KoiError::Internal("No RPC found for network".to_string()))?;
+            .get_first_rpc(state)
+            .await?;
         let provider = rpc
             .get_provider()
             .ok_or(KoiError::Internal("No provider found for RPC".to_string()))?;
