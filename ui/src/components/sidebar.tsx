@@ -9,12 +9,14 @@ import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";
 
 import { AccountIcon } from "./account/icon";
+import { AccountExternalLinkModal } from "./account/link";
 import { AccountTypeIcon } from "./account/type";
 import { Modal } from "./dialog";
 
 export const Sidebar = () => {
     const params = useParams({ from: "/acc/$account" });
-    const account = useAccount(() => ({ path: { account_identity: Number.parseInt(params().account) } }));
+    const account_identity = Number.parseInt(params().account);
+    const account = useAccount(() => ({ path: { account_identity } }));
 
     return (
         <div class="px-1.5 py-2 min-w-56 max-w-64 bg-surface h-full space-y-2">
@@ -53,15 +55,13 @@ export const Sidebar = () => {
                             </ReceiveQR>
                         )}
                     </Show>
+                    <button class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
+                        <FaSolidCopy />
+                    </button>
+                    <AccountExternalLinkModal account_identity={account_identity} class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
+                        <FaSolidExternalLink />
+                    </AccountExternalLinkModal>
                     <For each={[
-                        {
-                            icon: FaSolidCopy,
-                            label: "Copy address",
-                        },
-                        {
-                            icon: FaSolidExternalLink,
-                            label: "View on Explorer",
-                        },
                         {
                             icon: FaSolidGear,
                             label: "Settings",

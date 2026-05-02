@@ -43,9 +43,20 @@ const Title: typeof Dialog.Title = props => (
   />
 );
 
+const Content: typeof Dialog.Content = props => (
+  <Dialog.Content
+    classList={{
+      "z-50": true,
+      [props.class]: true,
+    }}
+    {...props}
+  />
+);
+
 export const Modal = Object.assign(Root, {
   ...Dialog,
   CloseButton,
+  Content,
   Overlay,
   Title,
 });
