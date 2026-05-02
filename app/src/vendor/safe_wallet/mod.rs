@@ -18,8 +18,33 @@ fn network_icon_url(network_identity: u64) -> String {
     )
 }
 
+fn native_token_icon_url(network_identity: u64) -> String {
+    format!(
+        "https://safe-transaction-assets.safe.global/chains/{}/currency_logo.png",
+        network_identity
+    )
+}
+
 pub async fn fetch_network_icon(network_identity: u64) -> Result<String, KoiError> {
     let url = network_icon_url(network_identity);
+    info!("Fetching icon from {}", url);
+
+    let response = reqwest::get(&url)
+        .await
+        .map_err(|e| KoiError::Internal(format!("Failed to fetch icon from {}: {}", url, e)))?;
+
+    match response.status().is_success() {
+        true => Ok(url),
+        false => Err(KoiError::Internal(format!(
+            "Failed to fetch icon from {}: {}",
+            url,
+            response.status()
+        ))),
+    }
+}
+
+pub async fn fetch_native_token_icon(network_identity: u64) -> Result<String, KoiError> {
+    let url = native_token_icon_url(network_identity);
     info!("Fetching icon from {}", url);
 
     let response = reqwest::get(&url)

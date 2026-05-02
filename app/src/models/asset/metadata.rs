@@ -1,15 +1,13 @@
 use std::collections::HashMap;
 
-use eth_prices::token::erc20;
 use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
-use tracing::info;
 
 use crate::error::KoiError;
 use crate::models::asset::identity::AssetIdentity;
 use crate::models::vendor::flags::VendorFlag;
 use crate::state::AppState;
-use crate::vendor::{avara, blockscout, smoldapp, zerion};
+use crate::vendor::{avara, blockscout, safe_wallet, smoldapp, zerion};
 
 use super::Asset;
 
@@ -32,44 +30,35 @@ impl Asset {
         state: &AppState,
         asset_identity: &AssetIdentity,
     ) -> Result<AssetMetadataDiscovery, KoiError> {
-        let erc20_option = Self::fetch_erc20_metadata(state, asset_identity).await;
+        let mut options = HashMap::new();
 
-        let icon_options: Vec<Option<(Result<String, KoiError>, String)>> = vec![
+        if matches!(asset_identity, AssetIdentity::ERC20(..)) {
+            if let Ok(option) = Self::fetch_erc20_metadata(state, asset_identity).await {
+                options.insert("erc20".to_string(), option);
+            }
+        }
+
+        let icon_options: Vec<Option<(Result<String, KoiError>, &'static str)>> = vec![
             match state.vendors.has_flag(VendorFlag::AvaraAssetIcons) {
-                true => Some((
-                    avara::fetch_asset_icon(asset_identity).await,
-                    "avara".to_string(),
-                )),
+                true => Some((avara::fetch_asset_icon(asset_identity).await, "avara")),
                 false => None,
             },
             match state.vendors.has_flag(VendorFlag::ZerionAssetIcons) {
-                true => Some((
-                    zerion::fetch_asset_icon(asset_identity).await,
-                    "zerion".to_string(),
-                )),
+                true => Some((zerion::fetch_asset_icon(asset_identity).await, "zerion")),
                 false => None,
             },
             match state.vendors.has_flag(VendorFlag::BlockscoutAssetIcons) {
                 true => Some((
                     blockscout::fetch_asset_icon(asset_identity).await,
-                    "blockscout".to_string(),
+                    "blockscout",
                 )),
                 false => None,
             },
             match state.vendors.has_flag(VendorFlag::SmoldappAssetIcons) {
-                true => Some((
-                    smoldapp::fetch_token_icon(asset_identity).await,
-                    "smoldapp".to_string(),
-                )),
+                true => Some((smoldapp::fetch_token_icon(asset_identity).await, "smoldapp")),
                 false => None,
             },
         ];
-
-        let mut options = HashMap::new();
-
-        if let Ok(option) = erc20_option {
-            options.insert("erc20".to_string(), option);
-        }
 
         for option in icon_options {
             if let Some((Ok(url), name)) = option {
@@ -83,6 +72,23 @@ impl Asset {
                     },
                 );
             }
+        }
+
+        if let AssetIdentity::Native(network_identity) = asset_identity
+            && state
+                .vendors
+                .has_flag(VendorFlag::SafewalletNativeTokenIcons)
+            && let Ok(url) = safe_wallet::fetch_native_token_icon(network_identity.0).await
+        {
+            options.insert(
+                "safe".to_string(),
+                AssetMetadataOption {
+                    icon_url: Some(url),
+                    name: None,
+                    symbol: None,
+                    decimals: None,
+                },
+            );
         }
 
         Ok(AssetMetadataDiscovery {

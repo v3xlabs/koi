@@ -72,8 +72,13 @@ export const AssetAdd = () => {
         console.log(asset());
     });
 
-    const discoveryQuery = useAssetMetadataDiscovery(() => ({ path: { asset_identity: `erc20:${networkId()}:${assetAddress()}` } }), {
-        enabled: () => !!assetAddress() && assetType() === "erc20" && networkId() !== 0,
+    const discoveryAssetIdentity = createMemo(() => match(assetType())
+        .with("erc20", () => (networkId() && assetAddress() ? `erc20:${networkId()}:${assetAddress()}` : undefined))
+        .with("native", () => (networkId() ? `native:${networkId()}` : undefined))
+        .otherwise(() => undefined));
+
+    const discoveryQuery = useAssetMetadataDiscovery(() => ({ path: { asset_identity: discoveryAssetIdentity()! } }), {
+        enabled: () => !!discoveryAssetIdentity(),
     });
 
     createEffect(() => {
