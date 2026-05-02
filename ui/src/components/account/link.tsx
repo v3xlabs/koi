@@ -9,9 +9,11 @@ import { NetworkIcon } from "../net/icon";
 const EXPLORER_ADDRESS_LINKS: Partial<Record<VendorFlag, Record<number, string>>> = {
     etherscan_link_address: {
         1: "https://etherscan.io/address/$address",
+        11_155_111: "https://sepolia.etherscan.io/address/$address",
     },
     blockscout_link_address: {
         1: "https://eth.blockscout.com/address/$address",
+        11_155_111: "https://sepolia.blockscout.com/address/$address",
     },
 };
 
@@ -62,13 +64,13 @@ export const AccountExternalLinkModal: Component<{ account_identity: number; chi
                                 {link => (
                                     <a href={link.link} target="_blank" class="hover:underline">
                                         <div class="flex items-center gap-2">
-                                        <NetworkIcon network_identity={link.network_identity} />
-                                        <span>
-                                        {link.flag}
-                                        </span>
+                                            <NetworkIcon network_identity={link.network_identity} />
+                                            <span>
+                                                {link.flag}
+                                            </span>
                                         </div>
                                         <div class="wrap-anywhere">
-                                        {link.link}
+                                            {link.link}
                                         </div>
                                     </a>
                                 )}
