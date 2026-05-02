@@ -6,6 +6,7 @@ dist
 .vinxi
 .tanstack
 app.config.timestamp_*.js
+tsconfig.tsbuildinfo
 
 # Environment
 .env
