@@ -5,10 +5,12 @@ import { components } from "../schema.gen";
 
 export type Network = components["schemas"]["Network"];
 export type NetworkEndpoint = components["schemas"]["NetworkEndpoint"];
+export type NetworkMetadataDiscovery = components["schemas"]["NetworkMetadataDiscovery"];
 
 export const networkKeys = {
     all: ["networks"] as const,
     detail: (network_identity: number | string) => ["network", network_identity.toString()] as const,
+    discovery: (network_identity: number | string) => ["network-discovery", network_identity.toString()] as const,
     presets: ["network-presets"] as const,
     endpoints: (network_identity: number | string) => ["network-endpoints", network_identity.toString()] as const,
     endpoint: (network_identity: number | string, endpoint_identity: number | string) => ["network-endpoint", network_identity.toString(), endpoint_identity.toString()] as const,
@@ -17,6 +19,7 @@ export const networkKeys = {
 };
 
 export const useNetwork = createApi("/net/{network_identity}", "get", options => networkKeys.detail(options.path.network_identity));
+export const useNetworkMetadataDiscovery = createApi("/net/{network_identity}/metadata", "get", options => networkKeys.discovery(options.path.network_identity));
 export const useNetworks = createApi("/net", "get", () => networkKeys.all, {
     onData: data => data.networks.forEach(network => queryClient.setQueryData(networkKeys.detail(network.network_identity), network)),
 });

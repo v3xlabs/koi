@@ -9,7 +9,7 @@ use crate::error::KoiError;
 use crate::models::asset::identity::AssetIdentity;
 use crate::models::vendor::flags::VendorFlag;
 use crate::state::AppState;
-use crate::vendor::{avara, blockscout, zerion};
+use crate::vendor::{avara, blockscout, smoldapp, zerion};
 
 use super::Asset;
 
@@ -35,24 +35,31 @@ impl Asset {
         let erc20_option = Self::fetch_erc20_metadata(state, asset_identity).await;
 
         let icon_options: Vec<Option<(Result<String, KoiError>, String)>> = vec![
-            match state.vendors.has_flag(VendorFlag::AvaraTokenLogos) {
+            match state.vendors.has_flag(VendorFlag::AvaraAssetIcons) {
                 true => Some((
-                    avara::fetch_icon_avara(asset_identity).await,
+                    avara::fetch_asset_icon(asset_identity).await,
                     "avara".to_string(),
                 )),
                 false => None,
             },
-            match state.vendors.has_flag(VendorFlag::ZerionTokenLogos) {
+            match state.vendors.has_flag(VendorFlag::ZerionAssetIcons) {
                 true => Some((
-                    zerion::fetch_icon_zerion(asset_identity).await,
+                    zerion::fetch_asset_icon(asset_identity).await,
                     "zerion".to_string(),
                 )),
                 false => None,
             },
-            match state.vendors.has_flag(VendorFlag::BlockscoutTokenLogos) {
+            match state.vendors.has_flag(VendorFlag::BlockscoutAssetIcons) {
                 true => Some((
-                    blockscout::fetch_icon_blockscout(asset_identity).await,
+                    blockscout::fetch_asset_icon(asset_identity).await,
                     "blockscout".to_string(),
+                )),
+                false => None,
+            },
+            match state.vendors.has_flag(VendorFlag::SmoldappAssetIcons) {
+                true => Some((
+                    smoldapp::fetch_token_icon(asset_identity).await,
+                    "smoldapp".to_string(),
                 )),
                 false => None,
             },

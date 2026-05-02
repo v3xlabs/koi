@@ -538,6 +538,46 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/net/{network_identity}/metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Discover metadata for a network
+         * @description GET /api/net/:network_identity/metadata
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    network_identity: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["NetworkMetadataDiscovery"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/net/{network_identity}/endpoints": {
         parameters: {
             query?: never;
@@ -1259,6 +1299,18 @@ export type components = {
             endpoint_url?: string;
             endpoint_disabled?: boolean;
         };
+        /** NetworkMetadataDiscovery */
+        NetworkMetadataDiscovery: {
+            /** Format: uint64 */
+            network_identity: number;
+            options: {
+                [key: string]: components["schemas"]["NetworkMetadataOption"];
+            };
+        };
+        /** NetworkMetadataOption */
+        NetworkMetadataOption: {
+            icon_url?: string;
+        };
         /** NetworkUpdate */
         NetworkUpdate: {
             network_name?: string;
@@ -1314,7 +1366,7 @@ export type components = {
             evm_address: string;
         };
         /** @enum {string} */
-        VendorFlag: "avara_token_logos" | "zerion_token_logos" | "etherscan_token_logos" | "etherscan_link_tx_hash" | "etherscan_link_address" | "etherscan_link_block" | "etherscan_link_contracts" | "blockscout_token_logos" | "blockscout_link_tx_hash" | "blockscout_link_address" | "blockscout_link_block" | "blockscout_link_contracts";
+        VendorFlag: "avara_asset_icons" | "zerion_asset_icons" | "smoldapp_asset_icons" | "smoldapp_network_icons" | "safewallet_network_icons" | "etherscan_asset_icons" | "etherscan_link_tx_hash" | "etherscan_link_address" | "etherscan_link_block" | "etherscan_link_contracts" | "blockscout_asset_icons" | "blockscout_link_tx_hash" | "blockscout_link_address" | "blockscout_link_block" | "blockscout_link_contracts";
         /** VendorFlagInfo */
         VendorFlagInfo: {
             flag: components["schemas"]["VendorFlag"];

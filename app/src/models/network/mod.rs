@@ -7,6 +7,7 @@ use crate::{error::KoiError, models::network::identity::NetworkIdentity, state::
 pub mod endpoint;
 pub mod identity;
 pub mod manager;
+pub mod metadata;
 pub mod pool;
 
 #[derive(Debug, Serialize, Deserialize, Object, FromRow)]
@@ -63,6 +64,7 @@ impl Network {
 
         let network_name = network.network_name.unwrap_or(original.network_name);
         let network_icon_url = match network.network_icon_url {
+            Some(url) if url.trim().is_empty() => None,
             Some(url) => Some(url),
             None => original.network_icon_url,
         };

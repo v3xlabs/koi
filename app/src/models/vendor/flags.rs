@@ -17,13 +17,22 @@ use tracing::info;
 #[oai(rename_all = "snake_case")]
 pub enum VendorFlag {
     #[strum(props(comment = "Asset Icon Discovery"))]
-    AvaraTokenLogos,
+    AvaraAssetIcons,
 
     #[strum(props(comment = "Asset Icon Discovery"))]
-    ZerionTokenLogos,
+    ZerionAssetIcons,
+
+    #[strum(props(comment = "Asset Icon Discovery"))]
+    SmoldappAssetIcons,
+
+    #[strum(props(comment = "Network Icon Discovery"))]
+    SmoldappNetworkIcons,
+
+    #[strum(props(comment = "Network Icon Discovery"))]
+    SafewalletNetworkIcons,
 
     #[strum(props(comment = "Asset Icon Discovery", unfinished = "true"))]
-    EtherscanTokenLogos,
+    EtherscanAssetIcons,
 
     #[strum(props(
         comment = "Link-out to Etherscan for Transaction Hashes",
@@ -41,7 +50,7 @@ pub enum VendorFlag {
     EtherscanLinkContracts,
 
     #[strum(props(comment = "Asset Icon Discovery"))]
-    BlockscoutTokenLogos,
+    BlockscoutAssetIcons,
 
     #[strum(props(
         comment = "Link-out to Blockscout for Transaction Hashes",

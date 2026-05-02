@@ -1,11 +1,8 @@
-// https://cdn.zerion.io/0x1abaea1f7c830bd89acc67ec4af516284b1bc33c.png
-// check if an image is available at this url, if so proxy it.
-
 use tracing::info;
 
 use crate::{error::KoiError, models::asset::identity::AssetIdentity};
 
-pub async fn fetch_icon_zerion(asset_identity: &AssetIdentity) -> Result<String, KoiError> {
+pub async fn fetch_asset_icon(asset_identity: &AssetIdentity) -> Result<String, KoiError> {
     let (_network_identity, address) = asset_identity.unwrap_address().ok_or(
         KoiError::Internal("Asset identity is not an ERC20 address".to_string()),
     )?;

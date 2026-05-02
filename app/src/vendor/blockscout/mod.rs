@@ -6,7 +6,7 @@ use tracing::info;
 use crate::{error::KoiError, models::asset::identity::AssetIdentity};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct BlockscoutMetadata {
+pub struct BlockscoutAssetMetadata {
     pub icon_url: String,
     // pub decimals: String,
     // pub name: String,
@@ -16,7 +16,7 @@ pub struct BlockscoutMetadata {
 }
 
 /// https://eth.blockscout.com/api/v2/tokens/0x123
-pub async fn fetch_icon_blockscout(asset_identity: &AssetIdentity) -> Result<String, KoiError> {
+pub async fn fetch_asset_icon(asset_identity: &AssetIdentity) -> Result<String, KoiError> {
     let (_network_identity, address) = asset_identity.unwrap_address().ok_or(
         KoiError::Internal("Asset identity is not an ERC20 address".to_string()),
     )?;
@@ -27,7 +27,7 @@ pub async fn fetch_icon_blockscout(asset_identity: &AssetIdentity) -> Result<Str
         .map_err(|e| KoiError::Internal(format!("Failed to fetch icon from Blockscout: {}", e)))?;
 
     if response.status().is_success() {
-        let metadata: BlockscoutMetadata = response.json().await.map_err(|e| {
+        let metadata: BlockscoutAssetMetadata = response.json().await.map_err(|e| {
             KoiError::Internal(format!("Failed to parse Blockscout metadata: {}", e))
         })?;
 

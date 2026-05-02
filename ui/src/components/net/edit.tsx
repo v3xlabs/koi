@@ -1,5 +1,5 @@
 import { Tabs } from "@kobalte/core/tabs";
-import { Component, For, Show, Suspense } from "solid-js";
+import { Component, createMemo, For, Show, Suspense } from "solid-js";
 
 import { useNetwork, useNetworkEndpoints } from "#/api/network";
 
@@ -48,9 +48,8 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
             network_identity,
         },
     }));
-
-    // TODO: Implement name editing (and icon)
-    // const updateNetwork = useUpdateNetwork(() => ({
+    const network = createMemo(() => networkQuery.data);
+    // const updateNetwork = useUpdateNetwork(({ data }: { data: { network_name?: string; network_icon_url?: string; }; }) => ({
     //     path: {
     //         network_identity,
     //     },
@@ -63,14 +62,14 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
             <Tabs>
                 <div class="flex justify-between items-end">
                     <div class="flex items-center gap-2 px-1 pb-2 pt-1">
-                        <Show when={networkQuery.data?.network_icon_url}>
-                            {icon => <img src={icon()} alt={networkQuery.data?.network_name} class="size-4 aspect-square rounded-full" />}
+                        <Show when={network()?.network_icon_url}>
+                            {icon => <img src={icon()} alt={network()?.network_name} class="size-4 aspect-square rounded-full" />}
                         </Show>
                         <div class="flex items-baseline gap-1">
-                            <span>{networkQuery.data?.network_name}</span>
+                            <span>{network()?.network_name}</span>
                             <span class="text-muted text-xs">
                                 #
-                                {networkQuery.data?.network_identity?.toString()}
+                                {network()?.network_identity?.toString()}
                             </span>
                         </div>
                     </div>
@@ -97,8 +96,8 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
                                     <input
                                       type="text"
                                       class="input w-full"
-                                      value={networkQuery.data?.network_name}
-                                      disabled
+                                      value={network()?.network_name}
+                                    //   onChange={e => updateNetwork.mutate({ data: { network_name: e.target.value } })}
                                     />
                                 </div>
                                 <div>
@@ -106,28 +105,40 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
                                     <input
                                       type="text"
                                       class="input w-full"
-                                      value={networkQuery.data?.network_identity?.toString()}
+                                      value={network()?.network_identity?.toString()}
                                       disabled
                                     />
                                 </div>
                             </div>
 
-                            <div class="flex gap-2 w-full items-center">
-                                <Show when={networkQuery.data?.network_icon_url}>
-                                    {icon => <img src={icon()} alt={networkQuery.data?.network_name} class="size-6 aspect-square rounded-full mx-2" />}
-                                </Show>
-                                <div class="grow">
-                                    <div>Icon</div>
-                                    <input
-                                      type="text"
-                                      class="input w-full"
-                                      value={networkQuery.data?.network_icon_url}
-                                      disabled
-                                    />
+                            <div class="space-y-1 w-full">
+                                <div>Icon</div>
+                                <div class="space-y-2">
+                                    <div class="input w-full flex items-center gap-3 px-3">
+                                        <div class="size-8 shrink-0 flex items-center justify-center rounded-full bg-surface-alt overflow-hidden">
+                                            <Show when={network()?.network_icon_url}>
+                                                {icon => <img src={icon()} alt={network()?.network_name} class="size-8 aspect-square rounded-full" />}
+                                            </Show>
+                                        </div>
+                                        <input
+                                          type="text"
+                                          class="bg-transparent outline-none w-full min-w-0"
+                                          value={network()?.network_icon_url}
+                                        //   onChange={e => setNetworkIconUrl(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="flex w-full justify-end">
+                            <div class="flex w-full justify-end gap-2">
+                                <button
+                                  class="btn btn-primary"
+                                  disabled
+                                //   disabled={!isDirty()}
+                                //   onClick={() => updateNetwork.mutate({ data: { network_name: networkName(), network_icon_url: networkIconUrl() } })}
+                                >
+                                    Save
+                                </button>
                                 <NetworkDelete network_identity={network_identity} />
                             </div>
                         </div>

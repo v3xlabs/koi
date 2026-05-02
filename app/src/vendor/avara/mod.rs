@@ -2,9 +2,7 @@ use tracing::info;
 
 use crate::{error::KoiError, models::asset::identity::AssetIdentity};
 
-/// Fetch the icon from the token-logos.family.co/asset?id=1:0x endpoint
-/// This requires the `avara_token_logos` vendor flag
-pub async fn fetch_icon_avara(asset_identity: &AssetIdentity) -> Result<String, KoiError> {
+pub async fn fetch_asset_icon(asset_identity: &AssetIdentity) -> Result<String, KoiError> {
     let (network_identity, address) = asset_identity.unwrap_address().ok_or(KoiError::Internal(
         "Asset identity is not an ERC20 address".to_string(),
     ))?;

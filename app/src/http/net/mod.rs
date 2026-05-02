@@ -5,6 +5,7 @@ use crate::{
         Network, NetworkUpdate,
         endpoint::{NetworkEndpoint, NetworkEndpointUpdate, provider::RpcStatus},
         identity::NetworkIdentity,
+        metadata::NetworkMetadataDiscovery,
     },
     state::AppState,
 };
@@ -86,6 +87,27 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(Network::get_by_id(&state, &network_identity).await?))
+    }
+
+    /// Discover metadata for a network
+    ///
+    /// GET /api/net/:network_identity/metadata
+    #[oai(
+        path = "/net/:network_identity/metadata",
+        method = "get",
+        tag = "ApiTags::Network"
+    )]
+    async fn discover_metadata_for_network(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        network_identity: Path<NetworkIdentity>,
+    ) -> Result<Json<NetworkMetadataDiscovery>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(
+            Network::fetch_metadata(&state, &network_identity).await?,
+        ))
     }
 
     /// Update a network by ID
