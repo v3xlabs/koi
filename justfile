@@ -3,23 +3,27 @@ default:
 
 install:
     cd ui && pnpm install
-    cd app && cargo fmt
+    cd crates/app && cargo fmt
+    cd crates/bin && cargo fmt
 
 ui:
-    cd ui && pnpm dev
+    cd crates/web && pnpm dev
 openapi:
-    cd ui && pnpm openapi
+    cd crates/web && pnpm openapi
 dev:
-    cd app && cargo run
+    cd crates/bin && cargo run
+tui:
+    cd crates/bin && cargo run -- tui
 lint:
-    cd app && cargo fmt && cargo clippy
+    cd crates/app && cargo fmt && cargo clippy
+    cd crates/bin && cargo fmt && cargo clippy
     cd ui && pnpm lint --fix
 bacon:
-    cd app && bacon
+    cd crates/bin && bacon
 
 build:
-    cd ui && pnpm build
-    cd app && cargo build --release
+    cd crates/web && pnpm build
+    cd crates/bin && cargo build --release
 
 [parallel]
 both: ui dev

@@ -24,9 +24,8 @@ It queries data directly via ethereum rpc; or via opt-in 3rd party vendor servic
 
 ## Development
 
-In two terminals run:
-
 ```bash
-just dev
-just ui
+nix develop
+just install
+just both
 ```

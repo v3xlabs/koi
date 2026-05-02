@@ -1,0 +1,25 @@
+[package]
+name = "koi"
+version = "0.0.1"
+edition = "2024"
+
+[[bin]]
+name = "koi"
+path = "src/main.rs"
+
+[dependencies]
+koi = { path = "../app", package = "koi-app" }
+koi-cli = { path = "../cli" }
+clap = { version = "4", features = ["derive"] }
+koi-tui = { path = "../tui" }
+anyhow = "1"
+dotenvy = "0.15.7"
+reqwest = { version = "0.12.5", features = [
+    "rustls-tls",
+    "charset",
+    "http2",
+    "json",
+], default-features = false }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi"] }
