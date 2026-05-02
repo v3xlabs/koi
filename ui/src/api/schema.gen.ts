@@ -1336,10 +1336,10 @@ export type components = {
         WalletType: components["schemas"]["WalletType_Safe"] | components["schemas"]["WalletType_EOA"] | components["schemas"]["WalletType_View"] | components["schemas"]["WalletType_Railgun"];
         WalletType_EOA: {
             /**
-             * @example e_o_a
+             * @example eoa
              * @enum {string}
              */
-            type: "e_o_a";
+            type: "eoa";
         } & components["schemas"]["EOAWallet"];
         WalletType_Railgun: {
             /**

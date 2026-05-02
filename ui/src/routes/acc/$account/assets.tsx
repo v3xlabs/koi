@@ -5,6 +5,7 @@ import { AccountAssetTable } from "#/components/asset/table";
 export const Route = createFileRoute("/acc/$account/assets")({
   component: () => {
     const params = useParams({ from: "/acc/$account/assets" });
+    const account_id = Number.parseInt(params().account);
 
     return (
       <div class="w-full p-4">
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/acc/$account/assets")({
               Assets
             </div>
           </div>
-          <AccountAssetTable account_identity={params().account} />
+          <AccountAssetTable account_identity={account_id} />
         </div>
       </div>
     );

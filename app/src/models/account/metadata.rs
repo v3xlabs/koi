@@ -14,6 +14,7 @@ use sqlx::{
 pub enum WalletType {
     Safe(SafeWallet),
     #[serde(rename = "eoa")]
+    #[oai(mapping = "eoa")]
     EOA(EOAWallet),
     View(ViewWallet),
     Railgun(RailgunWallet),
