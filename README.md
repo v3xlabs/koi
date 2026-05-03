@@ -24,7 +24,9 @@ It queries data directly via ethereum rpc; or via opt-in 3rd party vendor servic
 
 ## Development
 
+In two terminals run:
+
 ```bash
-cd app && cargo run
-cd ui && pnpm dev
+just dev
+just ui
 ```
