@@ -1,6 +1,6 @@
 import { SegmentedControl } from "@kobalte/core/segmented-control";
 import { FiPlus } from "solid-icons/fi";
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 import { match } from "ts-pattern";
 
 import { Asset, useAssetMetadataDiscovery, useCreateAsset } from "#/api/asset";
@@ -45,12 +45,13 @@ export const AssetAdd = () => {
     const [assetDecimals, setAssetDecimals] = createSignal<number | undefined>(undefined);
     const [assetIconUrl, setAssetIconUrl] = createSignal("");
 
+    const assetIdentity = createMemo(() => match(assetType())
+        .with("erc20", () => (networkId() && assetAddress() ? `erc20:${networkId()}:${assetAddress()}` : undefined))
+        .with("native", () => (networkId() ? `native:${networkId()}` : undefined))
+        .with("fiat", () => (assetSymbol() ? `fiat:${assetSymbol()}` : undefined))
+        .otherwise(() => undefined));
     const asset = createMemo((): Asset | undefined => {
-        const asset_identity = match(assetType())
-            .with("erc20", () => (networkId() && assetAddress() ? `erc20:${networkId()}:${assetAddress()}` : undefined))
-            .with("native", () => (networkId() ? `native:${networkId()}` : undefined))
-            .with("fiat", () => (assetSymbol() ? `fiat:${assetSymbol()}` : undefined))
-            .otherwise(() => undefined);
+        const asset_identity = assetIdentity();
 
         if (!asset_identity) return undefined;
 
@@ -68,21 +69,8 @@ export const AssetAdd = () => {
     });
     const assetCreate = useCreateAsset(({ data }: { data: Asset; }) => ({ contentType: "application/json; charset=utf-8", data }));
 
-    createEffect(() => {
-        console.log(asset());
-    });
-
-    const discoveryAssetIdentity = createMemo(() => match(assetType())
-        .with("erc20", () => (networkId() && assetAddress() ? `erc20:${networkId()}:${assetAddress()}` : undefined))
-        .with("native", () => (networkId() ? `native:${networkId()}` : undefined))
-        .otherwise(() => undefined));
-
-    const discoveryQuery = useAssetMetadataDiscovery(() => ({ path: { asset_identity: discoveryAssetIdentity()! } }), {
-        enabled: () => !!discoveryAssetIdentity(),
-    });
-
-    createEffect(() => {
-        console.log(JSON.stringify(discoveryQuery.data?.options));
+    const discoveryQuery = useAssetMetadataDiscovery(() => ({ path: { asset_identity: assetIdentity()! } }), {
+        enabled: () => !!assetIdentity(),
     });
 
     const nameSuggestions = createMemo(() => (assetName().length > 0

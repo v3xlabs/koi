@@ -1,6 +1,6 @@
 use tracing::info;
 
-use crate::error::KoiError;
+use crate::{error::KoiError, models::asset::identity::AssetIdentity};
 
 // discover chain ids through safe-api
 // https://safe-client.safe.global/v1/chains/1/safes/0x123/balances/usd?trusted=false
@@ -43,8 +43,13 @@ pub async fn fetch_network_icon(network_identity: u64) -> Result<String, KoiErro
     }
 }
 
-pub async fn fetch_native_token_icon(network_identity: u64) -> Result<String, KoiError> {
-    let url = native_token_icon_url(network_identity);
+pub async fn fetch_asset_icon(asset_identity: &AssetIdentity) -> Result<String, KoiError> {
+    let network_identity = match asset_identity {
+        AssetIdentity::Native(network_identity) => network_identity,
+        _ => Err(KoiError::Internal(format!("Asset identity is not a native token: {}", asset_identity)))?,
+    };
+
+    let url = native_token_icon_url(network_identity.0);
     info!("Fetching icon from {}", url);
 
     let response = reqwest::get(&url)

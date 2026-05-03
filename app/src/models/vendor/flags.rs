@@ -31,8 +31,8 @@ pub enum VendorFlag {
     #[strum(props(comment = "Network Icon Discovery"))]
     SafewalletNetworkIcons,
 
-    #[strum(props(comment = "Native Token Icon Discovery"))]
-    SafewalletNativeTokenIcons,
+    #[strum(props(comment = "Asset Icon Discovery"))]
+    SafewalletAssetIcons,
 
     #[strum(props(comment = "Asset Icon Discovery", unfinished = "true"))]
     EtherscanAssetIcons,

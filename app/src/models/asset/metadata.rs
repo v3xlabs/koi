@@ -32,10 +32,8 @@ impl Asset {
     ) -> Result<AssetMetadataDiscovery, KoiError> {
         let mut options = HashMap::new();
 
-        if matches!(asset_identity, AssetIdentity::ERC20(..)) {
-            if let Ok(option) = Self::fetch_erc20_metadata(state, asset_identity).await {
-                options.insert("erc20".to_string(), option);
-            }
+        if let Ok(option) = Self::fetch_erc20_metadata(state, asset_identity).await {
+            options.insert("erc20".to_string(), option);
         }
 
         let icon_options: Vec<Option<(Result<String, KoiError>, &'static str)>> = vec![
@@ -58,6 +56,13 @@ impl Asset {
                 true => Some((smoldapp::fetch_token_icon(asset_identity).await, "smoldapp")),
                 false => None,
             },
+            match state.vendors.has_flag(VendorFlag::SafewalletAssetIcons) {
+                true => Some((
+                    safe_wallet::fetch_asset_icon(asset_identity).await,
+                    "safewallet",
+                )),
+                false => None,
+            },
         ];
 
         for option in icon_options {
@@ -72,23 +77,6 @@ impl Asset {
                     },
                 );
             }
-        }
-
-        if let AssetIdentity::Native(network_identity) = asset_identity
-            && state
-                .vendors
-                .has_flag(VendorFlag::SafewalletNativeTokenIcons)
-            && let Ok(url) = safe_wallet::fetch_native_token_icon(network_identity.0).await
-        {
-            options.insert(
-                "safe".to_string(),
-                AssetMetadataOption {
-                    icon_url: Some(url),
-                    name: None,
-                    symbol: None,
-                    decimals: None,
-                },
-            );
         }
 
         Ok(AssetMetadataDiscovery {
