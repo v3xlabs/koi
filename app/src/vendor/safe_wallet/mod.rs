@@ -46,7 +46,10 @@ pub async fn fetch_network_icon(network_identity: u64) -> Result<String, KoiErro
 pub async fn fetch_asset_icon(asset_identity: &AssetIdentity) -> Result<String, KoiError> {
     let network_identity = match asset_identity {
         AssetIdentity::Native(network_identity) => network_identity,
-        _ => Err(KoiError::Internal(format!("Asset identity is not a native token: {}", asset_identity)))?,
+        _ => Err(KoiError::Internal(format!(
+            "Asset identity is not a native token: {}",
+            asset_identity
+        )))?,
     };
 
     let url = native_token_icon_url(network_identity.0);
