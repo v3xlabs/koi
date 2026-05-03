@@ -82,7 +82,9 @@ impl Account {
     }
 
     pub async fn get_next_identity(state: &AppState) -> Result<AccountIdentity, KoiError> {
-        query_scalar::<_, AccountIdentity>("SELECT MAX(account_identity) + 1 FROM accounts")
+        query_scalar::<_, AccountIdentity>(
+            "SELECT COALESCE(MAX(account_identity), 0) + 1 FROM accounts",
+        )
             .fetch_one(&state.database)
             .await
             .map_err(KoiError::from)

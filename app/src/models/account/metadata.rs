@@ -88,7 +88,7 @@ impl FromStr for WalletType {
 
 impl Display for WalletType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", serde_plain::to_string(self).unwrap())
+        write!(f, "{}", serde_json::to_string(self).unwrap())
     }
 }
 
