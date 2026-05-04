@@ -2,7 +2,11 @@ use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as};
 
-use crate::{error::KoiError, models::network::identity::NetworkIdentity, state::AppState};
+use crate::{
+    error::KoiError,
+    models::network::identity::NetworkIdentity,
+    state::{AppState, DB},
+};
 
 pub mod endpoint;
 pub mod identity;
@@ -27,40 +31,40 @@ pub struct NetworkUpdate {
 }
 
 impl Network {
-    pub async fn all(state: &AppState) -> Result<Vec<Network>, KoiError> {
+    pub async fn all(database: &DB) -> Result<Vec<Network>, KoiError> {
         query_as::<_, Network>("SELECT * FROM networks")
-            .fetch_all(&state.database)
+            .fetch_all(database)
             .await
             .map_err(KoiError::from)
     }
 
     pub async fn get_by_id(
-        state: &AppState,
+        database: &DB,
         network_identity: &NetworkIdentity,
     ) -> Result<Network, KoiError> {
         query_as::<_, Network>("SELECT * FROM networks WHERE network_identity = ?")
             .bind(network_identity)
-            .fetch_one(&state.database)
+            .fetch_one(database)
             .await
             .map_err(KoiError::from)
     }
 
-    pub async fn create(state: &AppState, network: Network) -> Result<Network, KoiError> {
+    pub async fn create(database: &DB, network: Network) -> Result<Network, KoiError> {
         query_as::<_, Network>("INSERT INTO networks (network_identity, network_name, network_icon_url) VALUES (?, ?, ?) RETURNING *")
             .bind(network.network_identity)
             .bind(network.network_name)
             .bind(network.network_icon_url)
-            .fetch_one(&state.database)
+            .fetch_one(database)
             .await
             .map_err(KoiError::from)
     }
 
     pub async fn update(
-        state: &AppState,
+        database: &DB,
         network_identity: &NetworkIdentity,
         network: NetworkUpdate,
     ) -> Result<Network, KoiError> {
-        let original = Self::get_by_id(state, &network_identity).await?;
+        let original = Self::get_by_id(database, &network_identity).await?;
 
         let network_name = network.network_name.unwrap_or(original.network_name);
         let network_icon_url = match network.network_icon_url {
@@ -73,18 +77,15 @@ impl Network {
             .bind(network_name)
             .bind(network_icon_url)
             .bind(network_identity)
-            .fetch_one(&state.database)
+            .fetch_one(database)
             .await
             .map_err(KoiError::from)
     }
 
-    pub async fn delete(
-        state: &AppState,
-        network_identity: &NetworkIdentity,
-    ) -> Result<(), KoiError> {
+    pub async fn delete(database: &DB, network_identity: &NetworkIdentity) -> Result<(), KoiError> {
         query("DELETE FROM networks WHERE network_identity = ?")
             .bind(network_identity)
-            .execute(&state.database)
+            .execute(database)
             .await
             .map_err(KoiError::from)
             .map(|_| ())

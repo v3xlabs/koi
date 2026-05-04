@@ -40,7 +40,7 @@ impl NetworkApi {
     ) -> Result<Json<NetworksResponse>> {
         let _auth_data = auth.unwrap()?;
 
-        let networks = Network::all(&state).await?;
+        let networks = Network::all(&state.database).await?;
 
         Ok(Json(NetworksResponse { networks }))
     }
@@ -57,7 +57,7 @@ impl NetworkApi {
     ) -> Result<Json<Network>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Network::create(&state, payload.0).await?))
+        Ok(Json(Network::create(&state.database, payload.0).await?))
     }
 
     /// Get network presets
@@ -86,7 +86,9 @@ impl NetworkApi {
     ) -> Result<Json<Network>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Network::get_by_id(&state, &network_identity).await?))
+        Ok(Json(
+            Network::get_by_id(&state.database, &network_identity).await?,
+        ))
     }
 
     /// Discover metadata for a network
@@ -128,7 +130,7 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            Network::update(&state, &network_identity, payload.0).await?,
+            Network::update(&state.database, &network_identity, payload.0).await?,
         ))
     }
 
@@ -148,7 +150,9 @@ impl NetworkApi {
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Network::delete(&state, &network_identity).await?))
+        Ok(Json(
+            Network::delete(&state.database, &network_identity).await?,
+        ))
     }
 
     /// Get network endpoints
@@ -168,7 +172,7 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::get_by_network_id(&state, &network_identity.0).await?,
+            NetworkEndpoint::get_by_network_id(&state.database, &network_identity.0).await?,
         ))
     }
 
@@ -188,7 +192,7 @@ impl NetworkApi {
     ) -> Result<Json<i32>> {
         let _auth_data = auth.unwrap()?;
         let _network_identity = network_identity.0;
-        Ok(Json(NetworkEndpoint::get_next_id(&state).await?))
+        Ok(Json(NetworkEndpoint::get_next_id(&state.database).await?))
     }
 
     /// Create a network endpoint
@@ -212,7 +216,9 @@ impl NetworkApi {
             return Err(poem::Error::from_status(StatusCode::BAD_REQUEST));
         }
 
-        Ok(Json(NetworkEndpoint::create(&state, payload.0).await?))
+        Ok(Json(
+            NetworkEndpoint::create(&state.database, payload.0).await?,
+        ))
     }
 
     /// Get a network endpoint by ID
@@ -256,9 +262,13 @@ impl NetworkApi {
     ) -> Result<Json<NetworkEndpoint>> {
         let _auth_data = auth.unwrap()?;
 
-        let updated_endpoint =
-            NetworkEndpoint::update(&state, &network_identity, &endpoint_identity, payload.0)
-                .await?;
+        let updated_endpoint = NetworkEndpoint::update(
+            &state.database,
+            &network_identity,
+            &endpoint_identity,
+            payload.0,
+        )
+        .await?;
 
         // Notify the running rpc
         state
@@ -291,7 +301,7 @@ impl NetworkApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            NetworkEndpoint::delete(&state, &network_identity, &endpoint_identity).await?,
+            NetworkEndpoint::delete(&state.database, &network_identity, &endpoint_identity).await?,
         ))
     }
 

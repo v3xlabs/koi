@@ -20,6 +20,8 @@ pub enum KoiError {
     Parse(#[from] ParseIntError),
     #[error("alloy hex error: {0}")]
     AlloyHex(#[from] alloy::primitives::hex::FromHexError),
+    #[error("eth prices error: {0}")]
+    EthPrices(#[from] eth_prices::error::EthPricesError),
 }
 
 impl IntoResponse for KoiError {

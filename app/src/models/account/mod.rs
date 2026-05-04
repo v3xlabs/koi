@@ -1,4 +1,3 @@
-use alloy::primitives::Address;
 use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
@@ -10,7 +9,7 @@ use crate::{
         asset::identity::AssetIdentity,
         network::identity::NetworkIdentity,
     },
-    state::AppState,
+    state::DB,
 };
 
 pub mod balances;
@@ -50,25 +49,25 @@ impl<'r> FromRow<'r, SqliteRow> for Account {
 }
 
 impl Account {
-    pub async fn all(state: &AppState) -> Result<Vec<Account>, KoiError> {
+    pub async fn all(database: &DB) -> Result<Vec<Account>, KoiError> {
         query_as::<_, Account>("SELECT * FROM accounts")
-            .fetch_all(&state.database)
+            .fetch_all(database)
             .await
             .map_err(KoiError::from)
     }
 
     pub async fn get_by_id(
-        state: &AppState,
+        database: &DB,
         account_identity: AccountIdentity,
     ) -> Result<Account, KoiError> {
         query_as::<_, Account>("SELECT * FROM accounts WHERE account_identity = ?")
             .bind(account_identity)
-            .fetch_one(&state.database)
+            .fetch_one(database)
             .await
             .map_err(KoiError::from)
     }
 
-    pub async fn create(state: &AppState, account: Account) -> Result<Account, KoiError> {
+    pub async fn create(database: &DB, account: Account) -> Result<Account, KoiError> {
         query_as::<_, Account>(
             "INSERT INTO accounts (account_identity, name, networks, metadata) VALUES (?, ?, ?, ?) RETURNING *",
         )
@@ -76,86 +75,83 @@ impl Account {
         .bind(account.name)
         .bind(serde_json::to_string(&account.networks).map_err(|x| sqlx::Error::Encode(Box::new(x)))?)
         .bind(account.metadata)
-        .fetch_one(&state.database)
+        .fetch_one(database)
         .await
         .map_err(KoiError::from)
     }
 
-    pub async fn get_next_identity(state: &AppState) -> Result<AccountIdentity, KoiError> {
+    pub async fn get_next_identity(database: &DB) -> Result<AccountIdentity, KoiError> {
         query_scalar::<_, AccountIdentity>(
             "SELECT COALESCE(MAX(account_identity), 0) + 1 FROM accounts",
         )
-            .fetch_one(&state.database)
-            .await
-            .map_err(KoiError::from)
+        .fetch_one(database)
+        .await
+        .map_err(KoiError::from)
     }
 
-    pub async fn delete(
-        state: &AppState,
-        account_identity: AccountIdentity,
-    ) -> Result<(), KoiError> {
+    pub async fn delete(database: &DB, account_identity: AccountIdentity) -> Result<(), KoiError> {
         query("DELETE FROM accounts WHERE account_identity = ?")
             .bind(account_identity)
-            .execute(&state.database)
+            .execute(database)
             .await
             .map_err(KoiError::from)
             .map(|_| ())
     }
 
     pub async fn update(
-        state: &AppState,
+        database: &DB,
         account_identity: AccountIdentity,
         account: AccountUpdate,
     ) -> Result<Account, KoiError> {
-        let original = Self::get_by_id(state, account_identity.clone()).await?;
+        let original = Self::get_by_id(database, account_identity.clone()).await?;
 
         query_as::<_, Account>("UPDATE accounts SET name = ?, networks = ?, metadata = ? WHERE account_identity = ? RETURNING *")
             .bind(account.name.unwrap_or(original.name))
             .bind(serde_json::to_string(&account.networks.unwrap_or(original.networks)).map_err(|x| sqlx::Error::Encode(Box::new(x)))?)
             .bind(serde_json::to_string(&account.metadata.unwrap_or(original.metadata)).map_err(|x| sqlx::Error::Encode(Box::new(x)))?)
             .bind(account_identity.0 as i64)
-            .fetch_one(&state.database)
+            .fetch_one(database)
             .await
             .map_err(KoiError::from)
     }
 
     pub async fn add_asset(
-        state: &AppState,
+        database: &DB,
         account_identity: AccountIdentity,
         asset_identity: AssetIdentity,
     ) -> Result<(), KoiError> {
         query("INSERT INTO account_assets (account_identity, asset_identity) VALUES (?, ?)")
             .bind(account_identity)
             .bind(asset_identity)
-            .execute(&state.database)
+            .execute(database)
             .await
             .map_err(KoiError::from)
             .map(|_| ())
     }
 
     pub async fn remove_asset(
-        state: &AppState,
+        database: &DB,
         account_identity: AccountIdentity,
         asset_identity: AssetIdentity,
     ) -> Result<(), KoiError> {
         query("DELETE FROM account_assets WHERE account_identity = ? AND asset_identity = ?")
             .bind(account_identity)
             .bind(asset_identity)
-            .execute(&state.database)
+            .execute(database)
             .await
             .map_err(KoiError::from)
             .map(|_| ())
     }
 
     pub async fn get_assets(
-        state: &AppState,
+        database: &DB,
         account_identity: AccountIdentity,
     ) -> Result<Vec<AssetIdentity>, KoiError> {
         query_as::<_, AssetIdentity>(
             "SELECT asset_identity FROM account_assets WHERE account_identity = ?",
         )
         .bind(account_identity)
-        .fetch_all(&state.database)
+        .fetch_all(database)
         .await
         .map_err(KoiError::from)
     }

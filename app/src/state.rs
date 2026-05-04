@@ -10,7 +10,9 @@ use tracing::info;
 
 use crate::{
     error::KoiError,
-    models::{network::manager::NetworkManager, vendor::VendorManager},
+    models::{
+        network::manager::NetworkManager, quoter::man::QuoterManager, vendor::man::VendorManager,
+    },
 };
 
 pub type AppState = Arc<State>;
@@ -28,10 +30,13 @@ impl Default for Configuration {
     }
 }
 
+pub type DB = SqlitePool;
+
 pub struct State {
     pub config: Configuration,
     pub database: SqlitePool,
     pub networks: NetworkManager,
+    pub quoters: QuoterManager,
     pub vendors: VendorManager,
 }
 
@@ -47,10 +52,13 @@ impl State {
         let database = SqlitePool::connect(&config.database_url).await?;
 
         let vendors = VendorManager::init(&database).await?;
+        let networks = NetworkManager::default();
+        let quoters = QuoterManager::init(&database).await?;
 
         Ok(Arc::new(State {
+            networks,
+            quoters,
             vendors,
-            networks: NetworkManager::default(),
             database,
             config,
         }))

@@ -5,7 +5,7 @@ import { Sidebar } from "#/components/sidebar";
 
 export const Route = createFileRoute("/acc/$account")({
   component: () => (
-    <div class="w-full h-full grid grid-cols-[auto_1fr]">
+    <div class="w-full h-full grid grid-cols-[auto_1fr] max-h-[calc(100vh-54px)]">
       <div class="h-full">
         <Sidebar />
       </div>

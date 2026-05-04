@@ -36,7 +36,7 @@ impl AccountApi {
     ) -> Result<Json<AccountsResponse>> {
         let _auth_data = auth.unwrap()?;
 
-        let accounts = Account::all(&state).await?;
+        let accounts = Account::all(&state.database).await?;
 
         Ok(Json(AccountsResponse { accounts }))
     }
@@ -57,7 +57,7 @@ impl AccountApi {
     ) -> Result<Json<Account>> {
         let _auth_data = auth.unwrap()?;
 
-        let account = Account::get_by_id(&state, account_identity.0).await?;
+        let account = Account::get_by_id(&state.database, account_identity.0).await?;
 
         Ok(Json(account))
     }
@@ -74,7 +74,7 @@ impl AccountApi {
     ) -> Result<Json<Account>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Account::create(&state, payload.0).await?))
+        Ok(Json(Account::create(&state.database, payload.0).await?))
     }
 
     /// Get the next account ID
@@ -88,7 +88,7 @@ impl AccountApi {
     ) -> Result<Json<AccountIdentity>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Account::get_next_identity(&state).await?))
+        Ok(Json(Account::get_next_identity(&state.database).await?))
     }
 
     /// Delete an account by ID
@@ -107,7 +107,9 @@ impl AccountApi {
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Account::delete(&state, account_identity.0).await?))
+        Ok(Json(
+            Account::delete(&state.database, account_identity.0).await?,
+        ))
     }
 
     /// Update an account by ID
@@ -128,7 +130,7 @@ impl AccountApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            Account::update(&state, account_identity.0, payload.0).await?,
+            Account::update(&state.database, account_identity.0, payload.0).await?,
         ))
     }
 
@@ -148,7 +150,9 @@ impl AccountApi {
     ) -> Result<Json<Vec<AssetIdentity>>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Account::get_assets(&state, account_identity.0).await?))
+        Ok(Json(
+            Account::get_assets(&state.database, account_identity.0).await?,
+        ))
     }
 
     /// Add an asset to an account
@@ -169,7 +173,7 @@ impl AccountApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            Account::add_asset(&state, account_identity.0, asset_identity.0).await?,
+            Account::add_asset(&state.database, account_identity.0, asset_identity.0).await?,
         ))
     }
 
@@ -191,7 +195,7 @@ impl AccountApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            Account::remove_asset(&state, account_identity.0, asset_identity.0).await?,
+            Account::remove_asset(&state.database, account_identity.0, asset_identity.0).await?,
         ))
     }
 
@@ -211,7 +215,7 @@ impl AccountApi {
     ) -> Result<Json<AccountBalances>> {
         let _auth_data = auth.unwrap()?;
 
-        let account = Account::get_by_id(&state, account_identity.0).await?;
+        let account = Account::get_by_id(&state.database, account_identity.0).await?;
 
         Ok(Json(account.get_balances(&state).await?))
     }

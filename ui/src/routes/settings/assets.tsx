@@ -5,6 +5,7 @@ import { For, Show } from "solid-js/web";
 import { useAssets } from "#/api/asset";
 import { AssetAdd } from "#/components/asset/add";
 import { AssetPreview } from "#/components/asset/preview";
+import { AssetQuote } from "#/components/asset/quote";
 
 export const Route = createFileRoute("/settings/assets")({
   component: () => {
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/settings/assets")({
                 {asset => (
                   <div class="py-2 px-4 hover:bg-surface-alt cursor-pointer rounded-md flex items-center justify-between">
                     <AssetPreview asset_identity={asset.asset_identity} />
+                    <AssetQuote asset_identity={asset.asset_identity} />
                   </div>
                 )}
               </For>

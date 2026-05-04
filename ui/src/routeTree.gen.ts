@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from "./routes/index"
 import { Route as SettingsIndexRouteImport } from "./routes/settings/index"
 import { Route as OnboardingIndexRouteImport } from "./routes/onboarding/index"
 import { Route as SettingsVendorsRouteImport } from "./routes/settings/vendors"
+import { Route as SettingsQuotersRouteImport } from "./routes/settings/quoters"
 import { Route as SettingsNetworksRouteImport } from "./routes/settings/networks"
 import { Route as SettingsAssetsRouteImport } from "./routes/settings/assets"
 import { Route as OnboardingVendorsRouteImport } from "./routes/onboarding/vendors"
@@ -63,6 +64,11 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
 const SettingsVendorsRoute = SettingsVendorsRouteImport.update({
   id: "/vendors",
   path: "/vendors",
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsQuotersRoute = SettingsQuotersRouteImport.update({
+  id: "/quoters",
+  path: "/quoters",
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsNetworksRoute = SettingsNetworksRouteImport.update({
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/settings/quoters": typeof SettingsQuotersRoute
   "/settings/vendors": typeof SettingsVendorsRoute
   "/onboarding/": typeof OnboardingIndexRoute
   "/settings/": typeof SettingsIndexRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/settings/quoters": typeof SettingsQuotersRoute
   "/settings/vendors": typeof SettingsVendorsRoute
   "/onboarding": typeof OnboardingIndexRoute
   "/settings": typeof SettingsIndexRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   "/onboarding/vendors": typeof OnboardingVendorsRoute
   "/settings/assets": typeof SettingsAssetsRoute
   "/settings/networks": typeof SettingsNetworksRoute
+  "/settings/quoters": typeof SettingsQuotersRoute
   "/settings/vendors": typeof SettingsVendorsRoute
   "/onboarding/": typeof OnboardingIndexRoute
   "/settings/": typeof SettingsIndexRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | "/onboarding/vendors"
     | "/settings/assets"
     | "/settings/networks"
+    | "/settings/quoters"
     | "/settings/vendors"
     | "/onboarding/"
     | "/settings/"
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | "/onboarding/vendors"
     | "/settings/assets"
     | "/settings/networks"
+    | "/settings/quoters"
     | "/settings/vendors"
     | "/onboarding"
     | "/settings"
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | "/onboarding/vendors"
     | "/settings/assets"
     | "/settings/networks"
+    | "/settings/quoters"
     | "/settings/vendors"
     | "/onboarding/"
     | "/settings/"
@@ -375,6 +387,13 @@ declare module "@tanstack/solid-router" {
       path: "/vendors"
       fullPath: "/settings/vendors"
       preLoaderRoute: typeof SettingsVendorsRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    "/settings/quoters": {
+      id: "/settings/quoters"
+      path: "/quoters"
+      fullPath: "/settings/quoters"
+      preLoaderRoute: typeof SettingsQuotersRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     "/settings/networks": {
@@ -536,6 +555,7 @@ const OnboardingRouteRouteWithChildren = OnboardingRouteRoute._addFileChildren(
 interface SettingsRouteRouteChildren {
   SettingsAssetsRoute: typeof SettingsAssetsRoute
   SettingsNetworksRoute: typeof SettingsNetworksRoute
+  SettingsQuotersRoute: typeof SettingsQuotersRoute
   SettingsVendorsRoute: typeof SettingsVendorsRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
@@ -543,6 +563,7 @@ interface SettingsRouteRouteChildren {
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsAssetsRoute: SettingsAssetsRoute,
   SettingsNetworksRoute: SettingsNetworksRoute,
+  SettingsQuotersRoute: SettingsQuotersRoute,
   SettingsVendorsRoute: SettingsVendorsRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }

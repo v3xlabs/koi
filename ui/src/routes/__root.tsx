@@ -6,15 +6,13 @@ import { Navbar } from "#/components/navbar";
 export const Route = createRootRoute({
   component: () => (
     <>
-      <div class="w-full min-h-screen bg-background h-screen">
-        <div class="h-screen flex flex-col justify-stretch">
+      <div class="w-full h-screen max-h-screen bg-background flex flex-col justify-stretch">
           <Navbar />
-          <div class="flex h-[calc(100vh - 56px)] overflow-y-auto grow">
+          <div class="h-full w-full">
             <Suspense fallback={<div>Loading...</div>}>
               <Outlet />
             </Suspense>
           </div>
-        </div>
       </div>
     </>
   ),

@@ -1,4 +1,5 @@
 use crate::{
+    error::KoiError,
     http::auth::Auth,
     models::asset::{
         Asset, AssetUpdate, identity::AssetIdentity, metadata::AssetMetadataDiscovery,
@@ -7,8 +8,14 @@ use crate::{
 };
 
 use super::ApiTags;
+use alloy::primitives::U256;
+use eth_prices::token::{Token, TokenIdentifier};
 use poem::{Result, web::Data};
-use poem_openapi::{Object, OpenApi, param::Path, payload::Json};
+use poem_openapi::{
+    Object, OpenApi,
+    param::{Path, Query},
+    payload::Json,
+};
 use serde::{Deserialize, Serialize};
 
 pub struct AssetApi;
@@ -31,7 +38,7 @@ impl AssetApi {
     async fn get_assets(&self, auth: Auth, state: Data<&AppState>) -> Result<Json<AssetsResponse>> {
         let _auth_data = auth.unwrap()?;
 
-        let assets = Asset::all(&state).await?;
+        let assets = Asset::all(&state.database).await?;
 
         Ok(Json(AssetsResponse { assets }))
     }
@@ -48,7 +55,7 @@ impl AssetApi {
     ) -> Result<Json<Asset>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Asset::create(&state, payload.0).await?))
+        Ok(Json(Asset::create(&state.database, payload.0).await?))
     }
 
     /// Get an asset by ID
@@ -67,7 +74,9 @@ impl AssetApi {
     ) -> Result<Json<Asset>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Asset::get_by_id(&state, &asset_identity).await?))
+        Ok(Json(
+            Asset::get_by_id(&state.database, &asset_identity).await?,
+        ))
     }
 
     /// Discover metadata for an asset
@@ -107,7 +116,7 @@ impl AssetApi {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(
-            Asset::update(&state, &asset_identity, payload.0).await?,
+            Asset::update(&state.database, &asset_identity, payload.0).await?,
         ))
     }
 
@@ -127,6 +136,44 @@ impl AssetApi {
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
 
-        Ok(Json(Asset::delete(&state, &asset_identity).await?))
+        Ok(Json(Asset::delete(&state.database, &asset_identity).await?))
+    }
+
+    /// Quote an asset
+    ///
+    /// GET /api/asset/:asset_identity/quote
+    #[oai(
+        path = "/asset/:asset_identity/quote",
+        method = "get",
+        tag = "ApiTags::Asset"
+    )]
+    async fn quote_asset(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        asset_identity: Path<AssetIdentity>,
+    ) -> Result<Json<String>> {
+        let _auth_data = auth.unwrap()?;
+
+        let network_identity = asset_identity
+            .unwrap_network()
+            .ok_or(KoiError::Internal("Network not found".to_string()))?;
+        let base_asset = AssetIdentity::Fiat("usd".to_string());
+        let asset = Asset::get_by_id(&state.database, &asset_identity).await?;
+
+        let amount_in = U256::from(1) * U256::from(10).pow(U256::from(asset.asset_decimals as u32));
+
+        let quote = state
+            .quoters
+            .quote(
+                &state,
+                &network_identity,
+                &asset_identity,
+                &base_asset,
+                amount_in,
+            )
+            .await?;
+
+        Ok(Json(quote.to_string()))
     }
 }

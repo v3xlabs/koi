@@ -1018,6 +1018,124 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/asset/{asset_identity}/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quote an asset
+         * @description GET /api/asset/:asset_identity/quote
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    asset_identity: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quoter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all quoters
+         * @description GET /api/quoter
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["QuotersResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quoter/{quoter_identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a quoter by id
+         * @description GET /api/quoter/:quoter_identity
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    quoter_identity: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Quoter"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/vendor": {
         parameters: {
             query?: never;
@@ -1211,13 +1329,20 @@ export type components = {
         /** AccountBalance */
         AccountBalance: {
             asset_identity: string;
-            balance: string;
+            balance?: string;
+            asset_quote?: string;
+            balance_quote?: string;
             /** Format: date-time */
             updated_at: string;
         };
         /** AccountBalances */
         AccountBalances: {
             balances: components["schemas"]["AccountBalance"][];
+            total_quote?: string;
+            /** Format: date-time */
+            updated_at: string;
+            asset: string;
+            errors: string[];
         };
         /** AccountUpdate */
         AccountUpdate: {
@@ -1268,6 +1393,18 @@ export type components = {
         /** EOAWallet */
         EOAWallet: {
             evm_address: string;
+        };
+        /** Erc4626QuoterConfig */
+        Erc4626QuoterConfig: Record<string, never>;
+        /** FixedQuoterConfig */
+        FixedQuoterConfig: {
+            price: string;
+            /** Format: uint8 */
+            decimals: number;
+            /** Format: uint8 */
+            token_in_decimals: number;
+            /** Format: uint8 */
+            token_out_decimals: number;
         };
         /** Network */
         Network: {
@@ -1320,6 +1457,21 @@ export type components = {
         NetworksResponse: {
             networks: components["schemas"]["Network"][];
         };
+        /** Quoter */
+        Quoter: {
+            quoter_identity: string;
+            quoter_name: string;
+            token_a: string;
+            token_b: string;
+            config: components["schemas"]["QuoterConfig"];
+            enabled: boolean;
+            watch: boolean;
+        };
+        QuoterConfig: components["schemas"]["FixedQuoterConfig"] | components["schemas"]["Erc4626QuoterConfig"] | components["schemas"]["UniswapV2QuoterConfig"] | components["schemas"]["UniswapV3QuoterConfig"];
+        /** QuotersResponse */
+        QuotersResponse: {
+            quoters: components["schemas"]["Quoter"][];
+        };
         /** RailgunWallet */
         RailgunWallet: {
             railgun_address: string;
@@ -1364,6 +1516,14 @@ export type components = {
         /** SafeWallet */
         SafeWallet: {
             evm_address: string;
+        };
+        /** UniswapV2QuoterConfig */
+        UniswapV2QuoterConfig: {
+            pair_address: string;
+        };
+        /** UniswapV3QuoterConfig */
+        UniswapV3QuoterConfig: {
+            pool_address: string;
         };
         /** @enum {string} */
         VendorFlag: "avara_asset_icons" | "zerion_asset_icons" | "smoldapp_asset_icons" | "smoldapp_network_icons" | "safewallet_network_icons" | "safewallet_asset_icons" | "etherscan_asset_icons" | "etherscan_link_tx_hash" | "etherscan_link_address" | "etherscan_link_block" | "etherscan_link_contracts" | "blockscout_asset_icons" | "blockscout_link_tx_hash" | "blockscout_link_address" | "blockscout_link_block" | "blockscout_link_contracts";

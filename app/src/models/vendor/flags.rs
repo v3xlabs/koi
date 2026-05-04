@@ -43,7 +43,7 @@ pub enum VendorFlag {
     ))]
     EtherscanLinkTxHash,
 
-    #[strum(props(comment = "Link-out to Etherscan for Addresses", unfinished = "true"))]
+    #[strum(props(comment = "Link-out to Etherscan for Addresses"))]
     EtherscanLinkAddress,
 
     #[strum(props(comment = "Link-out to Etherscan for Blocks", unfinished = "true"))]
@@ -61,7 +61,7 @@ pub enum VendorFlag {
     ))]
     BlockscoutLinkTxHash,
 
-    #[strum(props(comment = "Link-out to Blockscout for Addresses", unfinished = "true"))]
+    #[strum(props(comment = "Link-out to Blockscout for Addresses"))]
     BlockscoutLinkAddress,
 
     #[strum(props(comment = "Link-out to Blockscout for Blocks", unfinished = "true"))]

@@ -5,7 +5,7 @@ use sqlx::{SqlitePool, prelude::FromRow, query, query_as, query_scalar};
 use crate::{
     error::KoiError,
     models::network::{Network, identity::NetworkIdentity},
-    state::AppState,
+    state::{AppState, DB},
 };
 
 pub mod provider;
@@ -29,24 +29,24 @@ pub struct NetworkEndpointUpdate {
 }
 
 impl Network {
-    pub async fn endpoints(state: &AppState) -> Result<Vec<NetworkEndpoint>, KoiError> {
+    pub async fn endpoints(database: &DB) -> Result<Vec<NetworkEndpoint>, KoiError> {
         query_as::<_, NetworkEndpoint>("SELECT * FROM network_endpoints")
-            .fetch_all(&state.database)
+            .fetch_all(database)
             .await
             .map_err(KoiError::from)
     }
 }
 
 impl NetworkEndpoint {
-    pub async fn get_next_id(state: &AppState) -> Result<i32, KoiError> {
+    pub async fn get_next_id(database: &DB) -> Result<i32, KoiError> {
         query_scalar::<_, i32>("SELECT MAX(endpoint_identity) + 1 FROM network_endpoints")
-            .fetch_one(&state.database)
+            .fetch_one(database)
             .await
             .map_err(KoiError::from)
     }
 
     pub async fn create(
-        state: &AppState,
+        database: &DB,
         endpoint: NetworkEndpoint,
     ) -> Result<NetworkEndpoint, KoiError> {
         query_as::<_, NetworkEndpoint>("INSERT INTO network_endpoints (endpoint_identity, endpoint_label, endpoint_type, endpoint_url, endpoint_disabled, network_identity) VALUES (?, ?, ?, ?, ?, ?) RETURNING *")
@@ -56,24 +56,24 @@ impl NetworkEndpoint {
             .bind(endpoint.endpoint_url)
             .bind(endpoint.endpoint_disabled)
             .bind(endpoint.network_identity)
-            .fetch_one(&state.database)
+            .fetch_one(database)
             .await
             .map_err(KoiError::from)
     }
 
     pub async fn get_by_network_id(
-        state: &AppState,
+        database: &DB,
         network_identity: &NetworkIdentity,
     ) -> Result<Vec<NetworkEndpoint>, KoiError> {
         query_as::<_, NetworkEndpoint>("SELECT * FROM network_endpoints WHERE network_identity = ?")
             .bind(network_identity)
-            .fetch_all(&state.database)
+            .fetch_all(database)
             .await
             .map_err(KoiError::from)
     }
 
     pub async fn get_by_id(
-        database: &SqlitePool,
+        database: &DB,
         network_identity: &NetworkIdentity,
         endpoint_identity: &i32,
     ) -> Result<NetworkEndpoint, KoiError> {
@@ -88,21 +88,21 @@ impl NetworkEndpoint {
     }
 
     pub async fn delete(
-        state: &AppState,
+        database: &DB,
         network_identity: &NetworkIdentity,
         endpoint_identity: &i32,
     ) -> Result<(), KoiError> {
         query("DELETE FROM network_endpoints WHERE network_identity = ? AND endpoint_identity = ?")
             .bind(network_identity)
             .bind(endpoint_identity)
-            .execute(&state.database)
+            .execute(database)
             .await
             .map_err(KoiError::from)
             .map(|_| ())
     }
 
     pub async fn update(
-        state: &AppState,
+        database: &DB,
         network_identity: &NetworkIdentity,
         endpoint_identity: &i32,
         update: NetworkEndpointUpdate,
@@ -114,7 +114,7 @@ impl NetworkEndpoint {
             .bind(update.endpoint_disabled)
             .bind(network_identity)
             .bind(endpoint_identity)
-            .fetch_one(&state.database)
+            .fetch_one(database)
             .await
             .map_err(KoiError::from)
     }

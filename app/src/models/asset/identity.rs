@@ -1,6 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use alloy::primitives::Address;
+use eth_prices::token::TokenIdentifier;
 use poem_openapi::types::Example;
 use serde::{Deserialize, Serialize};
 use sqlx::{
@@ -152,6 +153,26 @@ impl AssetIdentity {
         match self {
             AssetIdentity::ERC20(network, address) => Some((network.clone(), address.clone())),
             _ => None,
+        }
+    }
+
+    pub fn unwrap_network(&self) -> Option<NetworkIdentity> {
+        match self {
+            AssetIdentity::ERC20(network, _address) => Some(network.clone()),
+            AssetIdentity::Native(network) => Some(network.clone()),
+            _ => None,
+        }
+    }
+}
+
+impl Into<TokenIdentifier> for AssetIdentity {
+    fn into(self) -> TokenIdentifier {
+        match self {
+            AssetIdentity::ERC20(_network, address) => TokenIdentifier::ERC20 {
+                address: address.into(),
+            },
+            AssetIdentity::Native(_network) => TokenIdentifier::Native,
+            AssetIdentity::Fiat(code) => TokenIdentifier::Fiat { symbol: code },
         }
     }
 }

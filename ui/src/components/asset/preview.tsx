@@ -1,10 +1,18 @@
-import { Component } from "solid-js";
+import { Component, Suspense } from "solid-js";
 
-import { useAsset } from "#/api/asset";
+import { Asset, useAsset } from "#/api/asset";
 
 import { AssetIcon } from "./icon";
 
-export const AssetPreview: Component<{ asset_identity: string; }> = ({ asset_identity }) => {
+export type AssetPreviewProperties = { asset_identity: string; } | { asset: Asset; };
+
+export const AssetPreview: Component<{ asset_identity: string; }> = ({ asset_identity }) => (
+    <Suspense fallback={<div>Loading...</div>}>
+        <AssetPreviewInner asset_identity={asset_identity} />
+    </Suspense>
+);
+
+const AssetPreviewInner: Component<{ asset_identity: string; }> = ({ asset_identity }) => {
     const assetQuery = useAsset(() => ({ path: { asset_identity } }));
 
     return (

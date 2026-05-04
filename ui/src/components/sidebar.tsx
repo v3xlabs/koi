@@ -80,15 +80,17 @@ export const Sidebar = () => {
                     </For>
                 </div>
             </div>
-            <div>
-                <Link
-                  to="/acc/$account/new-tx"
-                  params={{ account: params().account }}
-                  class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
-                >
-                    New transaction
-                </Link>
-            </div>
+            <Show when={account.data?.metadata.type !== "view"}>
+                <div>
+                    <Link
+                      to="/acc/$account/new-tx"
+                      params={{ account: params().account }}
+                      class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                    >
+                        New transaction
+                    </Link>
+                </div>
+            </Show>
             <div class="divide-y divide-border">
                 <For each={[
                     [

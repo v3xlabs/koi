@@ -2,8 +2,7 @@ import { createFileRoute, useParams } from "@tanstack/solid-router";
 import { FaSolidArrowRight, FaSolidRefresh } from "solid-icons/fa";
 import { Show, Suspense } from "solid-js";
 
-import { useAccount } from "#/api/account";
-import { useAccountBalance } from "#/api/account/balance";
+import { useAccount, useAccountBalances } from "#/api/account";
 import { AssetAmount } from "#/components/asset/amount";
 import { AccountAssetTable } from "#/components/asset/table";
 import { Modal } from "#/components/dialog";
@@ -13,8 +12,9 @@ import { ReceiveQR } from "#/views/receive/qr";
 export const Route = createFileRoute("/acc/$account/")({
   component: () => {
     const params = useParams({ from: "/acc/$account" });
-    const balance = useAccountBalance(params().account);
+    // const balance = useAccountBalance(params().account);
     const account_identity = Number.parseInt(params().account);
+    const balanceQuery = useAccountBalances(() => ({ path: { account_identity } }));
     const account = useAccount(() => ({ path: { account_identity } }));
 
     return (
@@ -31,16 +31,16 @@ export const Route = createFileRoute("/acc/$account/")({
                     <span>
                       Updated
                       {" "}
-                      {balance.data?.updated_at.toLocaleTimeString()}
+                      {balanceQuery.data?.updated_at ? Date.parse(balanceQuery.data.updated_at).toLocaleString() : "-"}
                     </span>
                   </Suspense>
-                  <Show when={!balance.isLoading}>
+                  <Show when={!balanceQuery.isLoading}>
                     <button
                       classList={{
-                        "cursor-pointer": !balance.isRefetching,
-                        "animate-spin": balance.isRefetching,
+                        "cursor-pointer": !balanceQuery.isRefetching,
+                        "animate-spin": balanceQuery.isRefetching,
                       }}
-                      onClick={() => balance.refetch()}
+                      onClick={() => balanceQuery.refetch()}
                     >
                       <FaSolidRefresh class="w-3.5 h-3.5 text-primary-foreground" />
                     </button>
@@ -50,20 +50,22 @@ export const Route = createFileRoute("/acc/$account/")({
               <div class="flex justify-between items-center">
                 <div class="text-4xl font-bold tabular-nums">
                   <Suspense fallback={<span class="text-muted">Loading...</span>}>
-                    <Show when={balance.data}>
+                    <Show when={balanceQuery.data}>
                       {data => (
-                        <AssetAmount amount={() => data().balance} asset={() => data().asset} />
+                        <AssetAmount amount={() => BigInt(data().total_quote ?? "0")} asset={() => data().asset} />
                       )}
                     </Show>
                   </Suspense>
                 </div>
                 <div class="flex gap-2">
-                  <button
-                    class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
-                  >
-                    <FaSolidArrowRight class="-rotate-45" />
-                    Send
-                  </button>
+                  <Show when={account.data?.metadata.type !== "view"}>
+                    <button
+                      class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                    >
+                      <FaSolidArrowRight class="-rotate-45" />
+                      Send
+                    </button>
+                  </Show>
                   <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
                     {x => (
                       <ReceiveQR address={() => x().evm_address}>

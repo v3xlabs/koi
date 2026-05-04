@@ -1776,9 +1776,9 @@ dependencies = [
 
 [[package]]
 name = "eth-prices"
-version = "0.0.4"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33e621ab14e133631196c9ed495d33f562a6fd0d574565c7b2a22c5790ce4a8c"
+checksum = "63660dd1746ea3529f8af6f30ddd263822384ba69ffa11bd00777f36145cad52"
 dependencies = [
  "alloy",
  "anyhow",
@@ -2792,6 +2792,7 @@ dependencies = [
  "dotenvy",
  "eth-prices",
  "figment",
+ "futures",
  "hex",
  "petgraph",
  "poem",

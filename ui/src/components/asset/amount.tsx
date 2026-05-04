@@ -1,5 +1,7 @@
 import { Accessor, Component, createMemo } from "solid-js";
 
+import { useAsset } from "#/api/asset";
+
 export type AssetAmountProperties = {
     amount: Accessor<bigint>;
     asset: Accessor<string>;
@@ -7,6 +9,9 @@ export type AssetAmountProperties = {
 };
 
 export const AssetAmount: Component<AssetAmountProperties> = (props) => {
+    const assetQuery = useAsset(() => ({ path: { asset_identity: props.asset() } }));
+    const assetQueryData = createMemo(() => assetQuery.data);
+
     const decimals = props.decimals ?? 2;
     const symbol = createMemo(() => {
         const asset = props.asset();
@@ -22,6 +27,12 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
 
         if (asset == "fiat:usd") {
             return 1e6;
+        }
+
+        const data = assetQueryData();
+
+        if (data) {
+            return data.asset_decimals;
         }
 
         return 1e6;

@@ -7,7 +7,7 @@ decimals is how much the value is scaled by (so 6 decimals for fiat:usd, where 1
 1.23 k in short mode (where k = *1000, m = *1000000, b = *1000000000)
 */
 export const formatUnits = (value: bigint, decimals: number, precision: number = 2, mode: "long" | "short" = "long") => {
-    const result = (Number(value) / 10 ** decimals).toFixed(precision);
+    const result = (Number(value) / (10 ** decimals)).toFixed(precision);
     const [integer, decimal] = result.split(".");
 
     if (mode === "short") {

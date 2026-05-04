@@ -72,7 +72,8 @@ impl RpcPool {
             }
         }
 
-        let endpoints = NetworkEndpoint::get_by_network_id(state, &self.network_identity).await;
+        let endpoints =
+            NetworkEndpoint::get_by_network_id(&state.database, &self.network_identity).await;
 
         if let Ok(endpoints) = endpoints {
             for endpoint in endpoints {

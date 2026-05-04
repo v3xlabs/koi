@@ -7,3 +7,5 @@ dev:
 lint:
     cd app && cargo fmt && cargo clippy
     cd ui && pnpm lint
+bacon:
+    cd app && bacon

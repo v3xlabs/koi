@@ -179,13 +179,13 @@ body {
 }
 
 ::-webkit-scrollbar {
-    @apply w-1;
+    @apply w-2;
 }
 ::-webkit-scrollbar-track {
     @apply bg-surface-alt;
 }
 ::-webkit-scrollbar-thumb {
-    @apply bg-primary;
+    @apply bg-primary/50 border border-border;
 }
 
 .popover-content {

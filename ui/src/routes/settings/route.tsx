@@ -4,7 +4,7 @@ import { For } from "solid-js";
 
 export const Route = createFileRoute("/settings")({
   component: () => (
-    <div class="mx-auto pt-8 space-y-4 grid grid-cols-[200px_1fr] gap-4">
+    <div class="mx-auto pt-8 space-y-4 grid grid-cols-[200px_1fr] gap-4 w-fit h-fit pb-64">
       <nav class="bg-surface rounded-md p-2 h-fit">
         <ul>
           <For each={[

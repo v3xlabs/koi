@@ -12,6 +12,7 @@ mod asset;
 mod auth;
 mod health;
 mod net;
+mod quoter;
 mod vendor;
 
 #[derive(Tags)]
@@ -39,6 +40,7 @@ fn get_api() -> impl OpenApi {
         account::api(),
         net::api(),
         asset::api(),
+        quoter::api(),
         vendor::api(),
         health::api(),
     )

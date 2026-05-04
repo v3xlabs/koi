@@ -4,8 +4,25 @@ import { Asset, useAsset } from "#/api/asset";
 
 type AssetIconProps = { asset: Asset; class?: string; } | { asset_identity: string; class?: string; };
 
+const textToColor = (text: string) => `#${text.split("").reduce((hash, char) => char.charCodeAt(0) + ((hash << 5) - hash), 0)
+    .toString(16)
+    .padStart(6, "0")}`;
+
 export const AssetIconImage: Component<{ asset?: Asset; class?: string; }> = props => (
-    <Show when={props.asset?.asset_icon_url}>
+    <Show
+      when={props.asset?.asset_icon_url}
+      fallback={(
+            <div
+              classList={{
+                    [props.class ?? "size-6"]: true,
+                    "aspect-square rounded-full": true,
+                }}
+              style={{
+                    "background-color": textToColor(props.asset?.asset_identity ?? ""),
+                }}
+            />
+        )}
+    >
         {icon => (
             <img
               src={icon()}
