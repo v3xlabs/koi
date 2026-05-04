@@ -84,8 +84,6 @@ impl QuoterManager {
         // TODO: respect "enabled" flag
         let quoters = Quoter::get_by_network_id(database, network_identity).await?;
 
-        info!("Quoters: {:?}", quoters);
-
         let quoters: Vec<AnyQuoter> = quoters.iter().map(|x| x.into()).collect();
 
         let graph = QuoterGraph::from_iter(quoters);

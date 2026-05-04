@@ -42,6 +42,6 @@ render(() => (
         </div>
       )}
     />
-    {/* <Toaster /> */}
+    <Toaster />
   </AppProvider>
 ), root!);
