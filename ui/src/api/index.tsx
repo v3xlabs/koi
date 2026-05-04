@@ -13,8 +13,11 @@ export const api = createFetch<paths>({
         "Content-Type": "application/json",
         "Authorization": "Bearer hello",
     },
-    onError: (error) => {
-        console.error(error);
+    onError: async (error) => {
+        const errorData = (await error.response?.json()) as { error: string; };
+
+        console.error(error, errorData);
+
         const id = toaster.show(props => (
             <Toast toastId={props.toastId} class="toast">
                 <div class="flex justify-between items-center">
@@ -27,6 +30,9 @@ export const api = createFetch<paths>({
                         </Toast.Title>
                         <Toast.Description class="toast__description">
                             {error.message}
+                            <div>
+                                {errorData.error}
+                            </div>
                         </Toast.Description>
                     </div>
                     <Toast.CloseButton class="toast__close-button">

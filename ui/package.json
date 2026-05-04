@@ -34,7 +34,7 @@
     "blo": "^2.0.0",
     "eslint": "^9.39.2",
     "eslint-plugin-v3xlabs": "^1.7.14",
-    "openapi-hooks": "^0.0.6",
+    "openapi-hooks": "^0.1.1",
     "openapi-typescript": "^7.13.0",
     "qr": "^0.5.5",
     "solid-icons": "^1.2.0",

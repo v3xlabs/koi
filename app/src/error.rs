@@ -1,7 +1,9 @@
 use std::num::ParseIntError;
 
 use poem::{IntoResponse, Response, web::headers::ContentType};
+use poem_openapi::{Object, payload::Json, types::ToJSON};
 use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::models::network::endpoint::provider::RpcError;
@@ -24,12 +26,17 @@ pub enum KoiError {
     EthPrices(#[from] eth_prices::error::EthPricesError),
 }
 
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct ErrorResponse {
+    pub error: String,
+}
+
 impl IntoResponse for KoiError {
     fn into_response(self) -> Response {
         Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .content_type(ContentType::text_utf8().to_string())
-            .body(self.to_string())
+            .content_type(ContentType::json().to_string())
+            .body(Json(ErrorResponse { error: self.to_string() }).to_json_string())
     }
 }
 
