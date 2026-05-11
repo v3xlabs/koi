@@ -1,7 +1,7 @@
 import { Component, Show, Suspense } from "solid-js";
 
 import { useAssetQuote } from "#/api/asset";
-import { formatUnits } from "#/utils/units";
+import { formatCurrency } from "#/utils/units";
 
 export const AssetQuote: Component<{ asset_identity: string; }> = ({ asset_identity }) => (
     <Suspense fallback={<div>Loading...</div>}>
@@ -15,8 +15,8 @@ export const AssetQuoteInner: Component<{ asset_identity: string; }> = ({ asset_
     return (
         <Show when={quoteQuery.data}>
             {data => (
-                <div class="text-nowrap tabular-nums">
-                    {formatUnits(BigInt(data()), 6, 2, "short")}
+                <div class="text-nowrap tabular-nums" title={formatCurrency(BigInt(data()), 2)}>
+                    {formatCurrency(BigInt(data()), 2, "compact")}
                 </div>
             )}
         </Show>

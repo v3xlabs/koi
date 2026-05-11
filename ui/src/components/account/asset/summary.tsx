@@ -28,7 +28,7 @@ const columns = [
                     <div class="text-muted">
                         <Skeleton visible={row.original.balance === undefined} class="skeleton">
                             <span class="tabular-nums">
-                                {row.original.balance === undefined ? "-" : formatUnits(row.original.balance, row.original.asset.asset_decimals, 2, "short")}
+                                {row.original.balance === undefined ? "-" : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, precision: 2, notation: "compact" })}
                             </span>
                             {" "}
                             {row.original.asset.asset_symbol}
@@ -43,11 +43,8 @@ const columns = [
         cell: ({ row }) => (
             <div class="space-y-1 items-end flex flex-col justify-end">
                 <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
-                    $/€
-                    {" "}
-                    {/* TODO: pending jonte rebase */}
-                    <span class="tabular-nums">
-                        {row.original.value === undefined ? "-" : formatUnits(row.original.value, 6, 2, "short")}
+                    <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatCurrency(row.original.value, 2)}>
+                        {row.original.value === undefined ? "-" : formatCurrency(row.original.value, 2, "compact")}
                     </span>
                 </Skeleton>
                 <div class="flex items-center gap-0.5">

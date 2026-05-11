@@ -39,10 +39,9 @@ const columns = [
         cell: ({ row }) => (
             <div class="flex items-center gap-2 py-3.5">
                 <span class="min-w-4">
-                    <Skeleton visible={!row.original.price} class="skeleton">
-                        $
-                        <span class="tabular-nums">
-                            {row.original.price ? formatUnits(row.original.price, 6, 2, "short") : "-"}
+                    <Skeleton visible={row.original.price === undefined} class="skeleton">
+                        <span class="tabular-nums" title={row.original.price === undefined ? undefined : formatCurrency(row.original.price, 2)}>
+                            {row.original.price === undefined ? "-" : formatCurrency(row.original.price, 2, "compact")}
                         </span>
                     </Skeleton>
                 </span>
@@ -54,8 +53,13 @@ const columns = [
         cell: ({ row }) => (
             <div class="space-y-1">
                 <Skeleton visible={row.original.balance === undefined} class="skeleton">
-                    <span class="tabular-nums">
-                        {row.original.balance === undefined ? "-" : formatUnits(row.original.balance, row.original.asset.asset_decimals, 2, "short")}
+                    <span class="tabular-nums" title={row.original.balance === undefined ? undefined : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals })}>
+                        {row.original.balance === undefined ? "-" : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, notation: "compact" })}
+                    </span>
+                </Skeleton>
+                <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton text-muted max-w-24 max-h-4 rounded-md">
+                    <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatCurrency(row.original.value, 2)}>
+                        {row.original.value === undefined ? "-" : formatCurrency(row.original.value, 2, "compact")}
                     </span>
                 </Skeleton>
             </div>
@@ -145,6 +149,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
             weight,
         }];
     }));
+    const total = createMemo(() => data().reduce((sum, asset) => sum + (asset.value ?? 0n), 0n));
 
     // eslint-disable-next-line no-restricted-syntax
     const [sorting, setSorting] = createSignal<SortingState>([{ id: "value", desc: false }]);
