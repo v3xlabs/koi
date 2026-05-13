@@ -8,7 +8,7 @@ import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency } from "#/api/context";
-import { formatUnits } from "#/utils/units";
+import { formatAmount, formatUnits } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
 
@@ -40,11 +40,14 @@ const columns = [
     }),
     helper.accessor("value", {
         header: "Value",
-        cell: ({ row }) => (
+        cell: ({ row }) => {
+            const { displayCurrency } = useDisplayCurrency();
+
+            return (
             <div class="space-y-1 items-end flex flex-col justify-end">
                 <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
-                    <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatCurrency(row.original.value, 2)}>
-                        {row.original.value === undefined ? "-" : formatCurrency(row.original.value, 2, "compact")}
+                    <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatAmount(row.original.value, { precision: 2, decimals: 6, currency: displayCurrency() })}>
+                        {row.original.value === undefined ? "-" : formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() })}
                     </span>
                 </Skeleton>
                 <div class="flex items-center gap-0.5">
@@ -54,7 +57,8 @@ const columns = [
                     </span>
                 </div>
             </div>
-        ),
+        );
+        },
         sortingFn: (rowA, rowB) => {
             const valueA = rowA.original.value ?? 0n;
             const valueB = rowB.original.value ?? 0n;

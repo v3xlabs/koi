@@ -10,7 +10,7 @@ import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency } from "#/api/context";
 import { AssetAmount } from "#/components/asset/amount";
 import { DisplayCurrencySelector } from "#/components/quoter/display";
-import { formatUnits, percentNumber } from "#/utils/units";
+import { formatAmount, percentNumber } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
 
@@ -36,34 +36,42 @@ const columns = [
     }),
     helper.accessor("price", {
         header: "Price",
-        cell: ({ row }) => (
-            <div class="flex items-center gap-2 py-3.5">
-                <span class="min-w-4">
-                    <Skeleton visible={row.original.price === undefined} class="skeleton">
-                        <span class="tabular-nums" title={row.original.price === undefined ? undefined : formatCurrency(row.original.price, 2)}>
-                            {row.original.price === undefined ? "-" : formatCurrency(row.original.price, 2, "compact")}
-                        </span>
-                    </Skeleton>
-                </span>
-            </div>
-        ),
+        cell: ({ row }) => {
+            const { displayCurrency } = useDisplayCurrency();
+
+            return (
+                <div class="flex items-center gap-2 py-3.5">
+                    <span class="min-w-4">
+                        <Skeleton visible={row.original.price === undefined} class="skeleton">
+                            <span class="tabular-nums" title={row.original.price === undefined ? undefined : formatAmount(row.original.price, { decimals: 2, currency: displayCurrency() })}>
+                                {row.original.price === undefined ? "-" : formatAmount(row.original.price, { decimals: 2, notation: "compact", currency: displayCurrency() })}
+                            </span>
+                        </Skeleton>
+                    </span>
+                </div>
+            );
+        },
     }),
     helper.accessor("value", {
         header: "Balance",
-        cell: ({ row }) => (
-            <div class="space-y-1">
-                <Skeleton visible={row.original.balance === undefined} class="skeleton">
-                    <span class="tabular-nums" title={row.original.balance === undefined ? undefined : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals })}>
-                        {row.original.balance === undefined ? "-" : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, notation: "compact" })}
-                    </span>
-                </Skeleton>
-                <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton text-muted max-w-24 max-h-4 rounded-md">
-                    <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatCurrency(row.original.value, 2)}>
-                        {row.original.value === undefined ? "-" : formatCurrency(row.original.value, 2, "compact")}
-                    </span>
-                </Skeleton>
-            </div>
-        ),
+        cell: ({ row }) => {
+            const { displayCurrency } = useDisplayCurrency();
+
+            return (
+                <div class="space-y-1">
+                    <Skeleton visible={row.original.balance === undefined} class="skeleton">
+                        <span class="tabular-nums" title={row.original.balance === undefined ? undefined : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals })}>
+                            {row.original.balance === undefined ? "-" : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, notation: "compact" })}
+                        </span>
+                    </Skeleton>
+                    <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton text-muted max-w-24 max-h-4 rounded-md">
+                        <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatAmount(row.original.value, { decimals: 2, currency: displayCurrency() })}>
+                            {row.original.value === undefined ? "-" : formatAmount(row.original.value, { decimals: 2, notation: "compact", currency: displayCurrency() })}
+                        </span>
+                    </Skeleton>
+                </div>
+            );
+        },
         sortingFn: (rowA, rowB) => {
             const valueA = rowA.original.balance ?? 0n;
             const valueB = rowB.original.balance ?? 0n;
@@ -83,24 +91,25 @@ const columns = [
     }),
     helper.accessor("value", {
         header: "Value",
-        cell: ({ row }) => (
-            <div class="space-y-1 items-end flex flex-col justify-end">
-                <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
-                    $/€
-                    {" "}
-                    {/* TODO: pending jonte rebase */}
-                    <span class="tabular-nums">
-                        {row.original.value === undefined ? "-" : formatUnits(row.original.value, 6, 2, "short")}
-                    </span>
-                </Skeleton>
-                <div class="flex items-center gap-0.5">
-                    <FiChevronUp class="size-3" />
-                    <span class="text-muted text-xs">
-                        0.00%
-                    </span>
+        cell: ({ row }) => {
+            const { displayCurrency } = useDisplayCurrency();
+
+            return (
+                <div class="space-y-1 items-end flex flex-col justify-end">
+                    <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
+                        <span class="tabular-nums">
+                            {row.original.value === undefined ? "-" : formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() })}
+                        </span>
+                    </Skeleton>
+                    <div class="flex items-center gap-0.5">
+                        <FiChevronUp class="size-3" />
+                        <span class="text-muted text-xs">
+                            0.00%
+                        </span>
+                    </div>
                 </div>
-            </div>
-        ),
+            );
+        },
         sortingFn: (rowA, rowB) => {
             const valueA = rowA.original.value ?? 0n;
             const valueB = rowB.original.value ?? 0n;
@@ -149,7 +158,6 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
             weight,
         }];
     }));
-    const total = createMemo(() => data().reduce((sum, asset) => sum + (asset.value ?? 0n), 0n));
 
     // eslint-disable-next-line no-restricted-syntax
     const [sorting, setSorting] = createSignal<SortingState>([{ id: "value", desc: false }]);

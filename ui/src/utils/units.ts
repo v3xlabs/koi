@@ -27,7 +27,7 @@ const withDefaults = (options: AmountFormatOptions) => ({
     precision: options.precision ?? 2,
     locale: options.locale ?? ("en-US" as Intl.LocalesArgument),
     style: options.style ?? ("decimal" as const),
-    currency: options.currency ?? "USD",
+    currency: options.currency?.replace("fiat:", "").toUpperCase() ?? "USD",
     notation: options.notation ?? ("standard" as const),
     decimals: options.decimals,
 });
@@ -134,16 +134,3 @@ export const percentNumber = (part: bigint, total: bigint, decimals: number = 2)
 
     return Number(scaled) / Number(scale);
 };
-
-export const formatCurrency = (
-    value: bigint,
-    precision: number = 2,
-    notation: "standard" | "compact" = "standard",
-): string =>
-    formatAmount(value, {
-        decimals: 6,
-        precision,
-        style: "currency",
-        currency: "USD",
-        notation,
-    });
