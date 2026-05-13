@@ -43,8 +43,8 @@ const columns = [
                 <div class="flex items-center gap-2 py-3.5">
                     <span class="min-w-4">
                         <Skeleton visible={row.original.price === undefined} class="skeleton">
-                            <span class="tabular-nums" title={row.original.price === undefined ? undefined : formatAmount(row.original.price, { decimals: 2, currency: displayCurrency() })}>
-                                {row.original.price === undefined ? "-" : formatAmount(row.original.price, { decimals: 2, notation: "compact", currency: displayCurrency() })}
+                            <span class="tabular-nums" title={row.original.price === undefined ? undefined : formatAmount(row.original.price, { decimals: 6, precision: 2, currency: displayCurrency() })}>
+                                {row.original.price === undefined ? "-" : formatAmount(row.original.price, { decimals: 6, precision: 2, notation: "compact", currency: displayCurrency() })}
                             </span>
                         </Skeleton>
                     </span>
@@ -54,24 +54,15 @@ const columns = [
     }),
     helper.accessor("value", {
         header: "Balance",
-        cell: ({ row }) => {
-            const { displayCurrency } = useDisplayCurrency();
-
-            return (
+        cell: ({ row }) => (
                 <div class="space-y-1">
                     <Skeleton visible={row.original.balance === undefined} class="skeleton">
                         <span class="tabular-nums" title={row.original.balance === undefined ? undefined : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals })}>
                             {row.original.balance === undefined ? "-" : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, notation: "compact" })}
                         </span>
                     </Skeleton>
-                    <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton text-muted max-w-24 max-h-4 rounded-md">
-                        <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatAmount(row.original.value, { decimals: 2, currency: displayCurrency() })}>
-                            {row.original.value === undefined ? "-" : formatAmount(row.original.value, { decimals: 2, notation: "compact", currency: displayCurrency() })}
-                        </span>
-                    </Skeleton>
                 </div>
-            );
-        },
+            ),
         sortingFn: (rowA, rowB) => {
             const valueA = rowA.original.balance ?? 0n;
             const valueB = rowB.original.balance ?? 0n;

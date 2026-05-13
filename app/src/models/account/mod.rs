@@ -162,10 +162,11 @@ impl Account {
         network_identity: &NetworkIdentity,
     ) -> Result<Vec<Asset>, KoiError> {
         query_as::<_, Asset>(
-            "SELECT * FROM assets WHERE asset_identity IN (SELECT asset_identity FROM account_assets WHERE account_identity = ? AND asset_identity LIKE ?)",
+            "SELECT * FROM assets WHERE asset_identity IN (SELECT asset_identity FROM account_assets WHERE account_identity = ? AND (asset_identity LIKE ? OR asset_identity = ?))",
         )
         .bind(account_identity)
         .bind(format!("erc20:{}:%%", network_identity))
+        .bind(format!("native:{}", network_identity))
         .fetch_all(database)
         .await
         .map_err(KoiError::from)

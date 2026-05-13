@@ -8,7 +8,7 @@ import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency } from "#/api/context";
-import { formatAmount, formatUnits } from "#/utils/units";
+import { formatAmount } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
 

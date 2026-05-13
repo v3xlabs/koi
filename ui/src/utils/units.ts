@@ -26,7 +26,7 @@ type AmountFormatOptions = {
 const withDefaults = (options: AmountFormatOptions) => ({
     precision: options.precision ?? 2,
     locale: options.locale ?? ("en-US" as Intl.LocalesArgument),
-    style: options.style ?? ("decimal" as const),
+    style: options.style ?? (options.currency ? "currency" : "decimal"),
     currency: options.currency?.replace("fiat:", "").toUpperCase() ?? "USD",
     notation: options.notation ?? ("standard" as const),
     decimals: options.decimals,

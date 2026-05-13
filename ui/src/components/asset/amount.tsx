@@ -17,7 +17,7 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
     const scale = createMemo(() => {
         const asset = props.asset();
 
-        if (asset == "fiat:usd") {
+        if (asset.startsWith("fiat:")) {
             return 6;
         }
 
@@ -31,7 +31,7 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
         return formatAmountParts(props.amount(), {
             decimals,
             precision,
-            style: props.asset() === "fiat:usd" ? "currency" : "decimal",
+            currency: props.asset().startsWith("fiat:") ? props.asset() : undefined,
         });
     });
 
