@@ -22,3 +22,24 @@ export const formatUnits = (value: bigint, decimals: number, precision: number =
 
     return `${integer}.${decimal.padEnd(precision, "0")}`;
 };
+
+export const percentage = (part: bigint, total: bigint, decimals: number = 2) => {
+    if (total === 0n) throw new Error("Cannot divide by zero");
+
+    const scale = 10n ** BigInt(decimals);
+    const value = (part * 100n * scale) / total;
+
+    const whole = value / scale;
+    const fraction = value % scale;
+
+    return `${whole}.${fraction.toString().padStart(decimals, "0")}%`;
+};
+
+export const percentNumber = (part: bigint, total: bigint, decimals: number = 2) => {
+    if (total === 0n) return 0;
+
+    const scale = 10n ** BigInt(decimals);
+    const scaled = (part * 100n * scale) / total;
+
+    return Number(scaled) / Number(scale);
+};

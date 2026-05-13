@@ -6,11 +6,11 @@ import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
 
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
-import { formatUnits } from "#/utils/units";
+import { formatUnits, percentNumber } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
 
-type Data = { asset: Asset; price: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; };
+type Data = { asset: Asset; price: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; weight: number | undefined; };
 const helper = createColumnHelper<Data>();
 
 const columns = [
@@ -63,6 +63,16 @@ const columns = [
             return valueA > valueB ? -1 : 0;
         },
     }),
+    helper.accessor("weight", {
+        header: "Weight",
+        cell: ({ row }) => (
+            <div class="space-y-1">
+                <Skeleton visible={row.original.weight === undefined} class="skeleton">
+                    {row.original.weight === undefined ? "-" : `${row.original.weight}%`}
+                </Skeleton>
+            </div>
+        ),
+    }),
     helper.accessor("value", {
         header: "Value",
         cell: ({ row }) => (
@@ -111,19 +121,21 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
     const accountBalancesQuery = useAccountBalances(() => ({ path: { account_identity } }));
     const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
 
+    const totalValue = createMemo(() => balances().reduce((acc, balance) => acc + BigInt(balance.balance_quote ?? 0), 0n));
+
     const data = createMemo(() => bulk.flatMap((asset): Data[] => {
         if (!asset.data) return [];
 
         const balances2 = balances();
         const k = balances2.find(balance => balance.asset_identity === asset.data.asset_identity);
+        const weight = k && k.balance_quote ? percentNumber(BigInt(k.balance_quote), totalValue()) : undefined;
 
         return [{
             asset: asset.data,
-            // price: price ? BigInt(price) : undefined,
             balance: k && k.balance ? BigInt(k.balance) : undefined,
-            // value,
             price: k && k.asset_quote ? BigInt(k.asset_quote) : undefined,
             value: k && k.balance_quote ? BigInt(k.balance_quote) : undefined,
+            weight,
         }];
     }));
 
