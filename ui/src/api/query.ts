@@ -26,11 +26,15 @@ type ApiQueryResult<TOptions, TData, QueryKeyFn> = {
     ensure: (options: TOptions, extraOptions?: ApiQueryOptions<TData>) => Promise<TData>;
 };
 
+type ApiSuccessData<TPath extends keyof paths, TMethod extends PathMethods<paths, TPath>> = NonNullable<paths[TPath][TMethod]> extends { responses: { 200: { content: infer TContent } } }
+    ? TContent[keyof TContent]
+    : never;
+
 export const createApi = <
     TPath extends keyof paths,
     TMethod extends PathMethods<paths, TPath>,
     TOptions extends Parameters<typeof api<TPath, TMethod>>[2],
-    TData extends Awaited<ReturnType<typeof api<TPath, TMethod>>>["data"],
+    TData extends ApiSuccessData<TPath, TMethod> = ApiSuccessData<TPath, TMethod>,
     QueryKeyFn extends ((options: TOptions) => ApiQueryKey) | undefined = ((options: TOptions) => ApiQueryKey),
 >(path: TPath, method: TMethod, queryKeygen?: QueryKeyFn, config: ApiConfig<TOptions, TData> = {}): ApiQueryResult<TOptions, TData, QueryKeyFn> => {
     const options = (options: TOptions, extraOptions: ApiQueryOptions<TData> = {}) => {
@@ -77,8 +81,8 @@ export const createApiMutation = <
     TPath extends keyof paths,
     TMethod extends PathMethods<paths, TPath>,
     TOptions extends Parameters<typeof api<TPath, TMethod>>[2],
-    TData extends Awaited<ReturnType<typeof api<TPath, TMethod>>>["data"],
-    TTTOptions extends Omit<MutationOptions<TData, Error, any, any>, "mutationFn">,
+    TData extends ApiSuccessData<TPath, TMethod> = ApiSuccessData<TPath, TMethod>,
+    TTTOptions extends Omit<MutationOptions<TData, Error, any, any>, "mutationFn"> = Omit<MutationOptions<TData, Error, any, any>, "mutationFn">,
 >(path: TPath, method: TMethod, extraOptions: Partial<TTTOptions> = {}) =>
     <TTOptions extends object>(propstwo: ApiPropsThree<TOptions, TTOptions>, extraExtraOptions: Partial<MutationOptions<TData, Error, TTOptions, any>> = {}) =>
         createMutation(() => ({

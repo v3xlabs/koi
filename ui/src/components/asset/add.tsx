@@ -244,7 +244,7 @@ export const AssetAdd = () => {
                                             <For each={decimalsSuggestions()}>
                                                 {([decimals, source]) => (
                                                     <li>
-                                                        <button onClick={() => setAssetDecimals(decimals)} class="text-sm text-muted hover:text-foreground cursor-pointer">{decimals}</button>
+                                                        <button onClick={() => setAssetDecimals(Number(decimals))} class="text-sm text-muted hover:text-foreground cursor-pointer">{decimals}</button>
                                                     </li>
                                                 )}
                                             </For>
