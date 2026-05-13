@@ -10,7 +10,7 @@ export const accountKeys = {
     detail: (account_identity: number | string) => ["account", account_identity.toString()] as const,
     nextId: ["next-account-id"] as const,
     assets: (account_identity: number | string) => ["account", account_identity.toString(), "assets"] as const,
-    balances: (account_identity: number | string) => ["account", account_identity.toString(), "balances"] as const,
+    balances: (account_identity: number | string, display_currency: string) => ["account", account_identity.toString(), "balances", display_currency] as const,
 };
 
 export const useAccount = createApi("/acc/{account_identity}", "get", options => accountKeys.detail(options.path.account_identity));
@@ -56,4 +56,4 @@ export const useRemoveAccountAsset = createApiMutation("/acc/{account_identity}/
     },
 });
 
-export const useAccountBalances = createApi("/acc/{account_identity}/balances", "get", options => accountKeys.balances(options.path.account_identity));
+export const useAccountBalances = createApi("/acc/{account_identity}/balances", "get", options => accountKeys.balances(options.path.account_identity, options.query.display_currency));

@@ -1,7 +1,8 @@
 import { createFileRoute, useParams } from "@tanstack/solid-router";
 import { FaSolidArrowRight, FaSolidRefresh } from "solid-icons/fa";
-import { Show, Suspense } from "solid-js";
+import { Show, Suspense, useContext } from "solid-js";
 
+import { appcontext } from "#/api";
 import { useAccount, useAccountBalances } from "#/api/account";
 import { AccountAssetSummary } from "#/components/account/asset/summary";
 import { AssetAmount } from "#/components/asset/amount";
@@ -12,9 +13,10 @@ import { ReceiveQR } from "#/views/receive/qr";
 export const Route = createFileRoute("/acc/$account/")({
   component: () => {
     const params = useParams({ from: "/acc/$account" });
+    const { displayCurrency: [displayCurrency] } = useContext(appcontext);
     // const balance = useAccountBalance(params().account);
     const account_identity = Number.parseInt(params().account);
-    const balanceQuery = useAccountBalances(() => ({ path: { account_identity } }));
+    const balanceQuery = useAccountBalances(() => ({ path: { account_identity }, query: { display_currency: displayCurrency() } }));
     const account = useAccount(() => ({ path: { account_identity } }));
 
     return (

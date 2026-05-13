@@ -27,6 +27,7 @@ pub struct QuoterManager {
     pub quoters: Mutex<HashMap<String, Quoter>>,
     pub routes:
         Mutex<HashMap<NetworkIdentity, HashMap<AssetIdentity, HashMap<AssetIdentity, Route>>>>,
+    pub graph: Mutex<HashMap<NetworkIdentity, QuoterGraph>>,
 }
 
 pub struct QuoteInput {
@@ -56,6 +57,7 @@ impl QuoterManager {
                     .collect(),
             ),
             routes: Mutex::new(HashMap::new()),
+            graph: Mutex::new(HashMap::new()),
         };
 
         me.build_graph(database).await?;
@@ -123,6 +125,11 @@ impl QuoterManager {
             .unwrap()
             .insert(network_identity.clone(), map);
 
+        self.graph
+            .lock()
+            .unwrap()
+            .insert(network_identity.clone(), graph);
+
         Ok(())
     }
 
@@ -132,18 +139,48 @@ impl QuoterManager {
         asset_in: &AssetIdentity,
         asset_out: &AssetIdentity,
     ) -> Result<Route, KoiError> {
-        let r = self.routes.lock().expect("routes mutex poisoned");
-        let routes = r
+        if let Some(route) = self
+            .routes
+            .lock()
+            .expect("routes mutex poisoned")
             .get(network_identity)
-            .ok_or(KoiError::Internal("Network not found".to_string()))?;
-        let routes = routes
-            .get(asset_in)
-            .ok_or(KoiError::Internal("Asset not found".to_string()))?;
-        let x = routes
-            .get(asset_out)
-            .ok_or(KoiError::Internal("Route not found".to_string()))?
+            .and_then(|routes| routes.get(asset_in))
+            .and_then(|routes| routes.get(asset_out))
+            .cloned()
+        {
+            return Ok(route);
+        }
+
+        let graph = self
+            .graph
+            .lock()
+            .expect("graph mutex poisoned")
+            .get(network_identity)
+            .cloned()
+            .ok_or(KoiError::Internal("Graph not found".to_string()))?;
+
+        let token_in: TokenIdentifier = asset_in.clone().into();
+        let token_out: TokenIdentifier = asset_out.clone().into();
+        let route = graph.compute(&token_in, &token_out).map_err(|e| {
+            KoiError::Internal(format!(
+                "Error computing route from asset {} to {}: {}",
+                asset_in, asset_out, e
+            ))
+        })?;
+
+        let route = self
+            .routes
+            .lock()
+            .expect("routes mutex poisoned")
+            .entry(network_identity.clone())
+            .or_default()
+            .entry(asset_in.clone())
+            .or_default()
+            .entry(asset_out.clone())
+            .or_insert(route)
             .clone();
-        Ok(x)
+
+        Ok(route)
     }
 
     pub async fn quote(
@@ -167,7 +204,7 @@ impl QuoterManager {
         let block = rpc
             .get_block_number()
             .await
-            .map_err(|e| KoiError::Internal("Failed to get block number".to_string()))?;
+            .map_err(|_| KoiError::Internal("Failed to get block number".to_string()))?;
 
         route
             .quote(&rpc, block, amount_in)

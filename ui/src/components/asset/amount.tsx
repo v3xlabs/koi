@@ -20,12 +20,20 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
             return "$";
         }
 
+        if (asset == "fiat:eur") {
+            return "€";
+        }
+
         return "?";
     });
     const denominator = createMemo(() => {
         const asset = props.asset();
 
         if (asset == "fiat:usd") {
+            return 1e6;
+        }
+
+        if (asset == "fiat:eur") {
             return 1e6;
         }
 

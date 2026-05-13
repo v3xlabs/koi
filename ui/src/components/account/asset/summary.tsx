@@ -7,6 +7,7 @@ import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
 
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
+import { useDisplayCurrency } from "#/api/context";
 import { formatUnits } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
@@ -42,7 +43,9 @@ const columns = [
         cell: ({ row }) => (
             <div class="space-y-1 items-end flex flex-col justify-end">
                 <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
-                    $
+                    $/€
+                    {" "}
+                    {/* TODO: pending jonte rebase */}
                     <span class="tabular-nums">
                         {row.original.value === undefined ? "-" : formatUnits(row.original.value, 6, 2, "short")}
                     </span>
@@ -72,7 +75,8 @@ const AccountAssetSummaryInner: Component<{ account_identity: number; }> = ({ ac
         queries: assetQueries(),
     }));
 
-    const accountBalancesQuery = useAccountBalances(() => ({ path: { account_identity } }));
+    const { displayCurrency } = useDisplayCurrency();
+    const accountBalancesQuery = useAccountBalances(() => ({ path: { account_identity }, query: { display_currency: displayCurrency() } }));
     const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
 
     const data = createMemo(() => bulk.flatMap((asset): Data[] => {

@@ -28,9 +28,18 @@ pub struct AccountBalances {
 #[derive(Serialize, Deserialize, Object, Clone)]
 pub struct AccountBalance {
     pub asset_identity: AssetIdentity,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub balance: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub balance_error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub asset_quote: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub asset_quote_error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub balance_quote: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub balance_quote_error: Option<String>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -41,34 +50,55 @@ async fn quote_nom(
     rpc: &DynProvider,
     block: u64,
     asset_out: &AssetIdentity,
-) -> Result<AccountBalance, KoiError> {
+) -> AccountBalance {
     let nominal_amount = U256::from(10).pow(U256::from(asset.asset_decimals as u32));
-    let nominal_quote = state
+    let (asset_quote, asset_quote_error): (Option<String>, Option<String>) = match state
         .quoters
         .quote_b(rpc, block, &asset.asset_identity, asset_out, nominal_amount)
-        .await;
-    let balance_quote = match &balance {
-        Ok(balance) => Ok(state
-            .quoters
-            .quote_b(rpc, block, &asset.asset_identity, asset_out, *balance)
-            .await?),
-        Err(error) => Err(error),
+        .await
+    {
+        Ok(asset_quote) => (Some(asset_quote.to_string()), None),
+        Err(error) => (None, Some(error.to_string())),
+    };
+    let (balance, balance_error): (Option<U256>, Option<String>) = match balance {
+        Ok(balance) => (Some(balance), None),
+        Err(error) => (None, Some(error.to_string())),
     };
 
-    Ok(AccountBalance {
+    let (balance_quote, balance_quote_error): (Option<String>, Option<String>) = match &balance {
+        Some(balance) => {
+            match state
+                .quoters
+                .quote_b(rpc, block, &asset.asset_identity, asset_out, *balance)
+                .await
+            {
+                Ok(balance_quote) => (Some(balance_quote.to_string()), None),
+                Err(error) => (None, Some(error.to_string())),
+            }
+        }
+        None => (None, balance_error.clone()),
+    };
+
+    AccountBalance {
         asset_identity: asset.asset_identity.clone(),
-        balance: balance.as_ref().map(|b| b.to_string()).ok(),
-        asset_quote: nominal_quote.map(|q| q.to_string()).ok(),
-        balance_quote: balance_quote.map(|q| q.to_string()).ok(),
+        balance: balance.map(|b| b.to_string()),
+        balance_error,
+        asset_quote,
+        asset_quote_error,
+        balance_quote,
+        balance_quote_error,
         updated_at: Utc::now(),
-    })
+    }
 }
 
 impl Account {
-    pub async fn get_balances(&self, state: &AppState) -> Result<AccountBalances, KoiError> {
+    pub async fn get_balances(
+        &self,
+        state: &AppState,
+        asset_out: &AssetIdentity,
+    ) -> Result<AccountBalances, KoiError> {
         let mut balances = Vec::new();
         let mut errors = Vec::new();
-        let asset_out = AssetIdentity::Fiat("usd".to_string());
 
         let mut tasks = self
             .networks
@@ -136,22 +166,13 @@ impl Account {
             .collect::<Vec<_>>()
             .await;
 
-        let quotes = stream::iter(balances)
+        let balances = stream::iter(balances)
             .map(async |(asset, balance)| {
                 quote_nom(&asset, balance, state, &rpc, block, &asset_out).await
             })
             .buffer_unordered(8)
             .collect::<Vec<_>>()
             .await;
-
-        let mut balances = Vec::new();
-        let mut errors = Vec::new();
-        for quote in quotes {
-            match quote {
-                Ok(balance) => balances.push(balance),
-                Err(error) => errors.push(error.to_string()),
-            }
-        }
 
         let total_quote = balances
             .iter()
@@ -168,7 +189,7 @@ impl Account {
 
         Ok(AccountBalances {
             balances,
-            errors,
+            errors: Vec::new(),
             total_quote: Some(total_quote),
             updated_at: Utc::now(),
             asset: asset_out.clone(),

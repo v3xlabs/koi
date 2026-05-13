@@ -1,4 +1,5 @@
 import { Toast, toaster } from "@kobalte/core/toast";
+import { makePersisted } from "@solid-primitives/storage";
 import { QueryClientProvider } from "@tanstack/solid-query";
 import { createFetch } from "openapi-hooks";
 import { FaSolidClose } from "solid-icons/fa";
@@ -44,15 +45,20 @@ export const api = createFetch<paths>({
     },
 });
 
+const displayCurrency = makePersisted(createSignal("fiat:usd"), { name: "display-currency" });
+
 type AppContext = {
     isOnline: Accessor<boolean>;
+    displayCurrency: typeof displayCurrency;
 };
 
 export const appcontext = createContext<AppContext>({
     isOnline: () => false,
+    displayCurrency,
 });
 
 export const AppProvider: ParentComponent = (props) => {
+    console.log("app provider!");
     const [isOnline, setIsOnline] = createSignal(globalThis.navigator.onLine);
 
     const handleOnline = () => {
@@ -71,7 +77,7 @@ export const AppProvider: ParentComponent = (props) => {
 
     return (
         <QueryClientProvider client={queryClient}>
-            <appcontext.Provider value={{ isOnline }}>
+            <appcontext.Provider value={{ isOnline, displayCurrency }}>
                 {props.children}
             </appcontext.Provider>
         </QueryClientProvider>

@@ -317,7 +317,9 @@ export type paths = {
          */
         get: {
             parameters: {
-                query?: never;
+                query: {
+                    display_currency: string;
+                };
                 header?: never;
                 path: {
                     account_identity: number;

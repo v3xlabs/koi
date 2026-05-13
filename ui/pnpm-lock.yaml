@@ -17,6 +17,9 @@ importers:
       '@openlv/transport':
         specifier: 0.0.1-beta.8
         version: 0.0.1-beta.8
+      '@solid-primitives/storage':
+        specifier: ^4.3.4
+        version: 4.3.4(solid-js@1.9.9)
       '@tanstack/router-plugin':
         specifier: ^1.167.22
         version: 1.167.22(vite-plugin-solid@2.11.9(solid-js@1.9.9)(vite@7.1.10(@types/node@25.6.0)(jiti@2.5.1)(lightningcss@1.30.1)(tsx@4.21.0)))(vite@7.1.10(@types/node@25.6.0)(jiti@2.5.1)(lightningcss@1.30.1)(tsx@4.21.0))
@@ -908,6 +911,18 @@ packages:
     resolution: {integrity: sha512-ReK+5O38lJ7fT+L6mUFvUr6igFwHBESZF+2Ug842s7fvlVeBdIVEdTCErygff6w7uR6+jrr7J8jQo+cYrEq4Iw==}
     peerDependencies:
       solid-js: ^1.6.12
+
+  '@solid-primitives/storage@4.3.4':
+    resolution: {integrity: sha512-GSxPAIuyxhJWOcv7n10iv3aid5oHN3KUgyA9IV0GYWlPpgyGs43aS9E85b0VXDLoH+D4ThNK8+2WEJ8B/S6Ccg==}
+    peerDependencies:
+      '@tauri-apps/plugin-store': '*'
+      solid-js: ^1.6.12
+      solid-start: '*'
+    peerDependenciesMeta:
+      '@tauri-apps/plugin-store':
+        optional: true
+      solid-start:
+        optional: true
 
   '@solid-primitives/styles@0.1.2':
     resolution: {integrity: sha512-7iX5K+J5b1PRrbgw3Ki92uvU2LgQ0Kd/QMsrAZxDg5dpUBwMyTijZkA3bbs1ikZsT1oQhS41bTyKbjrXeU0Awg==}
@@ -3644,6 +3659,11 @@ snapshots:
   '@solid-primitives/static-store@0.1.2(solid-js@1.9.9)':
     dependencies:
       '@solid-primitives/utils': 6.3.2(solid-js@1.9.9)
+      solid-js: 1.9.9
+
+  '@solid-primitives/storage@4.3.4(solid-js@1.9.9)':
+    dependencies:
+      '@solid-primitives/utils': 6.4.0(solid-js@1.9.9)
       solid-js: 1.9.9
 
   '@solid-primitives/styles@0.1.2(solid-js@1.9.9)':

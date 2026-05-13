@@ -1,11 +1,15 @@
 import { Skeleton } from "@kobalte/core/skeleton";
 import { createQueries } from "@tanstack/solid-query";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
+import { FaSolidRefresh } from "solid-icons/fa";
 import { FiArrowUpRight, FiChevronUp } from "solid-icons/fi";
 import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
 
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
+import { useDisplayCurrency } from "#/api/context";
+import { AssetAmount } from "#/components/asset/amount";
+import { DisplayCurrencySelector } from "#/components/quoter/display";
 import { formatUnits, percentNumber } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
@@ -78,7 +82,9 @@ const columns = [
         cell: ({ row }) => (
             <div class="space-y-1 items-end flex flex-col justify-end">
                 <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
-                    $
+                    $/€
+                    {" "}
+                    {/* TODO: pending jonte rebase */}
                     <span class="tabular-nums">
                         {row.original.value === undefined ? "-" : formatUnits(row.original.value, 6, 2, "short")}
                     </span>
@@ -111,6 +117,7 @@ const columns = [
 ];
 
 const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ account_identity }) => {
+    const { displayCurrency } = useDisplayCurrency();
     const accountAssetsQuery = useAccountAssets(() => ({ path: { account_identity } }));
     const assetQueries = createMemo(() => accountAssetsQuery.data?.map(asset_identity => useAsset.options({ path: { asset_identity } })) ?? []);
 
@@ -118,10 +125,10 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
         queries: assetQueries(),
     }));
 
-    const accountBalancesQuery = useAccountBalances(() => ({ path: { account_identity } }));
+    const accountBalancesQuery = useAccountBalances(() => ({ path: { account_identity }, query: { display_currency: displayCurrency() } }));
     const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
 
-    const totalValue = createMemo(() => balances().reduce((acc, balance) => acc + BigInt(balance.balance_quote ?? 0), 0n));
+    const totalValue = createMemo(() => BigInt(accountBalancesQuery.data?.total_quote ?? 0));
 
     const data = createMemo(() => bulk.flatMap((asset): Data[] => {
         if (!asset.data) return [];
@@ -156,83 +163,116 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
     });
 
     return (
-        <div class="bg-surface px-6 py-2.5 rounded-md w-full">
-            <table class="w-full">
-                <thead class="border-b border-border">
-                    <For each={table.getHeaderGroups()}>
-                        {headerGroup => (
-                            <tr>
-                                <For each={headerGroup.headers}>
-                                    {(header, index) => (
-                                        <th classList={{
-                                            "pb-2.5 py-0.5": true,
-                                            "text-left": index() === 0,
-                                            "text-right": index() !== 0,
-                                        }}
-                                        >
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext(),
-                                                )}
-                                        </th>
-                                    )}
-                                </For>
-                            </tr>
-                        )}
-                    </For>
-                </thead>
-                <tbody class="divide-y divide-border">
-                    <For each={table.getRowModel().rows}>
-                        {row => (
-                            <tr class="relative group z-10">
-                                <For each={row.getVisibleCells()}>
-                                    {(cell, index) => (
-                                        <td>
-                                            {
-                                                index() === 0
-                                                && <div class="group-hover:-inset-x-2.5 group-hover:opacity-100 opacity-0 transition-all -z-10 absolute inset-y-0 inset-x-0 bg-surface-alt rounded-md">            </div>
-                                            }
-                                            <div
-                                              classList={{
-                                                    "text-left": index() === 0,
-                                                    "text-right flex justify-end": index() !== 0,
-                                                }}
+        <div class="w-full space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="text-sm text-muted font-bold">Total assets value</div>
+                    <div class="text-2xl">
+                        <AssetAmount
+                          amount={() => totalValue()}
+                          asset={displayCurrency}
+                        />
+                    </div>
+                </div>
+                <div class="flex flex-col items-end justify-center gap-2">
+                    <div class="flex items-center gap-2 text-sm">
+                        <span>
+                            Updated
+                            {" "}
+                            {accountBalancesQuery.data?.updated_at}
+                            {" "}
+                            ago
+                        </span>
+                        <button class="btn btn-secondary aspect-square flex items-center justify-center btn-small">
+                            <FaSolidRefresh class="size-3" />
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2 justify-end">
+                        <button class="btn btn-outline text-sm">
+                            Manage assets
+                        </button>
+                        <DisplayCurrencySelector />
+                    </div>
+                </div>
+            </div>
+            <div class="bg-surface px-6 py-2.5 rounded-md w-full">
+                <table class="w-full">
+                    <thead class="border-b border-border">
+                        <For each={table.getHeaderGroups()}>
+                            {headerGroup => (
+                                <tr>
+                                    <For each={headerGroup.headers}>
+                                        {(header, index) => (
+                                            <th classList={{
+                                                "pb-2.5 py-0.5": true,
+                                                "text-left": index() === 0,
+                                                "text-right": index() !== 0,
+                                            }}
                                             >
-                                                {flexRender(
-                                                    cell.column.columnDef.cell,
-                                                    cell.getContext(),
-                                                )}
-                                            </div>
-                                        </td>
-                                    )}
-                                </For>
-                            </tr>
-                        )}
-                    </For>
-                </tbody>
-                <tfoot>
-                    <For each={table.getFooterGroups()}>
-                        {footerGroup => (
-                            <tr>
-                                <For each={footerGroup.headers}>
-                                    {header => (
-                                        <th>
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.footer,
-                                                    header.getContext(),
-                                                )}
-                                        </th>
-                                    )}
-                                </For>
-                            </tr>
-                        )}
-                    </For>
-                </tfoot>
-            </table>
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                        header.column.columnDef.header,
+                                                        header.getContext(),
+                                                    )}
+                                            </th>
+                                        )}
+                                    </For>
+                                </tr>
+                            )}
+                        </For>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        <For each={table.getRowModel().rows}>
+                            {row => (
+                                <tr class="relative group z-10">
+                                    <For each={row.getVisibleCells()}>
+                                        {(cell, index) => (
+                                            <td>
+                                                {
+                                                    index() === 0
+                                                    && <div class="group-hover:-inset-x-2.5 group-hover:opacity-100 opacity-0 transition-all -z-10 absolute inset-y-0 inset-x-0 bg-surface-alt rounded-md">            </div>
+                                                }
+                                                <div
+                                                  classList={{
+                                                        "text-left": index() === 0,
+                                                        "text-right flex justify-end": index() !== 0,
+                                                    }}
+                                                >
+                                                    {flexRender(
+                                                        cell.column.columnDef.cell,
+                                                        cell.getContext(),
+                                                    )}
+                                                </div>
+                                            </td>
+                                        )}
+                                    </For>
+                                </tr>
+                            )}
+                        </For>
+                    </tbody>
+                    <tfoot>
+                        <For each={table.getFooterGroups()}>
+                            {footerGroup => (
+                                <tr>
+                                    <For each={footerGroup.headers}>
+                                        {header => (
+                                            <th>
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                        header.column.columnDef.footer,
+                                                        header.getContext(),
+                                                    )}
+                                            </th>
+                                        )}
+                                    </For>
+                                </tr>
+                            )}
+                        </For>
+                    </tfoot>
+                </table>
+            </div>
         </div>
     );
 };
