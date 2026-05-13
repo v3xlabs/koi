@@ -2,6 +2,7 @@ import { Tabs } from "@kobalte/core/tabs";
 import { Component, createMemo, For, Show, Suspense } from "solid-js";
 
 import { useNetwork, useNetworkEndpoints } from "#/api/network";
+import { button } from "#/components/input/button";
 
 import { NetworkDelete } from "./delete";
 import { NetworkEndpointAdd } from "./endpoint/add";
@@ -78,7 +79,7 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
                         <Tabs.List class="flex gap-1">
                             <For each={[{ value: "endpoints", label: "Endpoints" }, { value: "details", label: "Details" }]}>
                                 {item => (
-                                    <Tabs.Trigger value={item.value} class="btn btn-secondary border-b-0 !rounded-b-none border-x border-t border-border btn-small text-sm">{item.label}</Tabs.Trigger>
+                                    <Tabs.Trigger value={item.value} class={button({ variant: "outline", size: "small", class: "border-b-0 !rounded-b-none text-sm" })}>{item.label}</Tabs.Trigger>
                                 )}
                             </For>
                         </Tabs.List>
@@ -132,7 +133,7 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
 
                             <div class="flex w-full justify-end gap-2">
                                 <button
-                                  class="btn btn-primary"
+                                  class={button({ variant: "primary" })}
                                   disabled
                                 //   disabled={!isDirty()}
                                 //   onClick={() => updateNetwork.mutate({ data: { network_name: networkName(), network_icon_url: networkIconUrl() } })}

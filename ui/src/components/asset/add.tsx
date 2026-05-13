@@ -1,4 +1,3 @@
-import { SegmentedControl } from "@kobalte/core/segmented-control";
 import { FiPlus } from "solid-icons/fi";
 import { createMemo, createSignal, For, Show } from "solid-js";
 import { match } from "ts-pattern";
@@ -7,6 +6,8 @@ import { Asset, useAssetMetadataDiscovery, useCreateAsset } from "#/api/asset";
 
 import { Modal } from "../dialog";
 import { AddressInput } from "../input/address";
+import { button } from "../input/button";
+import { SegmentedControl } from "../input/segmented";
 import { NetworkSelect } from "../net/input";
 
 const PLACEHOLDERS: Record<string, {
@@ -126,7 +127,7 @@ export const AssetAdd = () => {
 
     return (
         <Modal>
-            <Modal.Trigger class="btn btn-primary flex items-center gap-2">
+            <Modal.Trigger class={button({ variant: "primary", class: "text-sm" })}>
                 Add
                 {" "}
                 <FiPlus />
@@ -148,31 +149,29 @@ export const AssetAdd = () => {
                                     <SegmentedControl.Label class="w-full">
                                         Type
                                     </SegmentedControl.Label>
-                                    <div class="relative border border-border rounded-md p-1 w-fit" role="presentation">
-                                        <SegmentedControl.Indicator class="absolute top-1 left-1 w-full h-full bg-primary rounded-md transition-all duration-300" />
+                                    <SegmentedControl.Control>
+                                        <SegmentedControl.Indicator />
                                         <div class="flex gap-2 w-fit relative">
                                             <For each={Object.keys(PLACEHOLDERS)}>
                                                 {key => (
                                                     <SegmentedControl.Item
                                                       value={key}
-                                                      class="px-2"
                                                     >
                                                         <SegmentedControl.ItemInput class="" />
-                                                        <SegmentedControl.ItemLabel class="cursor-pointer">
+                                                        <SegmentedControl.ItemLabel>
                                                             {key}
                                                         </SegmentedControl.ItemLabel>
                                                     </SegmentedControl.Item>
                                                 )}
                                             </For>
                                         </div>
-                                    </div>
+                                    </SegmentedControl.Control>
                                 </SegmentedControl>
                                 <Show when={assetType() === "erc20" || assetType() === "native"}>
-                                    <label class="space-y-1 block w-full">
+                                    <div class="space-y-1 block w-full">
                                         <span>Network</span>
-                                        {/* TODO: make single network select instead of this hack lmao */}
-                                        <NetworkSelect value={() => [networkId()]} onChange={x => (x ? x[0] && setNetworkId(x.at(-1)!) : setNetworkId(0))} />
-                                    </label>
+                                        <NetworkSelect multiple={false} value={() => [networkId()]} onChange={x => (x ? x[0] && setNetworkId(x[0]) : setNetworkId(0))} />
+                                    </div>
                                 </Show>
                             </div>
                             <Show when={assetType() === "erc20"}>
@@ -199,9 +198,9 @@ export const AssetAdd = () => {
                                 <div class="flex justify-end text-end">
                                     <ul>
                                         <For each={nameSuggestions()}>
-                                            {([name, source]) => (
+                                            {([name]) => (
                                                 <li>
-                                                    <button onClick={() => setAssetName(name)} class="text-sm text-muted hover:text-foreground cursor-pointer">{name}</button>
+                                                    <button onClick={() => setAssetName(name)} class={button({ variant: "ghost", size: "small", class: "text-muted" })}>{name}</button>
                                                 </li>
                                             )}
                                         </For>
@@ -221,9 +220,9 @@ export const AssetAdd = () => {
                                     <div>
                                         <ul class="flex justify-end text-end">
                                             <For each={symbolSuggestions()}>
-                                                {([symbol, source]) => (
+                                                {([symbol]) => (
                                                     <li>
-                                                        <button onClick={() => setAssetSymbol(symbol)} class="text-sm text-muted hover:text-foreground cursor-pointer">{symbol}</button>
+                                                        <button onClick={() => setAssetSymbol(symbol)} class={button({ variant: "ghost", size: "small", class: "text-muted" })}>{symbol}</button>
                                                     </li>
                                                 )}
                                             </For>
@@ -242,9 +241,9 @@ export const AssetAdd = () => {
                                     <div>
                                         <ul class="flex justify-end text-end">
                                             <For each={decimalsSuggestions()}>
-                                                {([decimals, source]) => (
+                                                {([decimals]) => (
                                                     <li>
-                                                        <button onClick={() => setAssetDecimals(Number(decimals))} class="text-sm text-muted hover:text-foreground cursor-pointer">{decimals}</button>
+                                                        <button onClick={() => setAssetDecimals(Number(decimals))} class={button({ variant: "ghost", size: "small", class: "text-muted" })}>{decimals}</button>
                                                     </li>
                                                 )}
                                             </For>
@@ -265,7 +264,7 @@ export const AssetAdd = () => {
                                     <For each={iconSuggestions()}>
                                         {([iconUrl, source]) => (
                                             <li>
-                                                <button onClick={() => setAssetIconUrl(iconUrl)}>
+                                                <button class={button({ variant: "outline" })} onClick={() => setAssetIconUrl(iconUrl)}>
                                                     <img src={iconUrl} alt={source} class="size-8 aspect-square rounded-full" />
                                                     {source}
                                                 </button>
@@ -277,13 +276,13 @@ export const AssetAdd = () => {
                         </div>
                         <div class="w-full flex justify-end gap-2 p-4">
                             <button
-                              class="btn btn-primary"
+                              class={button({ variant: "primary" })}
                               onClick={() => assetCreate.mutate({ data: asset()! })}
                               disabled={!asset()}
                             >
                                 Create
                             </button>
-                            <Modal.CloseButton class="btn btn-secondary">
+                            <Modal.CloseButton class={button({ variant: "secondary" })}>
                                 Cancel
                             </Modal.CloseButton>
                         </div>

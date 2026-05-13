@@ -8,6 +8,7 @@ import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency } from "#/api/context";
+import { button } from "#/components/input/button";
 import { formatAmount } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
@@ -121,7 +122,7 @@ const AccountAssetSummaryInner: Component<{ account_identity: number; }> = ({ ac
                     Asset overview
                 </div>
                 <div class="flex justify-end">
-                    <Link to="/acc/$account/assets" params={{ account: account_identity.toString() }} class="btn btn-ghost flex items-center gap-1 text-sm">
+                    <Link to="/acc/$account/assets" params={{ account: account_identity.toString() }} class={button({ variant: "ghost", class: "text-sm" })}>
                         View all
                         {" "}
                         <FiChevronRight class="size-3" />

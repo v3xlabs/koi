@@ -1,9 +1,9 @@
-import { SegmentedControl } from "@kobalte/core/segmented-control";
 import { encodeQR } from "qr";
 import { Accessor, createMemo, createSignal, For, ParentComponent } from "solid-js";
 import { match } from "ts-pattern";
 
 import { Modal } from "#/components/dialog";
+import { SegmentedControl } from "#/components/input/segmented";
 
 type ReceiveQRProperties = {
     address: Accessor<string>;
@@ -54,29 +54,28 @@ export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
                                         <SegmentedControl.Label class="">
                                             Url Format
                                         </SegmentedControl.Label>
-                                        <div class="relative border border-border rounded-md p-1 w-fit" role="presentation">
-                                            <SegmentedControl.Indicator class="absolute top-1 left-1 w-full h-full bg-primary rounded-md transition-all duration-300" />
+                                        <SegmentedControl.Control>
+                                            <SegmentedControl.Indicator />
                                             <div class="flex gap-2 w-fit relative">
                                                 <For each={supportedQRType}>
                                                     {type => (
                                                         <SegmentedControl.Item
                                                           value={type}
-                                                          class="px-2"
                                                         >
                                                             <SegmentedControl.ItemInput class="" />
-                                                            <SegmentedControl.ItemLabel class="cursor-pointer">
+                                                            <SegmentedControl.ItemLabel>
                                                                 {type}
                                                             </SegmentedControl.ItemLabel>
                                                         </SegmentedControl.Item>
                                                     )}
                                                 </For>
                                             </div>
-                                        </div>
+                                        </SegmentedControl.Control>
                                     </SegmentedControl>
                                     <div>
                                         <input
                                           type="text"
-                                          class="w-full rounded-md px-2 py-1 font-bold flex items-center gap-2 cursor-pointer border border-border"
+                                          class="input w-full font-bold"
                                           value={url()}
                                           readonly
                                         />

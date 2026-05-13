@@ -9,6 +9,7 @@ import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency } from "#/api/context";
 import { AssetAmount } from "#/components/asset/amount";
+import { button } from "#/components/input/button";
 import { DisplayCurrencySelector } from "#/components/quoter/display";
 import { formatAmount, percentNumber } from "#/utils/units";
 
@@ -110,9 +111,9 @@ const columns = [
     }),
     helper.display({
         header: "Actions",
-        cell: ({ row }) => (
+        cell: () => (
             <div class="flex items-center gap-2 py-3.5">
-                <button class="btn btn-secondary aspect-square flex items-center justify-center btn-small">
+                <button class={button({ variant: "secondary", size: "small", square: true })}>
                     <FiArrowUpRight class="size-3" />
                 </button>
             </div>
@@ -187,12 +188,12 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                             {" "}
                             ago
                         </span>
-                        <button class="btn btn-secondary aspect-square flex items-center justify-center btn-small">
+                        <button class={button({ variant: "secondary", size: "small", square: true })}>
                             <FaSolidRefresh class="size-3" />
                         </button>
                     </div>
                     <div class="flex items-center gap-2 justify-end">
-                        <button class="btn btn-outline text-sm">
+                        <button class={button({ variant: "outline", class: "text-sm" })}>
                             Manage assets
                         </button>
                         <DisplayCurrencySelector />

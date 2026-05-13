@@ -5,6 +5,7 @@ import { useAccount, useAccountAssets, useAddAccountAsset, useRemoveAccountAsset
 import { useAssets } from "#/api/asset";
 import { AssetPreview } from "#/components/asset/preview";
 import { Modal } from "#/components/dialog";
+import { button } from "#/components/input/button";
 
 export const AccountAssetLink: Component<{ account_identity: number; }> = ({ account_identity }) => {
     const assetsQuery = useAssets();
@@ -23,7 +24,7 @@ export const AccountAssetLink: Component<{ account_identity: number; }> = ({ acc
 
     return (
         <Modal>
-            <Modal.Trigger class="btn btn-primary">
+            <Modal.Trigger class={button({ variant: "primary" })}>
                 Add Assets
             </Modal.Trigger>
             <Modal.Portal>
@@ -44,11 +45,11 @@ export const AccountAssetLink: Component<{ account_identity: number; }> = ({ acc
                                             <li class="hover:bg-surface-alt cursor-pointer p-2 rounded-md flex items-center justify-between">
                                                 <AssetPreview asset_identity={asset.asset_identity} />
                                                 <div class="flex items-center gap-2">
-                                                    <button class="btn btn-secondary aspect-square flex items-center justify-center" disabled>
+                                                    <button class={button({ variant: "secondary", square: true })} disabled>
                                                         <FiRefreshCcw />
                                                     </button>
                                                     <button
-                                                      class="btn btn-primary aspect-square flex items-center justify-center"
+                                                      class={button({ variant: "primary", square: true })}
                                                       onClick={() => linkAsset.mutate({ account_identity, asset_identity: asset.asset_identity })}
                                                     >
                                                         <FiPlus />
@@ -71,7 +72,7 @@ export const AssetUnlink: Component<{ account_identity: number; asset_identity: 
     const unlinkAsset = useRemoveAccountAsset<{ account_identity: number; asset_identity: string; }>(({ account_identity, asset_identity }) => ({ path: { account_identity, asset_identity } }));
 
     return (
-        <button class="btn btn-secondary aspect-square flex items-center justify-center" onClick={() => unlinkAsset.mutate({ account_identity, asset_identity })}>
+        <button class={button({ variant: "secondary", square: true })} onClick={() => unlinkAsset.mutate({ account_identity, asset_identity })}>
             <FiX />
         </button>
     );

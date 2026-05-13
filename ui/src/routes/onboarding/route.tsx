@@ -1,6 +1,8 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/solid-router";
 import { For } from "solid-js";
 
+import { button } from "#/components/input/button";
+
 export const Route = createFileRoute("/onboarding")({
   component: () => (
     <div class="mx-auto w-full max-w-2xl pt-8 space-y-4">
@@ -18,7 +20,7 @@ export const Route = createFileRoute("/onboarding")({
               <li class="text-sm">
                 <Link
                   to={item.href}
-                  class="h-full hover:bg-surface-alt rounded-md px-2 py-1"
+                  class={button({ variant: "ghost", size: "small", class: "h-full" })}
                   activeProps={{ class: "bg-surface-alt" }}
                   activeOptions={{ exact: true }}
                 >

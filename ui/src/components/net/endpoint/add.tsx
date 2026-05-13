@@ -3,6 +3,7 @@ import { FiPlus } from "solid-icons/fi";
 import { Component, createSignal } from "solid-js";
 
 import { NetworkEndpoint, useCreateNetworkEndpoint, useNetworkEndpointNextId } from "#/api/network";
+import { button } from "#/components/input/button";
 
 export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ network_identity }) => {
     const createNetwork = useCreateNetworkEndpoint(({ data }: { data: NetworkEndpoint; }) => ({
@@ -27,12 +28,12 @@ export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ n
     return (
         <Popover>
             <Popover.Trigger class="flex items-center gap-2">
-                <button class="btn btn-secondary aspect-square flex justify-center items-center">
+                <button class={button({ variant: "secondary", square: true })}>
                     <FiPlus />
                 </button>
             </Popover.Trigger>
             <Popover.Portal>
-                <Popover.Content class="bg-surface p-4 rounded-md border border-border outline-none w-full max-w-md">
+                <Popover.Content class="popover-content p-4 w-full max-w-md">
                     <div class="w-full">
                         <div class="w-full">
                             <label class="space-y-1 block w-full">
@@ -62,18 +63,18 @@ export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ n
                                   onChange={e => setType(e.target.value)}
                                 />
                             </label>
-                            <label class="space-y-1 block w-full">
+                            <label class="flex items-center gap-2 py-2">
                                 <span>Enabled</span>
                                 <input
                                   type="checkbox"
-                                  class="input w-full"
+                                  class="checkbox"
                                   checked={!disabled()}
                                   onChange={e => setDisabled(!e.target.checked)}
                                 />
                             </label>
                             <div class="flex justify-end">
                                 <button
-                                  class="btn btn-primary"
+                                  class={button({ variant: "primary" })}
                                   onClick={() => createNetwork.mutate({
                                         data: {
                                             endpoint_identity: Number(nextIdQuery.data ?? "0"),

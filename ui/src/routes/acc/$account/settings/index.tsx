@@ -3,6 +3,7 @@ import { createFileRoute, useParams } from "@tanstack/solid-router";
 import { Accessor, Component, createMemo, createSignal, Show, Suspense } from "solid-js";
 
 import { Account, useAccount, useUpdateAccount } from "#/api/account";
+import { button } from "#/components/input/button";
 import { NetworkSelect } from "#/components/net/input";
 
 export const Route = createFileRoute("/acc/$account/settings/")({
@@ -73,7 +74,7 @@ const AccountEdit: Component<{ account: Accessor<Account>; }> = ({ account }) =>
         <NetworkSelect value={selectedNetworks} onChange={setNetworks} />
       </div>
       <div class="flex justify-end">
-        <button class="btn btn-primary" disabled={!isDirty()} onClick={mutate}>
+        <button class={button({ variant: "primary" })} disabled={!isDirty()} onClick={mutate}>
           Save
         </button>
       </div>

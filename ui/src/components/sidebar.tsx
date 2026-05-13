@@ -12,6 +12,7 @@ import { AccountIcon } from "./account/icon";
 import { AccountExternalLinkModal } from "./account/link";
 import { AccountTypeIcon } from "./account/type";
 import { Modal } from "./dialog";
+import { button } from "./input/button";
 
 export const Sidebar = () => {
     const params = useParams({ from: "/acc/$account" });
@@ -49,16 +50,16 @@ export const Sidebar = () => {
                     <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
                         {acc => (
                             <ReceiveQR address={() => acc().evm_address}>
-                                <Modal.Trigger class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
+                                <Modal.Trigger class={button({ variant: "secondary", square: true })}>
                                     <FaSolidQrcode class="w-3.5 h-3.5 text-secondary-foreground" />
                                 </Modal.Trigger>
                             </ReceiveQR>
                         )}
                     </Show>
-                    <button class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
+                    <button class={button({ variant: "secondary", square: true })}>
                         <FaSolidCopy />
                     </button>
-                    <AccountExternalLinkModal account_identity={account_identity} class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer">
+                    <AccountExternalLinkModal account_identity={account_identity} class={button({ variant: "secondary", square: true })}>
                         <FaSolidExternalLink />
                     </AccountExternalLinkModal>
                     <For each={[
@@ -72,7 +73,7 @@ export const Sidebar = () => {
                         {item => (
                             <Link
                               to={item.href}
-                              class="bg-secondary hover:bg-secondary-hover aspect-square rounded-md p-2 flex items-center justify-center cursor-pointer"
+                              class={button({ variant: "secondary", square: true })}
                             >
                                 <item.icon class="w-3.5 h-3.5 text-secondary-foreground" />
                             </Link>
@@ -85,7 +86,7 @@ export const Sidebar = () => {
                     <Link
                       to="/acc/$account/new-tx"
                       params={{ account: params().account }}
-                      class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md p-2 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                      class={button({ variant: "primary", class: "w-full text-sm font-bold" })}
                     >
                         New transaction
                     </Link>

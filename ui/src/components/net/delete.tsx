@@ -1,6 +1,7 @@
 import { Component, JSX } from "solid-js";
 
 import { useDeleteNetwork } from "#/api/network";
+import { button } from "#/components/input/button";
 
 import { Modal } from "../dialog";
 
@@ -13,7 +14,7 @@ export const NetworkDelete: Component<{ network_identity: number; children?: JSX
 
     return (
         <Modal>
-            <Modal.Trigger class={children ? "" : "btn btn-danger"}>
+            <Modal.Trigger class={children ? "" : button({ variant: "danger" })}>
                 {children ?? "Delete"}
             </Modal.Trigger>
             <Modal.Portal>
@@ -32,8 +33,8 @@ export const NetworkDelete: Component<{ network_identity: number; children?: JSX
                             . This action cannot be undone.
                         </div>
                         <div class="w-full flex justify-end gap-2 p-4">
-                            <button class="btn btn-primary" onClick={() => deleteNetwork.mutate({ network_identity })}>Delete</button>
-                            <Modal.CloseButton class="btn btn-secondary">
+                            <button class={button({ variant: "primary" })} onClick={() => deleteNetwork.mutate({ network_identity })}>Delete</button>
+                            <Modal.CloseButton class={button({ variant: "secondary" })}>
                                 Cancel
                             </Modal.CloseButton>
                         </div>

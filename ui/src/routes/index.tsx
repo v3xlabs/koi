@@ -4,6 +4,7 @@ import { For, Suspense } from "solid-js";
 
 import { useAccounts } from "#/api/account";
 import { AccountPreview } from "#/components/account/preview";
+import { button } from "#/components/input/button";
 
 export const Route = createFileRoute("/")({
   component: () => {
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/")({
               Accounts
             </div>
             <div>
-              <Link to="/acc/new" class="btn btn-primary flex items-center gap-2 text-sm">
+              <Link to="/acc/new" class={button({ variant: "primary", class: "text-sm" })}>
                 <FiPlus />
                 Add
               </Link>
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/")({
                   {account => (
                     <Link to="/acc/$account" params={{ account: account.account_identity.toString() }} class="w-full px-4 hover:bg-surface-alt rounded-md py-1 text-sm font-bold flex">
                       <AccountPreview account_identity={account.account_identity} />
-                      <button class="btn btn-ghost btn-sm aspect-square flex justify-center items-center">
+                      <button class={button({ variant: "ghost", size: "small", square: true })}>
                         <FiMoreVertical />
                       </button>
                     </Link>

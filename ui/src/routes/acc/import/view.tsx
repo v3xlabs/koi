@@ -3,6 +3,7 @@ import { createMemo, createSignal } from "solid-js";
 
 import { useCreateAccount, useNextAccountId } from "#/api/account";
 import { AddressInput } from "#/components/input/address";
+import { button } from "#/components/input/button";
 import { NetworkSelect } from "#/components/net/input";
 
 export const Route = createFileRoute("/acc/import/view")({
@@ -64,7 +65,7 @@ export const Route = createFileRoute("/acc/import/view")({
             </label>
           </div>
           <div class="flex justify-end">
-            <button class="btn btn-primary" onClick={handleClick} disabled={disabled()}>
+            <button class={button({ variant: "primary" })} onClick={handleClick} disabled={disabled()}>
               Import
             </button>
           </div>

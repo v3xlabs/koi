@@ -46,59 +46,89 @@ body {
     /* font-family: "SF Pro Display", "SF Pro Text", "Inter", sans-serif; */
 }
 
-.btn {
-    &.btn-large {
-        &.aspect-square {
-            @apply size-10 rounded-md;
-        }
-        &:not(.aspect-square) {
-            @apply px-6 py-3 rounded-md;
-        }
+.input {
+    @apply min-h-8 bg-surface border border-border rounded-md px-2 py-1 text-sm text-foreground outline-none transition-colors placeholder:text-muted;
+
+    &:focus,
+    &:focus-within {
+        @apply border-primary ring-2 ring-primary/20;
     }
-    &:not(.btn-large):not(.btn-small) {
-        &.aspect-square {
-            @apply size-8 rounded-md;
-        }
-        &:not(.aspect-square) {
-            @apply px-4 py-1 rounded-md;
-        }
-    }
-    &.btn-small {
-        &.aspect-square {
-            @apply size-6 rounded-md;
-        }
-        &:not(.aspect-square) {
-            @apply px-2 py-0.5 rounded-md;
-        }
-    }
-    &.btn-primary {
-        @apply bg-primary hover:bg-primary-hover text-primary-foreground;
-        &:disabled {
-            @apply bg-primary/50 text-primary-foreground/50;
-        }
-    }
-    &.btn-secondary {
-        @apply bg-secondary hover:bg-secondary-hover text-secondary-foreground;
-    }
-    &.btn-tertiary {
-        @apply bg-transparent hover:bg-surface-alt text-foreground;
-    }
-    &.btn-danger {
-        @apply bg-secondary hover:bg-secondary-hover text-secondary-foreground border border-primary;
-    }
-    &.btn-ghost {
-        @apply bg-transparent hover:bg-surface-alt text-foreground;
-    }
-    &:not(:disabled) {
-        @apply cursor-pointer;
+    &:disabled,
+    &[readonly] {
+        @apply bg-surface-alt text-muted;
     }
     &:disabled {
-        @apply cursor-not-allowed;
+        @apply cursor-not-allowed opacity-70;
     }
 }
 
-.input {
-    @apply bg-surface border border-border rounded-md px-2 py-1;
+textarea.input {
+    @apply min-h-24 py-2;
+}
+
+.checkbox {
+    @apply size-4 rounded border-border accent-primary cursor-pointer;
+
+    &:focus-visible {
+        @apply ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
+    }
+    &:disabled {
+        @apply cursor-not-allowed opacity-60;
+    }
+}
+
+.nav-icon-button {
+    @apply h-full aspect-square inline-flex items-center justify-center text-muted hover:bg-surface-alt hover:text-foreground outline-none transition-colors cursor-pointer;
+
+    &:focus-visible {
+        @apply ring-2 ring-primary/50 ring-inset;
+    }
+}
+
+.select__trigger {
+    @apply min-h-8 bg-surface border border-border rounded-md px-2 py-1 text-sm text-foreground outline-none transition-colors inline-flex items-center justify-between gap-2 cursor-pointer;
+
+    &:focus,
+    &:focus-visible,
+    &[data-expanded] {
+        @apply border-primary ring-2 ring-primary/20;
+    }
+}
+
+.select__content {
+    @apply bg-surface p-1 rounded-md border border-border outline-none z-50;
+}
+
+.select__item {
+    @apply flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm outline-none cursor-pointer transition-colors;
+
+    &:hover,
+    &[data-highlighted] {
+        @apply bg-surface-alt;
+    }
+    &[data-disabled] {
+        @apply cursor-not-allowed opacity-50;
+    }
+}
+
+.select__item-indicator {
+    @apply ml-auto text-primary;
+}
+
+.select__token {
+    @apply inline-flex min-h-7 items-center gap-2 rounded-md border border-border bg-surface-alt px-2 py-0.5 text-sm;
+}
+
+.select__single-value {
+    @apply inline-flex min-h-7 min-w-0 items-center gap-2 text-sm;
+}
+
+.select__token-remove {
+    @apply rounded-sm p-0.5 text-muted hover:bg-surface hover:text-foreground outline-none cursor-pointer aspect-square w-fit;
+
+    &:focus-visible {
+        @apply ring-2 ring-primary/50;
+    }
 }
 
 @keyframes skeleton-fade {
@@ -190,6 +220,7 @@ body {
 }
 
 .popover-content {
+    @apply bg-surface border border-border rounded-md outline-none;
     transform-origin: var(--kb-popover-content-transform-origin);
     animation: contentHide 100ms ease-in forwards;
     &[data-expanded] {

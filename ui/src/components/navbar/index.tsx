@@ -23,7 +23,7 @@ export const Navbar = () => (
         <div class="flex items-center h-full">
             <ConnectionButton />
             <NetworkWidget />
-            <button class="h-full aspect-square flex justify-center items-center hover:bg-surface-alt cursor-pointer group">
+            <button class="nav-icon-button group">
                 <FiUnlock class="group-hover:hidden" />
                 <FiLock class="hidden group-hover:block" />
             </button>

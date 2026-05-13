@@ -1,6 +1,7 @@
 import { Accessor, createMemo, For, Show } from "solid-js";
 
 import { useNetworkMetadataDiscovery } from "#/api/network";
+import { button } from "#/components/input/button";
 
 export const NetworkIconSuggestions = (props: {
     network_identity: Accessor<number | undefined>;
@@ -35,7 +36,7 @@ export const NetworkIconSuggestions = (props: {
                               classList={{
                                   "border-primary bg-surface-alt": props.selected_icon_url?.() === iconUrl,
                               }}
-                              class="border border-border rounded-md px-2 py-1.5 flex items-center gap-2 hover:bg-surface-alt cursor-pointer transition-colors"
+                              class={button({ variant: "outline" })}
                               onClick={() => props.onSelect(iconUrl)}
                             >
                                 <img src={iconUrl} alt={source} class="size-8 aspect-square rounded-full" />

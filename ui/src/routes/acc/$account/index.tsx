@@ -7,6 +7,7 @@ import { useAccount, useAccountBalances } from "#/api/account";
 import { AccountAssetSummary } from "#/components/account/asset/summary";
 import { AssetAmount } from "#/components/asset/amount";
 import { Modal } from "#/components/dialog";
+import { button } from "#/components/input/button";
 import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";
 
@@ -38,13 +39,13 @@ export const Route = createFileRoute("/acc/$account/")({
                   </Suspense>
                   <Show when={!balanceQuery.isLoading}>
                     <button
+                      class={button({ variant: "ghost", size: "small", square: true })}
                       classList={{
-                        "cursor-pointer": !balanceQuery.isRefetching,
                         "animate-spin": balanceQuery.isRefetching,
                       }}
                       onClick={() => balanceQuery.refetch()}
                     >
-                      <FaSolidRefresh class="w-3.5 h-3.5 text-primary-foreground" />
+                      <FaSolidRefresh class="w-3.5 h-3.5" />
                     </button>
                   </Show>
                 </div>
@@ -62,7 +63,7 @@ export const Route = createFileRoute("/acc/$account/")({
                 <div class="flex gap-2">
                   <Show when={account.data?.metadata.type !== "view"}>
                     <button
-                      class="bg-primary hover:bg-primary-hover text-primary-foreground w-full rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                      class={button({ variant: "primary", class: "w-full text-sm font-bold" })}
                     >
                       <FaSolidArrowRight class="-rotate-45" />
                       Send
@@ -72,7 +73,7 @@ export const Route = createFileRoute("/acc/$account/")({
                     {x => (
                       <ReceiveQR address={() => x().evm_address}>
                         <Modal.Trigger
-                          class="bg-secondary hover:bg-secondary-hover text-primary-foreground w-full rounded-md py-2 px-4 flex items-center gap-2 cursor-pointer justify-center text-sm font-bold"
+                          class={button({ variant: "secondary", class: "w-full text-sm font-bold" })}
                         >
                           <FaSolidArrowRight class="-rotate-225" />
                           Receive

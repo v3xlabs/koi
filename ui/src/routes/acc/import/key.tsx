@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/solid-router";
 
+import { button } from "#/components/input/button";
+
 export const Route = createFileRoute("/acc/import/key")({
   component: () => (
     <div class="p-4 mx-auto w-full max-w-lg">
@@ -14,7 +16,7 @@ export const Route = createFileRoute("/acc/import/key")({
           </label>
         </div>
         <div class="flex justify-end">
-          <button class="btn btn-primary" disabled>
+          <button class={button({ variant: "primary" })} disabled>
             Import
           </button>
         </div>

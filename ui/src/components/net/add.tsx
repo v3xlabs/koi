@@ -3,6 +3,7 @@ import { Tabs } from "@kobalte/core/tabs";
 import { createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
 import { Network, useCreateNetwork, useNetworkPresets, useNetworks } from "#/api/network";
+import { button } from "#/components/input/button";
 
 import { NetworkIconSuggestions } from "./discovery";
 
@@ -31,20 +32,20 @@ export const NetworkAdd = () => {
           gutter={8}
         >
             <Popover.Trigger>
-                <button class="btn btn-primary">
+                <button class={button({ variant: "primary" })}>
                     Add Network
                 </button>
             </Popover.Trigger>
             <Popover.Anchor />
             <Popover.Portal>
-                <Popover.Content class="bg-surface p-4 rounded-md border border-border outline-none w-full max-w-md popover-content z-10">
+                <Popover.Content class="popover-content p-4 w-full max-w-md z-10">
                     <div class="w-full">
                         <Tabs>
                             <Tabs.List>
-                                <Tabs.Trigger value="new" class="btn btn-secondary">
+                                <Tabs.Trigger value="new" class={button({ variant: "secondary" })}>
                                     New
                                 </Tabs.Trigger>
-                                <Tabs.Trigger value="presets" class="btn btn-secondary">
+                                <Tabs.Trigger value="presets" class={button({ variant: "secondary" })}>
                                     Presets
                                 </Tabs.Trigger>
                             </Tabs.List>
@@ -100,7 +101,7 @@ export const NetworkAdd = () => {
                                         </div>
                                     </label>
                                     <div class="flex justify-end">
-                                        <button class="btn btn-primary" disabled={!canCreate()} onClick={() => createNetwork.mutate({ data: { network_identity: networkIdentity()!, network_name: name(), network_icon_url: iconUrl() || undefined } })}>
+                                        <button class={button({ variant: "primary" })} disabled={!canCreate()} onClick={() => createNetwork.mutate({ data: { network_identity: networkIdentity()!, network_name: name(), network_icon_url: iconUrl() || undefined } })}>
                                             Create
                                         </button>
                                     </div>
@@ -115,7 +116,7 @@ export const NetworkAdd = () => {
                                         <For each={availablePresets()}>
                                             {preset => (
                                                 <li class="w-full">
-                                                    <button class="btn btn-secondary w-full flex items-center gap-2" onClick={() => createNetwork.mutate({ data: preset })}>
+                                                    <button class={button({ variant: "secondary", class: "w-full justify-start" })} onClick={() => createNetwork.mutate({ data: preset })}>
                                                         <Show when={preset.network_icon_url}>
                                                             {icon => <img src={icon()} alt={preset.network_name} class="size-4 aspect-square" />}
                                                         </Show>

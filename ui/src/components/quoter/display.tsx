@@ -1,11 +1,11 @@
 import { Select } from "@kobalte/core/select";
-import { FiCheck } from "solid-icons/fi";
+import { FiCheck, FiChevronDown } from "solid-icons/fi";
 import { Component, createMemo, Show, useContext } from "solid-js";
 
 import { appcontext } from "#/api";
 import { Asset, useAssets } from "#/api/asset";
 
-export const DisplayCurrencySelector: Component<{ showLabel?: boolean }> = ({ showLabel = false }) => {
+export const DisplayCurrencySelector: Component<{ showLabel?: boolean; }> = (props) => {
     const assets = useAssets();
     const fiatAssets = createMemo(() => assets.data?.assets?.filter(asset => asset.asset_identity.startsWith("fiat:")) ?? []);
     const { displayCurrency: [selected, setSelected] } = useContext(appcontext);
@@ -28,17 +28,19 @@ export const DisplayCurrencySelector: Component<{ showLabel?: boolean }> = ({ sh
                 )}
               onChange={x => x?.asset_identity && setSelected(x?.asset_identity)}
             >
-                <Show when={showLabel}>
-                    <Select.Label>Display Currency</Select.Label>
+                <Show when={props.showLabel}>
+                    <Select.Label class="mb-1 block text-sm text-muted">Display Currency</Select.Label>
                 </Show>
-                <Select.Trigger class="inline-flex items-center justify-between border border-border rounded-md px-2 py-1 outline-none cursor-pointer">
+                <Select.Trigger class="select__trigger min-w-32">
                     <Select.Value<Asset>>
                         {state => state.selectedOption()?.asset_identity}
                     </Select.Value>
-                    <Select.Icon />
+                    <Select.Icon class="text-muted">
+                        <FiChevronDown />
+                    </Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                    <Select.Content class="bg-background z-50">
+                    <Select.Content class="select__content min-w-32">
                         <Select.Arrow />
                         <Select.Listbox />
                     </Select.Content>

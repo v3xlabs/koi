@@ -1,6 +1,7 @@
 import { Component, createMemo, createSignal, Show } from "solid-js";
 
 import { NetworkEndpoint, useNetworkEndpointStatus, useUpdateNetworkEndpoint } from "#/api/network";
+import { button } from "#/components/input/button";
 import { narrow } from "#/utils/narrow";
 
 import { NetworkEndpointDelete } from "./delete";
@@ -47,13 +48,13 @@ export const NetworkEndpointItem: Component<{ network_identity: number; endpoint
                           class="input w-full"
                         />
                     </label>
-                    <label class="">
+                    <label class="flex items-center gap-2 pt-5">
                         <span class="text-sm">Enabled</span>
                         <input
                           type="checkbox"
                           checked={!disabled()}
                           onChange={e => setDisabled(!e.target.checked)}
-                          class="input w-full"
+                          class="checkbox"
                         />
                     </label>
                 </div>
@@ -87,7 +88,7 @@ export const NetworkEndpointItem: Component<{ network_identity: number; endpoint
             </Show>
             <div class="flex justify-end gap-2">
                 <button
-                  class="btn btn-primary"
+                  class={button({ variant: "primary" })}
                   disabled={!isDirty()}
                   onClick={() => updateNetworkEndpoint.mutate({
                         data: {

@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/solid-router";
 
+import { button } from "#/components/input/button";
+
 export const Route = createFileRoute("/acc/$account/settings/danger")({
   component: () => (
     <div class="px-4">
@@ -8,7 +10,7 @@ export const Route = createFileRoute("/acc/$account/settings/danger")({
           Danger
         </div>
         <div>
-          <button class="btn btn-danger" disabled>
+          <button class={button({ variant: "danger" })} disabled>
             Remove Account
           </button>
         </div>
