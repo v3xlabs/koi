@@ -1,6 +1,7 @@
 import { Link, useParams } from "@tanstack/solid-router";
 import { FaSolidAddressCard, FaSolidClock, FaSolidCopy, FaSolidExternalLink, FaSolidGear, FaSolidGridHorizontal, FaSolidQrcode, FaSolidWallet } from "solid-icons/fa";
 import { FiHome } from "solid-icons/fi";
+import { Toast, toaster } from "@kobalte/core/toast";
 import { For, Show } from "solid-js";
 
 import { useAccount } from "#/api/account";
@@ -56,9 +57,35 @@ export const Sidebar = () => {
                             </ReceiveQR>
                         )}
                     </Show>
-                    <button class={button({ variant: "secondary", square: true })}>
-                        <FaSolidCopy />
-                    </button>
+                    <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
+                        {acc => (
+                            <button
+                              class={button({ variant: "secondary", square: true })}
+                              onClick={async () => {
+                                  try {
+                                      await navigator.clipboard.writeText(acc().evm_address);
+                                      toaster.show(props => (
+                                          <Toast toastId={props.toastId} class="toast">
+                                              <div class="flex justify-between items-center">
+                                                  <div>Address copied</div>
+                                              </div>
+                                          </Toast>
+                                      ));
+                                  } catch {
+                                      toaster.show(props => (
+                                          <Toast toastId={props.toastId} class="toast">
+                                              <div class="flex justify-between items-center">
+                                                  <div>Failed to copy address</div>
+                                              </div>
+                                          </Toast>
+                                      ));
+                                  }
+                              }}
+                            >
+                                <FaSolidCopy />
+                            </button>
+                        )}
+                    </Show>
                     <AccountExternalLinkModal account_identity={account_identity} class={button({ variant: "secondary", square: true })}>
                         <FaSolidExternalLink />
                     </AccountExternalLinkModal>
