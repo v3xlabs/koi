@@ -3,12 +3,11 @@ import { FaSolidArrowRight, FaSolidRefresh } from "solid-icons/fa";
 import { Show, Suspense } from "solid-js";
 
 import { useAccount, useAccountBalances } from "#/api/account";
+import { AccountAssetSummary } from "#/components/account/asset/summary";
 import { AssetAmount } from "#/components/asset/amount";
-import { AccountAssetTable } from "#/components/asset/table";
 import { Modal } from "#/components/dialog";
 import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";
-import { AccountAssetSummary } from "#/components/account/asset/summary";
 
 export const Route = createFileRoute("/acc/$account/")({
   component: () => {

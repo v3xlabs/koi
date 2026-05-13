@@ -1,5 +1,6 @@
 import { Skeleton } from "@kobalte/core/skeleton";
 import { createQueries } from "@tanstack/solid-query";
+import { Link } from "@tanstack/solid-router";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
 import { FiChevronRight, FiChevronUp } from "solid-icons/fi";
 import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
@@ -9,7 +10,6 @@ import { Asset, useAsset } from "#/api/asset";
 import { formatUnits } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
-import { Link } from "@tanstack/solid-router";
 
 type Data = { asset: Asset; price: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; };
 const helper = createColumnHelper<Data>();
@@ -38,7 +38,7 @@ const columns = [
         ),
     }),
     helper.accessor("value", {
-        header: "Balance",
+        header: "Value",
         cell: ({ row }) => (
             <div class="space-y-1 items-end flex flex-col justify-end">
                 <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">

@@ -1,13 +1,14 @@
 import { Skeleton } from "@kobalte/core/skeleton";
 import { createQueries } from "@tanstack/solid-query";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
+import { FiArrowUpRight, FiChevronUp } from "solid-icons/fi";
 import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
 
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { formatUnits } from "#/utils/units";
 
-import { AssetIcon } from "./icon";
+import { AssetIcon } from "../../asset/icon";
 
 type Data = { asset: Asset; price: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; };
 const helper = createColumnHelper<Data>();
@@ -16,11 +17,16 @@ const columns = [
     helper.accessor("asset.asset_name", {
         header: "Name",
         cell: ({ row }) => (
-            <div class="flex items-center gap-2 py-3.5">
-                <AssetIcon asset={row.original.asset} />
-                <Skeleton visible={!row.original.asset.asset_name || row.original.asset.asset_name === "placeholder"} class="skeleton animate-spin">
-                    {row.original.asset.asset_name}
-                </Skeleton>
+            <div class="flex items-center gap-3 py-3.5">
+                <AssetIcon asset={row.original.asset} class="size-8" />
+                <div>
+                    <Skeleton visible={!row.original.asset.asset_name || row.original.asset.asset_name === "placeholder"} class="skeleton animate-spin">
+                        {row.original.asset.asset_name}
+                    </Skeleton>
+                    <Skeleton visible={row.original.asset.asset_symbol === undefined} class="skeleton text-muted text-sm">
+                        {row.original.asset.asset_symbol}
+                    </Skeleton>
+                </div>
             </div>
         ),
     }),
@@ -47,15 +53,32 @@ const columns = [
                     <span class="tabular-nums">
                         {row.original.balance === undefined ? "-" : formatUnits(row.original.balance, row.original.asset.asset_decimals, 2, "short")}
                     </span>
-                    {" "}
-                    {row.original.asset.asset_symbol}
                 </Skeleton>
-                <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton text-muted max-w-24 max-h-4 rounded-md">
+            </div>
+        ),
+        sortingFn: (rowA, rowB) => {
+            const valueA = rowA.original.balance ?? 0n;
+            const valueB = rowB.original.balance ?? 0n;
+
+            return valueA > valueB ? -1 : 0;
+        },
+    }),
+    helper.accessor("value", {
+        header: "Value",
+        cell: ({ row }) => (
+            <div class="space-y-1 items-end flex flex-col justify-end">
+                <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
                     $
                     <span class="tabular-nums">
                         {row.original.value === undefined ? "-" : formatUnits(row.original.value, 6, 2, "short")}
                     </span>
                 </Skeleton>
+                <div class="flex items-center gap-0.5">
+                    <FiChevronUp class="size-3" />
+                    <span class="text-muted text-xs">
+                        0.00%
+                    </span>
+                </div>
             </div>
         ),
         sortingFn: (rowA, rowB) => {
@@ -64,6 +87,16 @@ const columns = [
 
             return valueA > valueB ? -1 : 0;
         },
+    }),
+    helper.display({
+        header: "Actions",
+        cell: ({ row }) => (
+            <div class="flex items-center gap-2 py-3.5">
+                <button class="btn btn-secondary aspect-square flex items-center justify-center btn-small">
+                    <FiArrowUpRight class="size-3" />
+                </button>
+            </div>
+        ),
     }),
 ];
 
@@ -94,8 +127,6 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
         }];
     }));
 
-    const total = createMemo(() => data().reduce((acc, curr) => (curr.value ? acc + curr.value : acc), 0n));
-
     // eslint-disable-next-line no-restricted-syntax
     const [sorting, setSorting] = createSignal<SortingState>([{ id: "value", desc: false }]);
 
@@ -114,22 +145,19 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
 
     return (
         <div class="bg-surface px-6 py-2.5 rounded-md w-full">
-            <div class="flex justify-between items-center">
-                <div class="text-sm text-muted">
-                    Total: $
-                    <span class="tabular-nums">
-                        {formatUnits(total(), 6, 2, "short")}
-                    </span>
-                </div>
-            </div>
             <table class="w-full">
                 <thead class="border-b border-border">
                     <For each={table.getHeaderGroups()}>
                         {headerGroup => (
                             <tr>
                                 <For each={headerGroup.headers}>
-                                    {header => (
-                                        <th class="text-left pb-2.5 py-0.5">
+                                    {(header, index) => (
+                                        <th classList={{
+                                            "pb-2.5 py-0.5": true,
+                                            "text-left": index() === 0,
+                                            "text-right": index() !== 0,
+                                        }}
+                                        >
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -154,10 +182,17 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                                                 index() === 0
                                                 && <div class="group-hover:-inset-x-2.5 group-hover:opacity-100 opacity-0 transition-all -z-10 absolute inset-y-0 inset-x-0 bg-surface-alt rounded-md">            </div>
                                             }
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext(),
-                                            )}
+                                            <div
+                                              classList={{
+                                                    "text-left": index() === 0,
+                                                    "text-right flex justify-end": index() !== 0,
+                                                }}
+                                            >
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext(),
+                                                )}
+                                            </div>
                                         </td>
                                     )}
                                 </For>
