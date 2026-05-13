@@ -153,7 +153,12 @@ impl Account {
             .await
             .map_err(|e| KoiError::Internal("Failed to get block number".to_string()))?;
 
-        let assets = Asset::get_by_network_id(&state.database, network_identity).await?;
+        let assets = Account::get_joined_assets_by_network_id(
+            &state.database,
+            &self.account_identity,
+            network_identity,
+        )
+        .await?;
 
         let balances: Vec<(Asset, Result<U256, KoiError>)> = stream::iter(assets)
             .map(async move |asset| {

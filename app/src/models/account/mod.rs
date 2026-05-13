@@ -6,7 +6,7 @@ use crate::{
     error::KoiError,
     models::{
         account::{identity::AccountIdentity, metadata::WalletType},
-        asset::identity::AssetIdentity,
+        asset::{Asset, identity::AssetIdentity},
         network::identity::NetworkIdentity,
     },
     state::DB,
@@ -151,6 +151,21 @@ impl Account {
             "SELECT asset_identity FROM account_assets WHERE account_identity = ?",
         )
         .bind(account_identity)
+        .fetch_all(database)
+        .await
+        .map_err(KoiError::from)
+    }
+
+    pub async fn get_joined_assets_by_network_id(
+        database: &DB,
+        account_identity: &AccountIdentity,
+        network_identity: &NetworkIdentity,
+    ) -> Result<Vec<Asset>, KoiError> {
+        query_as::<_, Asset>(
+            "SELECT * FROM assets WHERE asset_identity IN (SELECT asset_identity FROM account_assets WHERE account_identity = ? AND asset_identity LIKE ?)",
+        )
+        .bind(account_identity)
+        .bind(format!("erc20:{}:%%", network_identity))
         .fetch_all(database)
         .await
         .map_err(KoiError::from)

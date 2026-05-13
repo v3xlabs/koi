@@ -9,7 +9,11 @@ use crate::{
 
 use super::ApiTags;
 use poem::{Result, web::Data};
-use poem_openapi::{Object, OpenApi, param::{Path, Query}, payload::Json};
+use poem_openapi::{
+    Object, OpenApi,
+    param::{Path, Query},
+    payload::Json,
+};
 use serde::{Deserialize, Serialize};
 
 pub struct AccountApi;
@@ -218,6 +222,8 @@ impl AccountApi {
 
         let account = Account::get_by_id(&state.database, account_identity.0).await?;
 
-        Ok(Json(account.get_balances(&state, &display_currency.0).await?))
+        Ok(Json(
+            account.get_balances(&state, &display_currency.0).await?,
+        ))
     }
 }
