@@ -36,7 +36,12 @@ impl IntoResponse for KoiError {
         Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
             .content_type(ContentType::json().to_string())
-            .body(Json(ErrorResponse { error: self.to_string() }).to_json_string())
+            .body(
+                Json(ErrorResponse {
+                    error: self.to_string(),
+                })
+                .to_json_string(),
+            )
     }
 }
 

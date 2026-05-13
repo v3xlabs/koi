@@ -8,6 +8,7 @@ import { AccountAssetTable } from "#/components/asset/table";
 import { Modal } from "#/components/dialog";
 import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";
+import { AccountAssetSummary } from "#/components/account/asset/summary";
 
 export const Route = createFileRoute("/acc/$account/")({
   component: () => {
@@ -82,7 +83,7 @@ export const Route = createFileRoute("/acc/$account/")({
               </div>
             </div>
             <div class="w-full">
-              <AccountAssetTable account_identity={account_identity} />
+              <AccountAssetSummary account_identity={account_identity} />
             </div>
           </div>
           <div class="bg-surface p-4 xl:col-span-2 rounded-md max-h-128">
