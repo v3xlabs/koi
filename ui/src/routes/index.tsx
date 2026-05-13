@@ -12,9 +12,9 @@ export const Route = createFileRoute("/")({
 
     return (
       <div class="w-full p-4">
-        <div class="mx-auto w-full max-w-lg space-y-4 mt-4">
+        <div class="mx-auto w-full max-w-2xl space-y-6 mt-8">
           <div class="flex items-end justify-between">
-            <div class="text-xl">
+            <div class="text-3xl font-bold">
               Accounts
             </div>
             <div>
@@ -24,12 +24,12 @@ export const Route = createFileRoute("/")({
               </Link>
             </div>
           </div>
-          <div class="bg-surface py-4 px-2.5 rounded-md w-full">
-            <div class="space-y-2">
-              <Suspense fallback={<div>Loading...</div>}>
+          <div class="bg-surface py-5 px-4 rounded-xl w-full">
+            <div class="space-y-1">
+              <Suspense fallback={<div class="py-8 text-center text-muted">Loading...</div>}>
                 <For each={accountsQuery.data?.accounts}>
                   {account => (
-                    <Link to="/acc/$account" params={{ account: account.account_identity.toString() }} class="w-full px-4 hover:bg-surface-alt rounded-md py-1 text-sm font-bold flex">
+                    <Link to="/acc/$account" params={{ account: account.account_identity.toString() }} class="w-full px-2 hover:bg-surface-alt rounded-lg py-2 text-sm font-bold flex items-center gap-2">
                       <AccountPreview account_identity={account.account_identity} />
                       <button class={button({ variant: "ghost", size: "small", square: true })}>
                         <FiMoreVertical />

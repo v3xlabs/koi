@@ -35,19 +35,19 @@ export const AccountPreview: Component<AccountPreviewProperties> = (props) => {
         <div class="w-full">
             <Show when={accountQuery.data}>
                 {acc => (
-                    <div class="flex items-center gap-2 w-full">
+                    <div class="flex items-center gap-3 w-full">
                         <Show when={narrow(() => acc().metadata, x => "evm_address" in x)}>
                             {
-                                x => <AccountIcon address={() => x().evm_address} class="w-8 h-8" />
+                                x => <AccountIcon address={() => x().evm_address} class="w-10 h-10 rounded-lg" />
                             }
                         </Show>
-                        <div class="w-full flex justify-between items-center">
-                            <div class="">
+                        <div class="w-full flex justify-between items-center min-w-0">
+                            <div class="min-w-0">
                                 <div class="flex items-center gap-2">
-                                    <AccountTypeIcon type={() => acc().metadata.type} />
-                                    <div>
+                                    <div class="font-semibold truncate">
                                         {acc().name}
                                     </div>
+                                    <AccountTypeIcon type={() => acc().metadata.type} />
                                 </div>
                                 <div class="text-muted text-sm">
                                     <Show when={narrow(() => acc().metadata, x => "evm_address" in x)}>
@@ -57,29 +57,21 @@ export const AccountPreview: Component<AccountPreviewProperties> = (props) => {
                                     </Show>
                                 </div>
                             </div>
-                            <div>
-
-                                <div>
+                            <div class="text-right flex flex-col items-end gap-0.5 shrink-0">
+                                <div class="font-semibold">
                                     <Suspense>
                                         <InlineBalance account_identity={account_identity} />
                                     </Suspense>
                                 </div>
-                                <div class="text-muted text-sm">
-                                    <div class="flex items-center gap-1.5 text-muted">
-                                    </div>
-
-                                    <Show when={acc().networks.length > 0}>
-                                        <ul class="flex items-center justify-end gap-1">
-                                            <For each={acc().networks}>
-                                                {network => (
-                                                    <div class="text-muted text-sm">
-                                                        <NetworkIcon network_identity={network} />
-                                                    </div>
-                                                )}
-                                            </For>
-                                        </ul>
-                                    </Show>
-                                </div>
+                                <Show when={acc().networks.length > 0}>
+                                    <ul class="flex items-center gap-1">
+                                        <For each={acc().networks}>
+                                            {network => (
+                                                <NetworkIcon network_identity={network} />
+                                            )}
+                                        </For>
+                                    </ul>
+                                </Show>
                             </div>
                         </div>
                     </div>
