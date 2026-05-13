@@ -1,3 +1,10 @@
+default:
+    just --list
+
+install:
+    cd ui && pnpm install
+    cd app && cargo fmt
+
 ui:
     cd ui && pnpm dev
 openapi:
@@ -9,3 +16,6 @@ lint:
     cd ui && pnpm lint
 bacon:
     cd app && bacon
+
+[parallel]
+both: ui dev
