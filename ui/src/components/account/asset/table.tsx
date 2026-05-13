@@ -3,7 +3,7 @@ import { createQueries } from "@tanstack/solid-query";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
 import { FaSolidRefresh } from "solid-icons/fa";
 import { FiArrowUpRight, FiChevronUp } from "solid-icons/fi";
-import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
+import { Component, createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
@@ -56,14 +56,14 @@ const columns = [
     helper.accessor("value", {
         header: "Balance",
         cell: ({ row }) => (
-                <div class="space-y-1">
-                    <Skeleton visible={row.original.balance === undefined} class="skeleton">
-                        <span class="tabular-nums" title={row.original.balance === undefined ? undefined : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals })}>
-                            {row.original.balance === undefined ? "-" : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, notation: "compact" })}
-                        </span>
-                    </Skeleton>
-                </div>
-            ),
+            <div class="space-y-1">
+                <Skeleton visible={row.original.balance === undefined} class="skeleton">
+                    <span class="tabular-nums" title={row.original.balance === undefined ? undefined : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals })}>
+                        {row.original.balance === undefined ? "-" : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, notation: "compact" })}
+                    </span>
+                </Skeleton>
+            </div>
+        ),
         sortingFn: (rowA, rowB) => {
             const valueA = rowA.original.balance ?? 0n;
             const valueB = rowB.original.balance ?? 0n;
@@ -180,17 +180,26 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                     </div>
                 </div>
                 <div class="flex flex-col items-end justify-center gap-2">
-                    <div class="flex items-center gap-2 text-sm">
-                        <span>
-                            Updated
-                            {" "}
-                            {accountBalancesQuery.data?.updated_at}
-                            {" "}
-                            ago
-                        </span>
-                        <button class={button({ variant: "secondary", size: "small", square: true })}>
-                            <FaSolidRefresh class="size-3" />
-                        </button>
+                    <div class="text-muted text-sm flex items-center gap-2">
+                        <Suspense>
+                            <span>
+                                Updated
+                                {" "}
+                                {accountBalancesQuery.data?.updated_at ? Date.parse(accountBalancesQuery.data.updated_at).toLocaleString() : "-"}
+                            </span>
+                        </Suspense>
+                        <Show when={!accountBalancesQuery.isLoading}>
+                            <button
+                              class={button({ variant: "ghost", size: "small", square: true })}
+                              onClick={() => accountBalancesQuery.refetch()}
+                            >
+                                <FaSolidRefresh classList={{
+                                    "size-3.5": true,
+                                    "animate-spin": accountBalancesQuery.isRefetching,
+                                }}
+                                />
+                            </button>
+                        </Show>
                     </div>
                     <div class="flex items-center gap-2 justify-end">
                         <button class={button({ variant: "outline", class: "text-sm" })}>

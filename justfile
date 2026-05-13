@@ -13,7 +13,7 @@ dev:
     cd app && cargo run
 lint:
     cd app && cargo fmt && cargo clippy
-    cd ui && pnpm lint
+    cd ui && pnpm lint --fix
 bacon:
     cd app && bacon
 

@@ -40,12 +40,13 @@ export const Route = createFileRoute("/acc/$account/")({
                   <Show when={!balanceQuery.isLoading}>
                     <button
                       class={button({ variant: "ghost", size: "small", square: true })}
-                      classList={{
-                        "animate-spin": balanceQuery.isRefetching,
-                      }}
                       onClick={() => balanceQuery.refetch()}
                     >
-                      <FaSolidRefresh class="w-3.5 h-3.5" />
+                      <FaSolidRefresh classList={{
+                        "size-3.5": true,
+                        "animate-spin": balanceQuery.isRefetching,
+                      }}
+                      />
                     </button>
                   </Show>
                 </div>

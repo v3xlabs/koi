@@ -26,7 +26,7 @@ type ApiQueryResult<TOptions, TData, QueryKeyFn> = {
     ensure: (options: TOptions, extraOptions?: ApiQueryOptions<TData>) => Promise<TData>;
 };
 
-type ApiSuccessData<TPath extends keyof paths, TMethod extends PathMethods<paths, TPath>> = NonNullable<paths[TPath][TMethod]> extends { responses: { 200: { content: infer TContent } } }
+type ApiSuccessData<TPath extends keyof paths, TMethod extends PathMethods<paths, TPath>> = NonNullable<paths[TPath][TMethod]> extends { responses: { 200: { content: infer TContent; }; }; }
     ? TContent[keyof TContent]
     : never;
 
