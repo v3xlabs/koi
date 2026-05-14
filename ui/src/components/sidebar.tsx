@@ -9,6 +9,7 @@ import { truncateAddress } from "#/utils/address";
 import { narrow } from "#/utils/narrow";
 import { ReceiveQR } from "#/views/receive/qr";
 
+import { AccountBalance } from "./account/balance";
 import { AccountIcon } from "./account/icon";
 import { AccountExternalLinkModal } from "./account/link";
 import { AccountTypeIcon } from "./account/type";
@@ -45,6 +46,9 @@ export const Sidebar = () => {
                                 </div>
                             )}
                         </Show>
+                        <div class="text-sm leading-none">
+                        <AccountBalance account_identity={account_identity} />
+                        </div>
                     </div>
                 </div>
                 <div class="flex gap-2 px-1">
