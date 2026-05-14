@@ -39,7 +39,7 @@ impl Asset {
                         "Account is not on the network".to_string(),
                     ))
                 } else {
-                    Asset::fetch_erc20_balance(state, asset_identity, address.clone()).await
+                    Asset::fetch_erc20_balance(state, asset_identity, address).await
                 }
             }
             AssetIdentity::Fiat(_code) => Err(KoiError::Internal(

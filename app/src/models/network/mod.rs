@@ -2,11 +2,7 @@ use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as};
 
-use crate::{
-    error::KoiError,
-    models::network::identity::NetworkIdentity,
-    state::{AppState, DB},
-};
+use crate::{error::KoiError, models::network::identity::NetworkIdentity, state::DB};
 
 pub mod endpoint;
 pub mod identity;
@@ -64,7 +60,7 @@ impl Network {
         network_identity: &NetworkIdentity,
         network: NetworkUpdate,
     ) -> Result<Network, KoiError> {
-        let original = Self::get_by_id(database, &network_identity).await?;
+        let original = Self::get_by_id(database, network_identity).await?;
 
         let network_name = network.network_name.unwrap_or(original.network_name);
         let network_icon_url = match network.network_icon_url {

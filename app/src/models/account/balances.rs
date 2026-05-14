@@ -151,7 +151,7 @@ impl Account {
         let block = rpc
             .get_block_number()
             .await
-            .map_err(|e| KoiError::Internal("Failed to get block number".to_string()))?;
+            .map_err(|_e| KoiError::Internal("Failed to get block number".to_string()))?;
 
         let assets = Account::get_joined_assets_by_network_id(
             &state.database,

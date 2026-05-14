@@ -9,13 +9,8 @@ use crate::{
 
 use super::ApiTags;
 use alloy::primitives::U256;
-use eth_prices::token::{Token, TokenIdentifier};
 use poem::{Result, web::Data};
-use poem_openapi::{
-    Object, OpenApi,
-    param::{Path, Query},
-    payload::Json,
-};
+use poem_openapi::{Object, OpenApi, param::Path, payload::Json};
 use serde::{Deserialize, Serialize};
 
 pub struct AssetApi;

@@ -18,16 +18,17 @@ use crate::{
 };
 
 use eth_prices::{
+    asset::AssetIdentifier,
+    network::Network as EthPricesNetwork,
     quoter::AnyQuoter,
-    router::{Route, graph::QuoterGraph},
-    token::TokenIdentifier,
+    router::{Router, route::Route},
 };
 
 pub struct QuoterManager {
     pub quoters: Mutex<HashMap<String, Quoter>>,
     pub routes:
         Mutex<HashMap<NetworkIdentity, HashMap<AssetIdentity, HashMap<AssetIdentity, Route>>>>,
-    pub graph: Mutex<HashMap<NetworkIdentity, QuoterGraph>>,
+    pub graph: Mutex<HashMap<NetworkIdentity, Router>>,
 }
 
 pub struct QuoteInput {
@@ -88,12 +89,12 @@ impl QuoterManager {
 
         let quoters: Vec<AnyQuoter> = quoters.iter().map(|x| x.into()).collect();
 
-        let graph = QuoterGraph::from_iter(quoters);
+        let graph = Router::from_iter(quoters);
 
         info!("Graph {}", graph.to_graphviz());
 
         let base_asset: AssetIdentity = AssetIdentity::Fiat("usd".to_string());
-        let base_token: TokenIdentifier = base_asset.clone().into();
+        let base_token: AssetIdentifier = base_asset.clone().into();
 
         let assets = Asset::get_by_network_id(database, network_identity).await?;
 
@@ -102,7 +103,7 @@ impl QuoterManager {
         let mut map: HashMap<AssetIdentity, HashMap<AssetIdentity, Route>> = HashMap::new();
 
         for asset in assets {
-            let token: TokenIdentifier = asset.asset_identity.clone().into();
+            let token: AssetIdentifier = asset.asset_identity.clone().into();
             let route = graph.compute(&token, &base_token);
             match route {
                 Ok(route) => {
@@ -159,8 +160,8 @@ impl QuoterManager {
             .cloned()
             .ok_or(KoiError::Internal("Graph not found".to_string()))?;
 
-        let token_in: TokenIdentifier = asset_in.clone().into();
-        let token_out: TokenIdentifier = asset_out.clone().into();
+        let token_in: AssetIdentifier = asset_in.clone().into();
+        let token_out: AssetIdentifier = asset_out.clone().into();
         let route = graph.compute(&token_in, &token_out).map_err(|e| {
             KoiError::Internal(format!(
                 "Error computing route from asset {} to {}: {}",
@@ -206,8 +207,10 @@ impl QuoterManager {
             .await
             .map_err(|_| KoiError::Internal("Failed to get block number".to_string()))?;
 
+        let network = EthPricesNetwork::EVM(network_identity.0, block, rpc);
+
         route
-            .quote(&rpc, block, amount_in)
+            .quote(&network, amount_in)
             .await
             .map_err(KoiError::from)
     }
@@ -224,9 +227,7 @@ impl QuoterManager {
             .unwrap_network()
             .ok_or(KoiError::Internal("Input asset has no network".to_string()))?;
         let route = self.route(&network_identity, input, output)?;
-        route
-            .quote(rpc, block, amount)
-            .await
-            .map_err(KoiError::from)
+        let network = EthPricesNetwork::EVM(network_identity.0, block, rpc.clone());
+        route.quote(&network, amount).await.map_err(KoiError::from)
     }
 }

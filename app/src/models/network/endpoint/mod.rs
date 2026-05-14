@@ -1,11 +1,11 @@
 use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
-use sqlx::{SqlitePool, prelude::FromRow, query, query_as, query_scalar};
+use sqlx::{prelude::FromRow, query, query_as, query_scalar};
 
 use crate::{
     error::KoiError,
     models::network::{Network, identity::NetworkIdentity},
-    state::{AppState, DB},
+    state::DB,
 };
 
 pub mod provider;

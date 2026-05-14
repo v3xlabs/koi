@@ -13,7 +13,6 @@ use sqlx::{
     query_as,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
 };
-use tracing::warn;
 
 use crate::{
     error::KoiError,
