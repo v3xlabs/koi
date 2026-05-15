@@ -9,7 +9,7 @@ const MONTH = 30 * 24 * 60 * 60 * SECOND;
 
 const toDate = (v: TimeValue) => (v == null || v === "" ? null : new Date(v));
 
-export const FormattedTime: Component<{ value: TimeValue; class?: string; }> = (props) => {
+export const FormattedTime: Component<{ value: TimeValue; class?: string; prefix?: string; }> = (props) => {
   const [now, setNow] = createSignal(Date.now());
   const interval = setInterval(() => setNow(Date.now()), SECOND);
 
@@ -34,6 +34,11 @@ export const FormattedTime: Component<{ value: TimeValue; class?: string; }> = (
               dateTime={date().toISOString()}
               tabIndex={0}
             >
+              {props.prefix && (
+                <span>
+                  {props.prefix}
+                </span>
+              )}
               {display()}
             </Tooltip.Trigger>
             <Tooltip.Portal>
@@ -41,8 +46,8 @@ export const FormattedTime: Component<{ value: TimeValue; class?: string; }> = (
                 <Tooltip.Arrow />
                 {isRelative() && <p>{absolute()}</p>}
                 <p>
-Unix:
-{Math.floor(date().getTime() / SECOND)}
+                  Unix:
+                  {Math.floor(date().getTime() / SECOND)}
                 </p>
               </Tooltip.Content>
             </Tooltip.Portal>

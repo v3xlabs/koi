@@ -35,8 +35,7 @@ export const Route = createFileRoute("/acc/$account/")({
                     <Show when={balanceQuery.data} fallback={<span>Loading...</span>}>
                       {data => (
                         <span class="flex items-center gap-1">
-                          <span>Updated</span>
-                          <FormattedTime value={data().updated_at} />
+                          <FormattedTime value={data().updated_at} prefix="Updated " />
                         </span>
                       )}
                     </Show>

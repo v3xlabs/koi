@@ -11,6 +11,7 @@ import { useDisplayCurrency } from "#/api/context";
 import { AssetAmount } from "#/components/asset/amount";
 import { button } from "#/components/input/button";
 import { DisplayCurrencySelector } from "#/components/quoter/display";
+import { FormattedTime } from "#/components/time";
 import { formatAmount, percentNumber } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
@@ -188,24 +189,22 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                     <div class="text-sm text-muted font-bold">Total assets value</div>
                     <div class="text-2xl">
                         <AssetAmount
-                            amount={() => totalValue()}
-                            asset={displayCurrency}
+                          amount={() => totalValue()}
+                          asset={displayCurrency}
                         />
                     </div>
                 </div>
                 <div class="flex flex-col items-end justify-center gap-2">
                     <div class="text-muted text-sm flex items-center gap-2">
                         <Suspense>
-                            <span>
-                                Updated
-                                {" "}
-                                {accountBalancesQuery.data?.updated_at ? Date.parse(accountBalancesQuery.data.updated_at).toLocaleString() : "-"}
+                            <span class="">
+                                <FormattedTime value={accountBalancesQuery.data?.updated_at} prefix="Updated " />
                             </span>
                         </Suspense>
                         <Show when={!accountBalancesQuery.isLoading}>
                             <button
-                                class={button({ variant: "ghost", size: "small", square: true })}
-                                onClick={() => accountBalancesQuery.refetch()}
+                              class={button({ variant: "ghost", size: "small", square: true })}
+                              onClick={() => accountBalancesQuery.refetch()}
                             >
                                 <FaSolidRefresh classList={{
                                     "size-3.5": true,
@@ -262,7 +261,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                                                     && <div class="group-hover:-inset-x-2.5 group-hover:opacity-100 opacity-0 transition-all -z-10 absolute inset-y-0 inset-x-0 bg-surface-alt rounded-md">            </div>
                                                 }
                                                 <div
-                                                    classList={{
+                                                  classList={{
                                                         "text-left": index() === 0,
                                                         "text-right flex justify-end": index() !== 0,
                                                     }}
