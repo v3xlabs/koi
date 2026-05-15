@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use alloy::primitives::Address;
+use chrono::Utc;
 use eth_prices::quoter::{
     AnyQuoter, erc4626::ERC4626Quoter, fixed::FixedQuoter, uniswap_v2::UniswapV2Quoter,
     uniswap_v3::UniswapV3Quoter,
@@ -20,10 +21,12 @@ use crate::{
     state::DB,
 };
 
+pub mod discover;
 pub mod man;
 
 #[derive(Debug, Serialize, Deserialize, Union)]
 #[serde(tag = "type", rename_all = "snake_case")]
+#[oai(discriminator_name = "type", rename_all = "snake_case")]
 pub enum QuoterConfig {
     Fixed(FixedQuoterConfig),
     Erc4626(Erc4626QuoterConfig),
@@ -87,6 +90,26 @@ pub struct Quoter {
     pub watch: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct QuoterCreate {
+    pub quoter_name: String,
+    pub token_a: AssetIdentity,
+    pub token_b: AssetIdentity,
+    pub config: QuoterConfig,
+    pub enabled: bool,
+    pub watch: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Object)]
+pub struct QuoterUpdate {
+    pub quoter_name: Option<String>,
+    pub token_a: Option<AssetIdentity>,
+    pub token_b: Option<AssetIdentity>,
+    pub config: Option<QuoterConfig>,
+    pub enabled: Option<bool>,
+    pub watch: Option<bool>,
+}
+
 impl Quoter {
     pub async fn all(database: &DB) -> Result<Vec<Quoter>, KoiError> {
         query_as::<_, Quoter>("SELECT * FROM quoters")
@@ -114,6 +137,39 @@ impl Quoter {
 
     pub async fn get_by_id(database: &DB, quoter_identity: &str) -> Result<Quoter, KoiError> {
         query_as::<_, Quoter>("SELECT * FROM quoters WHERE quoter_identity = ?")
+            .bind(quoter_identity)
+            .fetch_one(database)
+            .await
+            .map_err(KoiError::from)
+    }
+
+    pub async fn insert(database: &DB, quoter: QuoterCreate) -> Result<Quoter, KoiError> {
+        let quoter_identity = Utc::now().timestamp_millis().to_string();
+        query_as::<_, Quoter>("INSERT INTO quoters (quoter_identity, quoter_name, token_a, token_b, config, enabled, watch) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *")
+            .bind(quoter_identity)
+            .bind(quoter.quoter_name)
+            .bind(quoter.token_a)
+            .bind(quoter.token_b)
+            .bind(quoter.config)
+            .bind(quoter.enabled)
+            .bind(quoter.watch)
+            .fetch_one(database)
+            .await
+            .map_err(KoiError::from)
+    }
+
+    pub async fn update(
+        database: &DB,
+        quoter_identity: &str,
+        quoter: QuoterUpdate,
+    ) -> Result<Quoter, KoiError> {
+        query_as::<_, Quoter>("UPDATE quoters SET quoter_name = ?, token_a = ?, token_b = ?, config = ?, enabled = ?, watch = ? WHERE quoter_identity = ? RETURNING *")
+            .bind(quoter.quoter_name)
+            .bind(quoter.token_a)
+            .bind(quoter.token_b)
+            .bind(quoter.config)
+            .bind(quoter.enabled)
+            .bind(quoter.watch)
             .bind(quoter_identity)
             .fetch_one(database)
             .await

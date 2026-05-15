@@ -13,26 +13,17 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
     const assetQuery = useAsset(() => ({ path: { asset_identity: props.asset() } }));
     const assetQueryData = createMemo(() => assetQuery.data);
 
-    const precision = props.decimals ?? 2;
-    const scale = createMemo(() => {
-        const asset = props.asset();
+    const parts = createMemo(() => formatAmountParts(props.amount(), {
+        decimals: assetQueryData()?.asset_decimals ?? 2,
+        precision: props.decimals ?? 2,
+        currency: props.asset().startsWith("fiat:") ? props.asset() : undefined,
+    }),
+    );
 
-        if (asset.startsWith("fiat:")) {
-            return 6;
-        }
+    const suffix = createMemo(() => {
+        if (props.asset().startsWith("fiat:")) return undefined;
 
-        return assetQueryData()?.asset_decimals;
-    });
-    const parts = createMemo(() => {
-        const decimals = scale();
-
-        if (decimals === undefined) return undefined;
-
-        return formatAmountParts(props.amount(), {
-            decimals,
-            precision,
-            currency: props.asset().startsWith("fiat:") ? props.asset() : undefined,
-        });
+        return assetQueryData()?.asset_symbol;
     });
 
     return (
@@ -40,10 +31,10 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
             <Show
               when={parts()}
               fallback={(
-                <span class="text-muted">
+                    <span class="text-muted">
                         ...
-                </span>
-              )}
+                    </span>
+                )}
             >
                 {formatted => (
                     <>
@@ -63,6 +54,13 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
                             </span>
                         )}
                     </>
+                )}
+            </Show>
+            <Show when={suffix()}>
+                {suffix => (
+                    <span class="text-foreground">
+                        {" " + suffix()}
+                    </span>
                 )}
             </Show>
         </div>

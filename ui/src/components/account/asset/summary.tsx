@@ -9,11 +9,11 @@ import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency } from "#/api/context";
 import { button } from "#/components/input/button";
-import { formatAmount } from "#/utils/units";
+import { formatAmount, percentNumber } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
 
-type Data = { asset: Asset; price: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; };
+type Data = { asset: Asset; price: bigint | undefined; price_24h: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; };
 const helper = createColumnHelper<Data>();
 
 const columns = [
@@ -44,21 +44,34 @@ const columns = [
         cell: ({ row }) => {
             const { displayCurrency } = useDisplayCurrency();
 
+            const percentageChange = row.original.price && row.original.price_24h ? percentNumber(row.original.price - row.original.price_24h, row.original.price_24h) : undefined;
+
             return (
-            <div class="space-y-1 items-end flex flex-col justify-end">
-                <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
-                    <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatAmount(row.original.value, { precision: 2, decimals: 6, currency: displayCurrency() })}>
-                        {row.original.value === undefined ? "-" : formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() })}
-                    </span>
-                </Skeleton>
-                <div class="flex items-center gap-0.5">
-                    <FiChevronUp class="size-3" />
-                    <span class="text-muted text-xs">
-                        0.00%
-                    </span>
+                <div class="space-y-1 items-end flex flex-col justify-end">
+                    <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
+                        <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatAmount(row.original.value, { precision: 2, decimals: 6, currency: displayCurrency() })}>
+                            {row.original.value === undefined ? "-" : formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() })}
+                        </span>
+                    </Skeleton>
+                    <div class="">
+                        <span classList={{
+                            "text-xs flex items-center gap-0.5": true,
+                            "text-muted": percentageChange == 0,
+                            "text-[#008000]": !!(percentageChange && percentageChange > 0),
+                            "text-[#FF0000]": !!(percentageChange && percentageChange < 0),
+                        }}
+                        >
+                            <FiChevronUp classList={{
+                                "size-3": true,
+                                "rotate-180": !!(percentageChange && percentageChange < 0),
+                            }}
+                            />
+                            {percentageChange}
+                            %
+                        </span>
+                    </div>
                 </div>
-            </div>
-        );
+            );
         },
         sortingFn: (rowA, rowB) => {
             const valueA = rowA.original.value ?? 0n;
@@ -93,6 +106,7 @@ const AccountAssetSummaryInner: Component<{ account_identity: number; }> = ({ ac
             balance: k && k.balance ? BigInt(k.balance) : undefined,
             // value,
             price: k && k.asset_quote ? BigInt(k.asset_quote) : undefined,
+            price_24h: k && k.asset_24h_quote ? BigInt(k.asset_24h_quote) : undefined,
             value: k && k.balance_quote ? BigInt(k.balance_quote) : undefined,
         }];
     })

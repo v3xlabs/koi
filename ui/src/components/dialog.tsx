@@ -34,13 +34,16 @@ const Overlay: typeof Dialog.Overlay = props => (
 );
 
 const Title: typeof Dialog.Title = props => (
-  <Dialog.Title
+  <div
     classList={{
       [props.class]: true,
       "w-full border-b border-border pb-4 px-4 pt-4": true,
     }}
-    {...props}
-  />
+  >
+    <Dialog.Title
+      {...props}
+    />
+  </div>
 );
 
 const Content: typeof Dialog.Content = props => (

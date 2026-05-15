@@ -1091,7 +1091,33 @@ export type paths = {
             };
         };
         put?: never;
-        post?: never;
+        /**
+         * Create a quoter
+         * @description POST /api/quoter
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["QuoterCreate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Quoter"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1130,8 +1156,78 @@ export type paths = {
                 };
             };
         };
-        put?: never;
+        /**
+         * Update a quoter
+         * @description PUT /api/quoter/:quoter_identity
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    quoter_identity: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["QuoterUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["Quoter"];
+                    };
+                };
+            };
+        };
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quoter/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Discover Quoter
+         * @description POST /api/quoter/discover
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["QuoterDiscovery"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["QuoterDiscoveryResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1332,8 +1428,13 @@ export type components = {
         AccountBalance: {
             asset_identity: string;
             balance?: string;
+            balance_error?: string;
             asset_quote?: string;
+            asset_quote_error?: string;
+            asset_24h_quote?: string;
+            asset_24h_quote_error?: string;
             balance_quote?: string;
+            balance_quote_error?: string;
             /** Format: date-time */
             updated_at: string;
         };
@@ -1469,7 +1570,64 @@ export type components = {
             enabled: boolean;
             watch: boolean;
         };
-        QuoterConfig: components["schemas"]["FixedQuoterConfig"] | components["schemas"]["Erc4626QuoterConfig"] | components["schemas"]["UniswapV2QuoterConfig"] | components["schemas"]["UniswapV3QuoterConfig"];
+        QuoterConfig: components["schemas"]["QuoterConfig_Fixed"] | components["schemas"]["QuoterConfig_Erc4626"] | components["schemas"]["QuoterConfig_UniswapV2"] | components["schemas"]["QuoterConfig_UniswapV3"];
+        QuoterConfig_Erc4626: {
+            /**
+             * @example erc4626
+             * @enum {string}
+             */
+            type: "erc4626";
+        } & components["schemas"]["Erc4626QuoterConfig"];
+        QuoterConfig_Fixed: {
+            /**
+             * @example fixed
+             * @enum {string}
+             */
+            type: "fixed";
+        } & components["schemas"]["FixedQuoterConfig"];
+        QuoterConfig_UniswapV2: {
+            /**
+             * @example uniswap_v2
+             * @enum {string}
+             */
+            type: "uniswap_v2";
+        } & components["schemas"]["UniswapV2QuoterConfig"];
+        QuoterConfig_UniswapV3: {
+            /**
+             * @example uniswap_v3
+             * @enum {string}
+             */
+            type: "uniswap_v3";
+        } & components["schemas"]["UniswapV3QuoterConfig"];
+        /** QuoterCreate */
+        QuoterCreate: {
+            quoter_name: string;
+            token_a: string;
+            token_b: string;
+            config: components["schemas"]["QuoterConfig"];
+            enabled: boolean;
+            watch: boolean;
+        };
+        /** QuoterDiscovery */
+        QuoterDiscovery: {
+            token_a: string;
+            token_b?: string;
+        };
+        /** QuoterDiscoveryResponse */
+        QuoterDiscoveryResponse: {
+            erc4626?: string;
+            uniswap_v2?: components["schemas"]["UniswapV2Pair"];
+            uniswap_v3?: components["schemas"]["UniswapV3Pool"][];
+        };
+        /** QuoterUpdate */
+        QuoterUpdate: {
+            quoter_name?: string;
+            token_a?: string;
+            token_b?: string;
+            config?: components["schemas"]["QuoterConfig"];
+            enabled?: boolean;
+            watch?: boolean;
+        };
         /** QuotersResponse */
         QuotersResponse: {
             quoters: components["schemas"]["Quoter"][];
@@ -1519,9 +1677,23 @@ export type components = {
         SafeWallet: {
             evm_address: string;
         };
+        /** UniswapV2Pair */
+        UniswapV2Pair: {
+            pair_address: string;
+            reserve_0?: string;
+            reserve_1?: string;
+        };
         /** UniswapV2QuoterConfig */
         UniswapV2QuoterConfig: {
             pair_address: string;
+        };
+        /** UniswapV3Pool */
+        UniswapV3Pool: {
+            pool_address: string;
+            /** Format: uint32 */
+            fee: number;
+            reserve_0?: string;
+            reserve_1?: string;
         };
         /** UniswapV3QuoterConfig */
         UniswapV3QuoterConfig: {

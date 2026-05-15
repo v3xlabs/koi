@@ -168,7 +168,7 @@ impl AssetIdentity {
 impl From<AssetIdentity> for AssetIdentifier {
     fn from(val: AssetIdentity) -> Self {
         match val {
-            AssetIdentity::ERC20(_network, address) => AssetIdentifier::ERC20 { address: address },
+            AssetIdentity::ERC20(_network, address) => AssetIdentifier::ERC20 { address },
             AssetIdentity::Native(_network) => AssetIdentifier::Native,
             AssetIdentity::Fiat(code) => AssetIdentifier::Fiat { symbol: code },
         }

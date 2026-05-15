@@ -15,7 +15,7 @@ import { formatAmount, percentNumber } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
 
-type Data = { asset: Asset; price: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; weight: number | undefined; };
+type Data = { asset: Asset; price: bigint | undefined; price_24h: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; weight: number | undefined; };
 const helper = createColumnHelper<Data>();
 
 const columns = [
@@ -86,6 +86,8 @@ const columns = [
         cell: ({ row }) => {
             const { displayCurrency } = useDisplayCurrency();
 
+            const percentageChange = row.original.price && row.original.price_24h ? percentNumber(row.original.price - row.original.price_24h, row.original.price_24h) : undefined;
+
             return (
                 <div class="space-y-1 items-end flex flex-col justify-end">
                     <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
@@ -93,10 +95,21 @@ const columns = [
                             {row.original.value === undefined ? "-" : formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() })}
                         </span>
                     </Skeleton>
-                    <div class="flex items-center gap-0.5">
-                        <FiChevronUp class="size-3" />
-                        <span class="text-muted text-xs">
-                            0.00%
+                    <div class="">
+                        <span classList={{
+                            "text-xs flex items-center gap-0.5": true,
+                            "text-muted": percentageChange == 0,
+                            "text-[#008000]": !!(percentageChange && percentageChange > 0),
+                            "text-[#FF0000]": !!(percentageChange && percentageChange < 0),
+                        }}
+                        >
+                            <FiChevronUp classList={{
+                                "size-3": true,
+                                "rotate-180": !!(percentageChange && percentageChange < 0),
+                            }}
+                            />
+                            {percentageChange}
+                            %
                         </span>
                     </div>
                 </div>
@@ -146,6 +159,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
             asset: asset.data,
             balance: k && k.balance ? BigInt(k.balance) : undefined,
             price: k && k.asset_quote ? BigInt(k.asset_quote) : undefined,
+            price_24h: k && k.asset_24h_quote ? BigInt(k.asset_24h_quote) : undefined,
             value: k && k.balance_quote ? BigInt(k.balance_quote) : undefined,
             weight,
         }];
@@ -174,8 +188,8 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                     <div class="text-sm text-muted font-bold">Total assets value</div>
                     <div class="text-2xl">
                         <AssetAmount
-                          amount={() => totalValue()}
-                          asset={displayCurrency}
+                            amount={() => totalValue()}
+                            asset={displayCurrency}
                         />
                     </div>
                 </div>
@@ -190,8 +204,8 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                         </Suspense>
                         <Show when={!accountBalancesQuery.isLoading}>
                             <button
-                              class={button({ variant: "ghost", size: "small", square: true })}
-                              onClick={() => accountBalancesQuery.refetch()}
+                                class={button({ variant: "ghost", size: "small", square: true })}
+                                onClick={() => accountBalancesQuery.refetch()}
                             >
                                 <FaSolidRefresh classList={{
                                     "size-3.5": true,
@@ -248,7 +262,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                                                     && <div class="group-hover:-inset-x-2.5 group-hover:opacity-100 opacity-0 transition-all -z-10 absolute inset-y-0 inset-x-0 bg-surface-alt rounded-md">            </div>
                                                 }
                                                 <div
-                                                  classList={{
+                                                    classList={{
                                                         "text-left": index() === 0,
                                                         "text-right flex justify-end": index() !== 0,
                                                     }}

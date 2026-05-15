@@ -37,6 +37,10 @@ pub struct AccountBalance {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub asset_quote_error: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub asset_24h_quote: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub asset_24h_quote_error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub balance_quote: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub balance_quote_error: Option<String>,
@@ -58,6 +62,15 @@ async fn quote_nom(
         .await
     {
         Ok(asset_quote) => (Some(asset_quote.to_string()), None),
+        Err(error) => (None, Some(error.to_string())),
+    };
+    let block_24h = block - (24 * 60 * 60 / 12);
+    let (asset_24h_quote, asset_24h_quote_error): (Option<String>, Option<String>) = match state
+        .quoters
+        .quote_b(rpc, block_24h, &asset.asset_identity, asset_out, nominal_amount)
+        .await
+    {
+        Ok(asset_24h_quote) => (Some(asset_24h_quote.to_string()), None),
         Err(error) => (None, Some(error.to_string())),
     };
     let (balance, balance_error): (Option<U256>, Option<String>) = match balance {
@@ -85,6 +98,8 @@ async fn quote_nom(
         balance_error,
         asset_quote,
         asset_quote_error,
+        asset_24h_quote,
+        asset_24h_quote_error,
         balance_quote,
         balance_quote_error,
         updated_at: Utc::now(),
