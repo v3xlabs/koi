@@ -1,12 +1,12 @@
 import { SegmentedControl as KobalteSegmentedControl } from "@kobalte/core/segmented-control";
 import { Component, JSX } from "solid-js";
 
-type SegmentedConrolRoot = typeof KobalteSegmentedControl;
+type SegmentedControlRoot = typeof KobalteSegmentedControl;
 
 // @ts-expect-error composite type
-const Root: SegmentedConrolRoot = props => (
+const Root: SegmentedControlRoot = props => (
     <KobalteSegmentedControl {...props} />
-) as unknown as SegmentedConrolRoot;
+) as unknown as SegmentedControlRoot;
 
 const Control: Component<JSX.HTMLAttributes<HTMLDivElement>> = props => (
     <div
