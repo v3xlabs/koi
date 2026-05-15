@@ -8,8 +8,9 @@ import { AccountAssetSummary } from "#/components/account/asset/summary";
 import { AssetAmount } from "#/components/asset/amount";
 import { Modal } from "#/components/dialog";
 import { button } from "#/components/input/button";
-import { narrow } from "#/utils/narrow";
+import { FormattedTime } from "#/components/time";
 import { ReceiveQR } from "#/views/receive/qr";
+import { narrow } from "#/utils/narrow";
 
 export const Route = createFileRoute("/acc/$account/")({
   component: () => {
@@ -30,12 +31,15 @@ export const Route = createFileRoute("/acc/$account/")({
                   Total balance
                 </div>
                 <div class="text-muted text-sm flex items-center gap-2">
-                  <Suspense>
-                    <span>
-                      Updated
-                      {" "}
-                      {balanceQuery.data?.updated_at ? Date.parse(balanceQuery.data.updated_at).toLocaleString() : "-"}
-                    </span>
+                  <Suspense fallback={<span>Loading...</span>}>
+                    <Show when={balanceQuery.data} fallback={<span>Loading...</span>}>
+                      {data => (
+                        <span class="flex items-center gap-1">
+                          <span>Updated</span>
+                          <FormattedTime value={data().updated_at} />
+                        </span>
+                      )}
+                    </Show>
                   </Suspense>
                   <Show when={!balanceQuery.isLoading}>
                     <button
