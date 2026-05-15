@@ -8,8 +8,10 @@ import { Accessor, createContext, createSignal, onCleanup, onMount, ParentCompon
 import { queryClient } from "./client";
 import type { paths } from "./schema.gen";
 
+const baseUrl = location.origin + "/api/";
+
 export const api = createFetch<paths>({
-    baseUrl: "http://localhost:5173/api/",
+    baseUrl,
     headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer hello",

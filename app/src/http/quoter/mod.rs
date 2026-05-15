@@ -1,20 +1,14 @@
 use poem::{Result, web::Data};
-use poem_openapi::{
-    Object, OpenApi,
-    param::Path,
-    payload::Json,
-};
+use poem_openapi::{Object, OpenApi, param::Path, payload::Json};
 use serde::{Deserialize, Serialize};
 
 use super::ApiTags;
 use crate::{
     http::auth::Auth,
     models::quoter::{
-            Quoter, QuoterCreate, QuoterUpdate,
-            discover::{
-                QuoterDiscovery, QuoterDiscoveryResponse,
-            },
-        },
+        Quoter, QuoterCreate, QuoterUpdate,
+        discover::{QuoterDiscovery, QuoterDiscoveryResponse},
+    },
     state::AppState,
 };
 

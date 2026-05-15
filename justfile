@@ -17,5 +17,9 @@ lint:
 bacon:
     cd app && bacon
 
+build:
+    cd ui && pnpm build
+    cd app && cargo build --release
+
 [parallel]
 both: ui dev
