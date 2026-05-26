@@ -13,6 +13,7 @@ use koi::models::{
 };
 
 use super::defi::DefiResult;
+use super::form::{ActiveForm, FormAction, available_presets};
 use super::settings::{SettingsSection, SettingsSnapshot, SettingsState};
 
 const REFRESH_INTERVAL: Duration = Duration::from_secs(30);
@@ -70,7 +71,9 @@ pub struct App {
     pub tx_states: HashMap<u64, ResourceState<Vec<Tx>>>,
     pub settings: SettingsState,
     pub settings_state: ResourceState<SettingsSnapshot>,
+    pub form: Option<ActiveForm>,
     pub list_index: usize,
+    pub list_scroll: usize,
     pub selected_account: Option<u64>,
     pub status: String,
     pub notice: Option<String>,
@@ -97,7 +100,9 @@ impl App {
             tx_states: HashMap::new(),
             settings: SettingsState::new(),
             settings_state: ResourceState::Idle,
+            form: None,
             list_index: 0,
+            list_scroll: 0,
             selected_account: None,
             status: "Connecting…".to_string(),
             notice: None,
@@ -251,6 +256,7 @@ impl App {
                 if notice.is_some() {
                     self.notice = notice;
                 }
+                self.clamp_list_index();
                 self.loading_core = false;
                 self.update_status();
                 self.complete_refresh_if_idle();
@@ -321,6 +327,28 @@ impl App {
                 }
                 self.settings.notice = Some(notice);
             }
+            BackgroundUpdate::EndpointNextId {
+                generation,
+                next_id,
+                ..
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                self.set_endpoint_next_id(next_id);
+            }
+            BackgroundUpdate::AssetMetadata {
+                generation,
+                identity,
+                result,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                if let Some(form) = &mut self.form {
+                    form.apply_asset_metadata(&identity, result);
+                }
+            }
         }
     }
 
@@ -354,6 +382,10 @@ impl App {
     }
 
     pub fn handle_key(&mut self, code: KeyCode) -> KeyAction {
+        if self.form.is_some() {
+            return self.handle_form_key(code);
+        }
+
         match code {
             KeyCode::Char('q') => KeyAction::Quit,
             KeyCode::Esc | KeyCode::Char('b') => {
@@ -364,6 +396,7 @@ impl App {
                 } else if self.tab == Tab::Networks && self.settings.nested_network.is_some() {
                     self.settings.nested_network = None;
                     self.settings.row_index = 0;
+                    self.settings.row_scroll = 0;
                 }
                 KeyAction::None
             }
@@ -489,6 +522,7 @@ impl App {
             KeyCode::Char('e') if self.uses_resource_rows() && self.selected_account.is_none() => {
                 self.settings_edit_action()
             }
+            KeyCode::Char('n') if self.selected_account.is_none() => self.open_add_form(),
             KeyCode::Char('a') if self.selected_account.is_some() => {
                 self.account_panel = AccountPanel::Assets;
                 self.account_focus = AccountFocus::Sidebar;
@@ -542,12 +576,105 @@ impl App {
         self.selected_account = None;
         self.account_panel = AccountPanel::Overview;
         self.account_focus = AccountFocus::Sidebar;
+        self.form = None;
+        self.settings.row_index = 0;
+        self.settings.row_scroll = 0;
+        self.list_scroll = 0;
         if !matches!(self.tab, Tab::Settings) {
             if !matches!(self.tab, Tab::Networks) {
                 self.settings.nested_network = None;
             }
         }
         self.clamp_list_index();
+    }
+
+    fn open_add_form(&mut self) -> KeyAction {
+        match self.tab {
+            Tab::Assets => {
+                self.form = Some(ActiveForm::open_add_asset());
+                KeyAction::None
+            }
+            Tab::Networks if self.settings.nested_network.is_some() => {
+                let network_id = self.settings.nested_network.unwrap();
+                self.form = Some(ActiveForm::open_add_endpoint(network_id));
+                KeyAction::FetchEndpointNextId(network_id)
+            }
+            Tab::Networks => {
+                self.form = Some(ActiveForm::open_add_network());
+                KeyAction::None
+            }
+            _ => KeyAction::None,
+        }
+    }
+
+    fn handle_form_key(&mut self, code: KeyCode) -> KeyAction {
+        let Some(mut form) = self.form.take() else {
+            return KeyAction::None;
+        };
+
+        match form.handle_key(code) {
+            FormAction::None => {
+                self.form = Some(form);
+                KeyAction::None
+            }
+            FormAction::Cancel => {
+                self.form = None;
+                KeyAction::None
+            }
+            FormAction::OpenNetworkPresets => {
+                let presets = available_presets(
+                    &self
+                        .networks
+                        .iter()
+                        .map(|network| network.network_identity.0)
+                        .collect::<Vec<_>>(),
+                );
+                if presets.is_empty() {
+                    self.settings.notice = Some("No network presets available".to_string());
+                    self.form = None;
+                } else {
+                    self.form = Some(ActiveForm::AddNetworkPreset {
+                        presets,
+                        selected: 0,
+                    });
+                }
+                KeyAction::None
+            }
+            FormAction::FetchAssetMetadata(identity) => {
+                self.form = Some(form);
+                KeyAction::FetchAssetMetadata(identity)
+            }
+            FormAction::SubmitCreateAsset(asset) => {
+                self.form = None;
+                self.settings.notice = Some(format!(
+                    "Creating asset {}…",
+                    asset.asset_identity
+                ));
+                KeyAction::CreateAsset(asset)
+            }
+            FormAction::SubmitCreateNetwork(network) => {
+                self.form = None;
+                self.settings.notice = Some(format!(
+                    "Creating network {}…",
+                    network.network_name
+                ));
+                KeyAction::CreateNetwork(network)
+            }
+            FormAction::SubmitCreateEndpoint(endpoint) => {
+                self.form = None;
+                self.settings.notice = Some(format!(
+                    "Creating endpoint #{}…",
+                    endpoint.endpoint_identity
+                ));
+                KeyAction::CreateNetworkEndpoint(endpoint)
+            }
+        }
+    }
+
+    pub fn set_endpoint_next_id(&mut self, next_id: i32) {
+        if let Some(form) = &mut self.form {
+            form.set_endpoint_next_id(next_id);
+        }
     }
 
     fn move_account_panel(&mut self, delta: i32) -> KeyAction {
@@ -631,8 +758,41 @@ impl App {
 
         if len == 0 {
             self.list_index = 0;
-        } else if self.list_index >= len {
-            self.list_index = len - 1;
+            self.list_scroll = 0;
+            self.settings.row_index = 0;
+            self.settings.row_scroll = 0;
+        } else {
+            if self.list_index >= len {
+                self.list_index = len - 1;
+            }
+            if self.uses_resource_rows() && self.settings.row_index >= len {
+                self.settings.row_index = len - 1;
+            }
+        }
+    }
+
+    pub fn reconcile_scroll(&mut self, viewport_height: usize) {
+        use super::scroll::ensure_visible;
+
+        if self.selected_account.is_some() {
+            return;
+        }
+
+        if self.uses_resource_rows() {
+            let len = self.settings_row_count();
+            ensure_visible(
+                &mut self.settings.row_scroll,
+                self.settings.row_index,
+                len,
+                viewport_height,
+            );
+        } else if self.tab == Tab::Accounts {
+            ensure_visible(
+                &mut self.list_scroll,
+                self.list_index,
+                self.accounts.len(),
+                viewport_height,
+            );
         }
     }
 
@@ -756,6 +916,7 @@ impl App {
             if let Some(network) = self.networks.get(self.settings.row_index) {
                 self.settings.nested_network = Some(network.network_identity.0);
                 self.settings.row_index = 0;
+                self.settings.row_scroll = 0;
             }
         }
         KeyAction::None
@@ -853,4 +1014,9 @@ pub enum KeyAction {
     DeleteNetworkEndpoint(u64, i32),
     DeleteAsset(String),
     SetVendor(String, bool),
+    FetchEndpointNextId(u64),
+    FetchAssetMetadata(String),
+    CreateAsset(koi::models::asset::Asset),
+    CreateNetwork(koi::models::network::Network),
+    CreateNetworkEndpoint(koi::models::network::endpoint::NetworkEndpoint),
 }

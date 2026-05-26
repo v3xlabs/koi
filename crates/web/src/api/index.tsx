@@ -48,15 +48,18 @@ export const api = createFetch<paths>({
 });
 
 const displayCurrency = makePersisted(createSignal("fiat:usd"), { name: "display-currency" });
+const privacyMode = makePersisted(createSignal(false), { name: "privacy-mode" });
 
 type AppContext = {
     isOnline: Accessor<boolean>;
     displayCurrency: typeof displayCurrency;
+    privacyMode: typeof privacyMode;
 };
 
 export const appcontext = createContext<AppContext>({
     isOnline: () => false,
     displayCurrency,
+    privacyMode,
 });
 
 export const AppProvider: ParentComponent = (props) => {
@@ -79,7 +82,7 @@ export const AppProvider: ParentComponent = (props) => {
 
     return (
         <QueryClientProvider client={queryClient}>
-            <appcontext.Provider value={{ isOnline, displayCurrency }}>
+            <appcontext.Provider value={{ isOnline, displayCurrency, privacyMode }}>
                 {props.children}
             </appcontext.Provider>
         </QueryClientProvider>

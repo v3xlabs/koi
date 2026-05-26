@@ -29,9 +29,9 @@ export const Route = createFileRoute("/")({
               <Suspense fallback={<div class="py-8 text-center text-muted">Loading...</div>}>
                 <For each={accountsQuery.data?.accounts}>
                   {account => (
-                    <Link to="/acc/$account" params={{ account: account.account_identity.toString() }} class="w-full px-2 hover:bg-surface-alt rounded-lg py-2 text-sm font-bold flex items-center gap-2">
+                    <Link to="/acc/$account" params={{ account: account.account_identity.toString() }} class="w-full min-w-0 px-2 hover:bg-surface-alt rounded-lg py-2 text-sm font-bold flex items-center gap-2">
                       <AccountPreview account_identity={account.account_identity} />
-                      <button class={button({ variant: "ghost", size: "small", square: true })}>
+                      <button class={button({ variant: "ghost", size: "small", square: true, class: "shrink-0" })}>
                         <FiMoreVertical />
                       </button>
                     </Link>

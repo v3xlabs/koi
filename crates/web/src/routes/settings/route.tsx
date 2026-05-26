@@ -51,7 +51,7 @@ export const Route = createFileRoute("/settings")({
           </For>
         </ul>
       </nav>
-      <div class="w-screen max-w-2xl space-y-4">
+      <div class="w-full max-w-2xl min-w-0 space-y-4">
         <Outlet />
       </div>
     </div>

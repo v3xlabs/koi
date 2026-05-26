@@ -1,7 +1,8 @@
 import { Component, Show, Suspense } from "solid-js";
 
 import { useAssetQuote } from "#/api/asset";
-import { useDisplayCurrency } from "#/api/context";
+import { useDisplayCurrency, usePrivacyMode } from "#/api/context";
+import { privateAmount, privateAmountTitle } from "#/utils/privacy";
 import { formatAmount } from "#/utils/units";
 
 export const AssetQuote: Component<{ asset_identity: string; }> = ({ asset_identity }) => (
@@ -13,12 +14,13 @@ export const AssetQuote: Component<{ asset_identity: string; }> = ({ asset_ident
 export const AssetQuoteInner: Component<{ asset_identity: string; }> = ({ asset_identity }) => {
     const quoteQuery = useAssetQuote(() => ({ path: { asset_identity } }));
     const { displayCurrency } = useDisplayCurrency();
+    const { privacyMode } = usePrivacyMode();
 
     return (
         <Show when={quoteQuery.data}>
             {data => (
-                <div class="text-nowrap tabular-nums" title={formatAmount(BigInt(data()), { precision: 2, decimals: 6, currency: displayCurrency() })}>
-                    {formatAmount(BigInt(data()), { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() })}
+                <div class="text-nowrap tabular-nums" title={privateAmountTitle(privacyMode(), formatAmount(BigInt(data()), { precision: 2, decimals: 6, currency: displayCurrency() }))}>
+                    {privateAmount(privacyMode(), formatAmount(BigInt(data()), { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() }))}
                 </div>
             )}
         </Show>

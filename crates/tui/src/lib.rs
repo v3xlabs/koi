@@ -1,7 +1,9 @@
 mod app;
 mod defi;
+mod form;
 mod format;
 mod loader;
+mod scroll;
 mod settings;
 mod ui;
 
@@ -39,7 +41,7 @@ pub async fn run(api_url: String) -> Result<()> {
     let generation = prepare_refresh_all(&mut app);
     loader.spawn_refresh_all(generation);
     spawn_input_task(input_tx);
-    terminal.draw(|frame| ui::render(frame, &app))?;
+    terminal.draw(|frame| ui::render(frame, &mut app))?;
 
     let result = run_loop(
         &mut terminal,
@@ -63,7 +65,7 @@ pub async fn run(api_url: String) -> Result<()> {
 
 async fn run_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    app: &mut App,
+    mut app: &mut App,
     rx: &mut mpsc::UnboundedReceiver<BackgroundUpdate>,
     input_rx: &mut mpsc::UnboundedReceiver<KeyCode>,
     loader: &Loader,
@@ -134,6 +136,33 @@ async fn run_loop(
                                 app.settings_network_ids(),
                             );
                         }
+                        KeyAction::FetchEndpointNextId(network_id) => {
+                            loader.fetch_endpoint_next_id(app.current_generation(), network_id);
+                        }
+                        KeyAction::FetchAssetMetadata(identity) => {
+                            loader.fetch_asset_metadata(app.current_generation(), identity);
+                        }
+                        KeyAction::CreateAsset(asset) => {
+                            loader.create_asset(
+                                app.current_generation(),
+                                asset,
+                                app.settings_network_ids(),
+                            );
+                        }
+                        KeyAction::CreateNetwork(network) => {
+                            loader.create_network(
+                                app.current_generation(),
+                                network,
+                                app.settings_network_ids(),
+                            );
+                        }
+                        KeyAction::CreateNetworkEndpoint(endpoint) => {
+                            loader.create_network_endpoint(
+                                app.current_generation(),
+                                endpoint,
+                                app.settings_network_ids(),
+                            );
+                        }
                         KeyAction::None => {}
                     }
                     dirty = true;
@@ -157,7 +186,7 @@ async fn run_loop(
         }
 
         if dirty {
-            terminal.draw(|frame| ui::render(frame, app))?;
+            terminal.draw(|frame| ui::render(frame, &mut app))?;
             dirty = false;
         }
     }

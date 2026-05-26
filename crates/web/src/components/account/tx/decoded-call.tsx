@@ -6,6 +6,8 @@ import { components } from "#/api/schema.gen";
 import { AssetAmount } from "#/components/asset/amount";
 import { AssetPreview } from "#/components/asset/preview";
 import { AddressPreview } from "#/components/link/address";
+import { usePrivacyMode } from "#/api/context";
+import { privateAmount } from "#/utils/privacy";
 
 import { TxField, TxJsonValue, TxValue } from "./value";
 
@@ -191,18 +193,22 @@ const MaybeAsset: Component<{ asset_identity: string | undefined; fallback: stri
   </Show>
 );
 
-const MaybeAmount: Component<{ amount: string | undefined; asset_identity: string | undefined; }> = props => (
-  <Show
-    when={props.asset_identity && bigintAmount(props.amount) !== undefined ? props.asset_identity : undefined}
-    fallback={(
-      <Show when={props.amount}>
-        {amount => <code class="rounded bg-foreground/10 px-1.5 py-0.5 text-xs">{amount()}</code>}
-      </Show>
-    )}
-  >
-    {asset => <AssetAmount amount={() => bigintAmount(props.amount)!} asset={() => asset()} />}
-  </Show>
-);
+const MaybeAmount: Component<{ amount: string | undefined; asset_identity: string | undefined; }> = props => {
+  const { privacyMode } = usePrivacyMode();
+
+  return (
+    <Show
+      when={props.asset_identity && bigintAmount(props.amount) !== undefined ? props.asset_identity : undefined}
+      fallback={(
+        <Show when={props.amount}>
+          {amount => <code class="rounded bg-foreground/10 px-1.5 py-0.5 text-xs">{privateAmount(privacyMode(), amount())}</code>}
+        </Show>
+      )}
+    >
+      {asset => <AssetAmount amount={() => bigintAmount(props.amount)!} asset={() => asset()} />}
+    </Show>
+  );
+};
 
 const CallSummary: Component<{ call: DecodedCall; network_identity: number; }> = props => (
   <Show when={handledPreview(props.call, props.network_identity)}>

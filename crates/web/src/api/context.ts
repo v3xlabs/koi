@@ -7,3 +7,9 @@ export const useDisplayCurrency = () => {
 
     return { displayCurrency, setDisplayCurrency };
 };
+
+export const usePrivacyMode = () => {
+    const { privacyMode: [privacyMode, setPrivacyMode] } = useContext(appcontext);
+
+    return { privacyMode, setPrivacyMode };
+};

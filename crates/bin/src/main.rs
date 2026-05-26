@@ -11,9 +11,24 @@ async fn main() {
     dotenv().ok();
 
     let args = std::env::args_os().collect::<Vec<_>>();
-    let explicit_api = tui_api_was_explicit(&args);
+    let explicit_api = api_was_explicit(&args);
 
     match Cli::parse_from(args).command() {
+        Commands::Gui { api } => {
+            init_logging(false);
+            let (api, _server_handle) = match prepare_client_api(api, explicit_api).await {
+                Ok(result) => result,
+                Err(error) => {
+                    eprintln!("GUI startup error: {error:#}");
+                    std::process::exit(1);
+                }
+            };
+
+            if let Err(error) = koi_gui::run(koi_gui::GuiOptions { url: api }) {
+                eprintln!("GUI error: {error:#}");
+                std::process::exit(1);
+            }
+        }
         Commands::Serve => {
             init_logging(false);
             info!("Heya");
@@ -22,7 +37,7 @@ async fn main() {
         }
         Commands::Tui { api } => {
             init_logging(true);
-            let (api, _server_handle) = match prepare_tui_api(api, explicit_api).await {
+            let (api, _server_handle) = match prepare_client_api(api, explicit_api).await {
                 Ok(result) => result,
                 Err(error) => {
                     eprintln!("TUI startup error: {error:#}");
@@ -50,7 +65,7 @@ fn init_logging(silent: bool) {
     }
 }
 
-async fn prepare_tui_api(
+async fn prepare_client_api(
     api: String,
     explicit_api: bool,
 ) -> anyhow::Result<(String, Option<tokio::task::JoinHandle<()>>)> {
@@ -72,7 +87,7 @@ async fn prepare_tui_api(
     Ok((api, Some(handle)))
 }
 
-fn tui_api_was_explicit(args: &[OsString]) -> bool {
+fn api_was_explicit(args: &[OsString]) -> bool {
     args.iter().any(|arg| {
         let value = arg.to_string_lossy();
         value == "--api" || value.starts_with("--api=")

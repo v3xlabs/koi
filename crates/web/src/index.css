@@ -43,7 +43,16 @@
 html,
 body {
     @apply bg-background text-foreground;
+    width: 100%;
+    height: 100%;
+    margin: 0;
     /* font-family: "SF Pro Display", "SF Pro Text", "Inter", sans-serif; */
+    smooth-scroll: auto;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
 }
 
 .input {
@@ -78,7 +87,7 @@ textarea.input {
 }
 
 .nav-icon-button {
-    @apply h-full aspect-square inline-flex items-center justify-center text-muted hover:bg-surface-alt hover:text-foreground outline-none transition-colors cursor-pointer;
+    @apply w-12 self-stretch inline-flex shrink-0 items-center justify-center text-muted hover:bg-surface-alt hover:text-foreground outline-none transition-colors cursor-pointer;
 
     &:focus-visible {
         @apply ring-2 ring-primary/50 ring-inset;

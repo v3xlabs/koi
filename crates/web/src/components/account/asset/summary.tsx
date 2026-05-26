@@ -3,12 +3,13 @@ import { createQueries } from "@tanstack/solid-query";
 import { Link } from "@tanstack/solid-router";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
 import { FiChevronRight, FiChevronUp } from "solid-icons/fi";
-import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
+import { Component, createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
 import { useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
-import { useDisplayCurrency } from "#/api/context";
+import { useDisplayCurrency, usePrivacyMode } from "#/api/context";
 import { button } from "#/components/input/button";
+import { privateAmount, privateAmountTitle } from "#/utils/privacy";
 import { formatAmount, percentNumber } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
@@ -19,38 +20,43 @@ const helper = createColumnHelper<Data>();
 const columns = [
     helper.accessor("asset.asset_name", {
         header: "Name",
-        cell: ({ row }) => (
-            <div class="flex items-center gap-2.5 py-3.5">
-                <AssetIcon asset={row.original.asset} class="size-8" />
-                <div>
-                    <Skeleton visible={!row.original.asset.asset_name || row.original.asset.asset_name === "placeholder"} class="skeleton animate-spin">
-                        {row.original.asset.asset_name}
-                    </Skeleton>
-                    <div class="text-muted">
-                        <Skeleton visible={row.original.balance === undefined} class="skeleton">
-                            <span class="tabular-nums">
-                                {row.original.balance === undefined ? "-" : formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, precision: 2, notation: "compact" })}
-                            </span>
-                            {" "}
-                            {row.original.asset.asset_symbol}
+        cell: ({ row }) => {
+            const { privacyMode } = usePrivacyMode();
+
+            return (
+                <div class="flex items-center gap-2.5 py-3.5">
+                    <AssetIcon asset={row.original.asset} class="size-8" />
+                    <div>
+                        <Skeleton visible={!row.original.asset.asset_name || row.original.asset.asset_name === "placeholder"} class="skeleton animate-spin">
+                            {row.original.asset.asset_name}
                         </Skeleton>
+                        <div class="text-muted">
+                            <Skeleton visible={row.original.balance === undefined} class="skeleton">
+                                <span class="tabular-nums">
+                                    {row.original.balance === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.balance, { decimals: row.original.asset.asset_decimals, precision: 2, notation: "compact" }))}
+                                </span>
+                                {" "}
+                                {row.original.asset.asset_symbol}
+                            </Skeleton>
+                        </div>
                     </div>
                 </div>
-            </div>
-        ),
+            );
+        },
     }),
     helper.accessor("value", {
         header: "Value",
         cell: ({ row }) => {
             const { displayCurrency } = useDisplayCurrency();
+            const { privacyMode } = usePrivacyMode();
 
             const percentageChange = row.original.price && row.original.price_24h ? percentNumber(row.original.price - row.original.price_24h, row.original.price_24h) : undefined;
 
             return (
                 <div class="space-y-1 items-end flex flex-col justify-end">
                     <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
-                        <span class="tabular-nums" title={row.original.value === undefined ? undefined : formatAmount(row.original.value, { precision: 2, decimals: 6, currency: displayCurrency() })}>
-                            {row.original.value === undefined ? "-" : formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() })}
+                        <span class="tabular-nums" title={privateAmountTitle(privacyMode(), row.original.value === undefined ? undefined : formatAmount(row.original.value, { precision: 2, decimals: 6, currency: displayCurrency() }))}>
+                            {row.original.value === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() }))}
                         </span>
                     </Skeleton>
                     <div class="">
@@ -143,50 +149,54 @@ const AccountAssetSummaryInner: Component<{ account_identity: number; }> = ({ ac
                     </Link>
                 </div>
             </div>
-            <table class="w-full">
-                <tbody class="divide-y divide-border">
-                    <For each={table.getRowModel().rows}>
-                        {row => (
-                            <tr class="relative group z-10">
-                                <For each={row.getVisibleCells()}>
-                                    {(cell, index) => (
-                                        <td>
-                                            {
-                                                index() === 0
-                                                && <div class="group-hover:-inset-x-2.5 group-hover:opacity-100 opacity-0 transition-all -z-10 absolute inset-y-0 inset-x-0 bg-surface-alt rounded-md">            </div>
-                                            }
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext(),
+            <div class="-mx-2.5 overflow-x-clip">
+                <table class="w-full">
+                    <tbody class="w-full">
+                        <For each={table.getRowModel().rows}>
+                            {row => (
+                                <>
+                                    <tr class="group relative hover:bg-surface-alt rounded-2xl transition-colors w-full after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px after:bg-border">
+                                        <For each={row.getVisibleCells()}>
+                                            {(cell, index) => (
+                                                <td classList={{
+                                                    "pl-5 -ml-2.5 -translate-x-2.5": index() === 0,
+                                                    "pr-5 -mr-2.5 translate-x-2.5": index() === row.getVisibleCells().length - 1,
+                                                }}
+                                                >
+                                                    {flexRender(
+                                                        cell.column.columnDef.cell,
+                                                        cell.getContext(),
+                                                    )}
+                                                </td>
                                             )}
-                                        </td>
-                                    )}
-                                </For>
-                            </tr>
-                        )}
-                    </For>
-                </tbody>
-                <tfoot>
-                    <For each={table.getFooterGroups()}>
-                        {footerGroup => (
-                            <tr>
-                                <For each={footerGroup.headers}>
-                                    {header => (
-                                        <th>
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.footer,
-                                                    header.getContext(),
-                                                )}
-                                        </th>
-                                    )}
-                                </For>
-                            </tr>
-                        )}
-                    </For>
-                </tfoot>
-            </table>
+                                        </For>
+                                    </tr>
+                                </>
+                            )}
+                        </For>
+                    </tbody>
+                    <tfoot>
+                        <For each={table.getFooterGroups()}>
+                            {footerGroup => (
+                                <tr>
+                                    <For each={footerGroup.headers}>
+                                        {header => (
+                                            <th>
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                        header.column.columnDef.footer,
+                                                        header.getContext(),
+                                                    )}
+                                            </th>
+                                        )}
+                                    </For>
+                                </tr>
+                            )}
+                        </For>
+                    </tfoot>
+                </table>
+            </div>
         </div>
     );
 };

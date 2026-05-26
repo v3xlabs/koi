@@ -1,0 +1,17 @@
+[package]
+name = "koi-gui"
+version = "0.0.1"
+edition = "2024"
+
+[lib]
+name = "koi_gui"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+gtk = "0.18"
+png = "0.18"
+tao = "0.30"
+tray-icon = "0.24.0"
+webkit2gtk = { version = "2.0.1", features = ["v2_38", "v2_40"] }
+wry = "0.52"

@@ -1,6 +1,8 @@
 import { Accessor, Component, createMemo, Show } from "solid-js";
 
+import { usePrivacyMode } from "#/api/context";
 import { useAsset } from "#/api/asset";
+import { PRIVATE_AMOUNT } from "#/utils/privacy";
 import { formatAmountParts } from "#/utils/units";
 
 export type AssetAmountProperties = {
@@ -12,6 +14,7 @@ export type AssetAmountProperties = {
 export const AssetAmount: Component<AssetAmountProperties> = (props) => {
     const assetQuery = useAsset(() => ({ path: { asset_identity: props.asset() } }));
     const assetQueryData = createMemo(() => assetQuery.data);
+    const { privacyMode } = usePrivacyMode();
 
     const parts = createMemo(() => formatAmountParts(props.amount(), {
         decimals: assetQueryData()?.asset_decimals ?? 2,
@@ -37,7 +40,10 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
                 )}
             >
                 {formatted => (
-                    <>
+                    <Show
+                      when={!privacyMode()}
+                      fallback={<span class="text-foreground">{PRIVATE_AMOUNT}</span>}
+                    >
                         <span class="text-foreground">
                             {formatted().prefix}
                             {formatted().integer}
@@ -53,7 +59,7 @@ export const AssetAmount: Component<AssetAmountProperties> = (props) => {
                                 {formatted().suffix}
                             </span>
                         )}
-                    </>
+                    </Show>
                 )}
             </Show>
             <Show when={suffix()}>

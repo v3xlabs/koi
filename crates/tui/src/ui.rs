@@ -14,11 +14,13 @@ use koi::models::{
 use super::{
     app::{AccountFocus, AccountPanel, App, ResourceState, Tab},
     defi::DefiResult,
+    form::{ActiveForm, AssetType, DiscoveryState, TextForm},
     format::{format_token, format_usd, percent_change, DisplayAmount},
+    scroll::visible_window,
     settings::SettingsSection,
 };
 
-pub fn render(frame: &mut Frame, app: &App) {
+pub fn render(frame: &mut Frame, app: &mut App) {
     let vertical = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -29,8 +31,13 @@ pub fn render(frame: &mut Frame, app: &App) {
         .split(frame.area());
 
     render_top_bar(frame, app, vertical[0]);
+    app.reconcile_scroll(table_body_height(vertical[1]));
     render_body(frame, app, vertical[1]);
     render_footer(frame, app, vertical[2]);
+
+    if let Some(form) = &app.form {
+        render_form(frame, form, frame.area());
+    }
 }
 
 fn render_top_bar(frame: &mut Frame, app: &App, area: Rect) {
@@ -159,7 +166,8 @@ fn render_accounts_home(frame: &mut Frame, app: &App, area: Rect) {
 }
 
 fn render_accounts_list(frame: &mut Frame, app: &App, area: Rect) {
-    let (start, end) = visible_range(app.accounts.len(), app.list_index, table_body_height(area));
+    let height = table_body_height(area);
+    let (start, end) = visible_window(app.accounts.len(), app.list_scroll, height);
     let rows: Vec<Row> = if app.accounts.is_empty() {
         vec![Row::new(vec![
             Cell::from("No accounts yet"),
@@ -374,9 +382,13 @@ fn render_settings_networks(frame: &mut Frame, app: &App, area: Rect) {
     let rows = if app.networks.is_empty() {
         vec![Row::new(vec![Cell::from("No networks configured"), Cell::from("")])]
     } else {
+        let height = table_body_height(area);
+        let (start, end) = visible_window(app.networks.len(), app.settings.row_scroll, height);
         app.networks
             .iter()
             .enumerate()
+            .skip(start)
+            .take(end.saturating_sub(start))
             .map(|(index, network)| {
                 let selected = index == app.settings.row_index;
                 let style = selected_row_style(selected);
@@ -407,7 +419,10 @@ fn render_settings_networks(frame: &mut Frame, app: &App, area: Rect) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(" Networks · Enter endpoints "),
+                .title(format!(
+                    " Networks · Enter endpoints · n add {} ",
+                    position_label(app.networks.len(), app.settings.row_index)
+                )),
         )
         .column_spacing(2);
 
@@ -426,35 +441,42 @@ fn render_settings_endpoints(frame: &mut Frame, app: &App, network_id: u64, area
             Cell::from(""),
             Cell::from(""),
         ])],
-        Some(endpoints) => endpoints
-            .iter()
-            .enumerate()
-            .map(|(index, endpoint)| {
-                let selected = index == app.settings.row_index;
-                let style = selected_row_style(selected);
-                Row::new(vec![
-                    Cell::from(format!(
-                        "{} #{}",
-                        if selected { "›" } else { " " },
-                        endpoint.endpoint_identity
-                    )),
-                    Cell::from(
-                        endpoint
-                            .endpoint_label
-                            .clone()
-                            .unwrap_or_else(|| "—".to_string()),
-                    ),
-                    Cell::from(endpoint.endpoint_type.clone()),
-                    Cell::from(if endpoint.endpoint_disabled {
-                        "disabled"
-                    } else {
-                        "enabled"
-                    }),
-                    Cell::from(truncate(&endpoint.endpoint_url, 54)),
-                ])
-                .style(style)
-            })
-            .collect(),
+        Some(endpoints) => {
+            let height = table_body_height(area);
+            let (start, end) =
+                visible_window(endpoints.len(), app.settings.row_scroll, height);
+            endpoints
+                .iter()
+                .enumerate()
+                .skip(start)
+                .take(end.saturating_sub(start))
+                .map(|(index, endpoint)| {
+                    let selected = index == app.settings.row_index;
+                    let style = selected_row_style(selected);
+                    Row::new(vec![
+                        Cell::from(format!(
+                            "{} #{}",
+                            if selected { "›" } else { " " },
+                            endpoint.endpoint_identity
+                        )),
+                        Cell::from(
+                            endpoint
+                                .endpoint_label
+                                .clone()
+                                .unwrap_or_else(|| "—".to_string()),
+                        ),
+                        Cell::from(endpoint.endpoint_type.clone()),
+                        Cell::from(if endpoint.endpoint_disabled {
+                            "disabled"
+                        } else {
+                            "enabled"
+                        }),
+                        Cell::from(truncate(&endpoint.endpoint_url, 54)),
+                    ])
+                    .style(style)
+                })
+            .collect()
+        }
         None => vec![Row::new(vec![
             Cell::from("Loading endpoints…"),
             Cell::from(""),
@@ -481,7 +503,13 @@ fn render_settings_endpoints(frame: &mut Frame, app: &App, network_id: u64, area
     .block(
         Block::default()
             .borders(Borders::ALL)
-            .title(format!(" Endpoints for network {network_id} · x delete · b back ")),
+            .title(format!(
+                " Endpoints for network {network_id} · n add · x delete · b back {} ",
+                position_label(
+                    endpoints.map(|items| items.len()).unwrap_or(0),
+                    app.settings.row_index,
+                )
+            )),
     )
     .column_spacing(2);
 
@@ -499,9 +527,13 @@ fn render_settings_assets(frame: &mut Frame, app: &App, area: Rect) {
             Cell::from(""),
         ])]
     } else {
+        let height = table_body_height(area);
+        let (start, end) = visible_window(identities.len(), app.settings.row_scroll, height);
         identities
             .iter()
             .enumerate()
+            .skip(start)
+            .take(end.saturating_sub(start))
             .filter_map(|(index, identity)| {
                 let asset = app.assets.get(identity)?;
                 let selected = index == app.settings.row_index;
@@ -536,7 +568,10 @@ fn render_settings_assets(frame: &mut Frame, app: &App, area: Rect) {
     .block(
         Block::default()
             .borders(Borders::ALL)
-            .title(" Assets · x delete "),
+            .title(format!(
+                " Assets · n add · x delete {} ",
+                position_label(identities.len(), app.settings.row_index)
+            )),
     )
     .column_spacing(2);
 
@@ -551,29 +586,36 @@ fn render_settings_price_feeds(frame: &mut Frame, app: &App, area: Rect) {
             Cell::from(""),
             Cell::from(""),
         ])],
-        Some(snapshot) => snapshot
-            .quoters
-            .iter()
-            .enumerate()
-            .map(|(index, quoter)| {
-                let selected = index == app.settings.row_index;
-                Row::new(vec![
-                    Cell::from(format!(
-                        "{} {}",
-                        if selected { "›" } else { " " },
-                        quoter.quoter_name
-                    )),
-                    Cell::from(if quoter.enabled { "enabled" } else { "disabled" }),
-                    Cell::from(format!(
-                        "{} -> {}",
-                        quoter.token_a,
-                        quoter.token_b
-                    )),
-                    Cell::from(truncate(&quoter.quoter_identity, 16)),
-                ])
-                .style(selected_row_style(selected))
-            })
-            .collect(),
+        Some(snapshot) => {
+            let height = table_body_height(area);
+            let (start, end) =
+                visible_window(snapshot.quoters.len(), app.settings.row_scroll, height);
+            snapshot
+                .quoters
+                .iter()
+                .enumerate()
+                .skip(start)
+                .take(end.saturating_sub(start))
+                .map(|(index, quoter)| {
+                    let selected = index == app.settings.row_index;
+                    Row::new(vec![
+                        Cell::from(format!(
+                            "{} {}",
+                            if selected { "›" } else { " " },
+                            quoter.quoter_name
+                        )),
+                        Cell::from(if quoter.enabled { "enabled" } else { "disabled" }),
+                        Cell::from(format!(
+                            "{} -> {}",
+                            quoter.token_a,
+                            quoter.token_b
+                        )),
+                        Cell::from(truncate(&quoter.quoter_identity, 16)),
+                    ])
+                    .style(selected_row_style(selected))
+                })
+                .collect()
+        }
         None => vec![Row::new(vec![
             Cell::from("Loading price feeds…"),
             Cell::from(""),
@@ -581,6 +623,11 @@ fn render_settings_price_feeds(frame: &mut Frame, app: &App, area: Rect) {
             Cell::from(""),
         ])],
     };
+
+    let quoter_count = app
+        .settings_snapshot()
+        .map(|snapshot| snapshot.quoters.len())
+        .unwrap_or(0);
 
     let table = Table::new(
         rows,
@@ -598,7 +645,10 @@ fn render_settings_price_feeds(frame: &mut Frame, app: &App, area: Rect) {
     .block(
         Block::default()
             .borders(Borders::ALL)
-            .title(" Price feeds · manage complex forms in web settings "),
+            .title(format!(
+                " Price feeds {} ",
+                position_label(quoter_count, app.settings.row_index)
+            )),
     )
     .column_spacing(2);
 
@@ -612,31 +662,38 @@ fn render_settings_vendors(frame: &mut Frame, app: &App, area: Rect) {
             Cell::from(""),
             Cell::from(""),
         ])],
-        Some(snapshot) => snapshot
-            .all_vendors
-            .iter()
-            .enumerate()
-            .map(|(index, vendor)| {
-                let flag = vendor.flag.to_string();
-                let enabled = snapshot.enabled_vendors.contains(&flag);
-                let selected = index == app.settings.row_index;
-                Row::new(vec![
-                    Cell::from(format!(
-                        "{} {}",
-                        if selected { "›" } else { " " },
-                        flag
-                    )),
-                    Cell::from(if enabled { "enabled" } else { "disabled" }).style(if enabled {
-                        Style::default().fg(Color::Green)
-                    } else {
-                        Style::default().fg(Color::DarkGray)
-                    }),
-                    Cell::from(if vendor.unfinished { "unfinished" } else { "" }),
-                    Cell::from(vendor.comment.clone()),
-                ])
-                .style(selected_row_style(selected))
-            })
-            .collect(),
+        Some(snapshot) => {
+            let height = table_body_height(area);
+            let (start, end) =
+                visible_window(snapshot.all_vendors.len(), app.settings.row_scroll, height);
+            snapshot
+                .all_vendors
+                .iter()
+                .enumerate()
+                .skip(start)
+                .take(end.saturating_sub(start))
+                .map(|(index, vendor)| {
+                    let flag = vendor.flag.to_string();
+                    let enabled = snapshot.enabled_vendors.contains(&flag);
+                    let selected = index == app.settings.row_index;
+                    Row::new(vec![
+                        Cell::from(format!(
+                            "{} {}",
+                            if selected { "›" } else { " " },
+                            flag
+                        )),
+                        Cell::from(if enabled { "enabled" } else { "disabled" }).style(if enabled {
+                            Style::default().fg(Color::Green)
+                        } else {
+                            Style::default().fg(Color::DarkGray)
+                        }),
+                        Cell::from(if vendor.unfinished { "unfinished" } else { "" }),
+                        Cell::from(vendor.comment.clone()),
+                    ])
+                    .style(selected_row_style(selected))
+                })
+                .collect()
+        }
         None => vec![Row::new(vec![
             Cell::from("Loading vendors…"),
             Cell::from(""),
@@ -647,7 +704,13 @@ fn render_settings_vendors(frame: &mut Frame, app: &App, area: Rect) {
 
     let title = app
         .settings_snapshot()
-        .map(|snapshot| format!(" Vendors · {} enabled · e/x toggle ", snapshot.enabled_vendor_count()))
+        .map(|snapshot| {
+            format!(
+                " Vendors · {} enabled · e/x toggle {} ",
+                snapshot.enabled_vendor_count(),
+                position_label(snapshot.all_vendors.len(), app.settings.row_index)
+            )
+        })
         .unwrap_or_else(|| " Vendors ".to_string());
 
     let table = Table::new(
@@ -1227,14 +1290,28 @@ fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
 }
 
 fn render_footer(frame: &mut Frame, app: &App, area: Rect) {
-    let help = if app.selected_account.is_some() {
+    let help = if let Some(form) = &app.form {
+        if matches!(form, ActiveForm::AddAsset { .. }) {
+            "form  ↑↓ field · Tab accept hint · Enter save · Esc cancel"
+        } else {
+            "form  ↑↓ field · Tab next · Enter save · Esc cancel"
+        }
+    } else if app.selected_account.is_some() {
         "account workspace  ← sidebar  → content  ↑↓ choose page in sidebar  h/a/d/t jump  r refresh  b back  q quit"
+    } else if app.tab == Tab::Assets {
+        "assets workspace  ↑↓/jk row  PgUp/PgDn scroll  n add  x delete  r reload  q quit"
+    } else if app.tab == Tab::Prices {
+        "prices workspace  ↑↓/jk row  PgUp/PgDn scroll  r reload  q quit"
     } else if app.tab == Tab::Networks {
-        "networks workspace  ↑↓ row  Enter endpoints  x delete endpoint  r reload  b back  q quit"
+        if app.settings.nested_network.is_some() {
+            "endpoints  ↑↓/jk row  PgUp/PgDn scroll  n add  x delete  b back  r reload  q quit"
+        } else {
+            "networks workspace  ↑↓/jk row  PgUp/PgDn scroll  n add  Enter endpoints  r reload  q quit"
+        }
     } else if app.tab == Tab::Settings {
-        "settings workspace  ←→ section  ↑↓ row  Enter drill  e/x action  r reload  b back  q quit"
+        "settings workspace  ←→ section  ↑↓/jk row  PgUp/PgDn scroll  e/x action  r reload  q quit"
     } else {
-        "workspace  1 accounts  2 assets  3 prices  4 networks  5 settings  Tab next  ↑↓ select  Enter open  r reload  q quit"
+        "accounts workspace  ↑↓/jk row  PgUp/PgDn scroll  Enter open  r reload  q quit"
     };
 
     frame.render_widget(
@@ -1311,20 +1388,6 @@ fn table_body_height(area: Rect) -> usize {
     area.height.saturating_sub(3) as usize
 }
 
-fn visible_range(len: usize, selected: usize, height: usize) -> (usize, usize) {
-    if len == 0 || height == 0 {
-        return (0, 0);
-    }
-
-    let half = height / 2;
-    let mut start = selected.saturating_sub(half);
-    if start + height > len {
-        start = len.saturating_sub(height);
-    }
-    let end = (start + height).min(len);
-    (start, end)
-}
-
 fn position_label(len: usize, selected: usize) -> String {
     if len == 0 {
         "(0)".to_string()
@@ -1339,6 +1402,312 @@ fn selected_row_style(selected: bool) -> Style {
     } else {
         Style::default()
     }
+}
+
+const OVERLAY_BG: Color = Color::Rgb(18, 18, 18);
+const PANEL_BG: Color = Color::Rgb(36, 36, 36);
+const PANEL_SELECTED_BG: Color = Color::Rgb(58, 58, 58);
+const HINT_FG: Color = Color::Rgb(110, 110, 110);
+const HINT_ACCEPT_FG: Color = Color::Rgb(80, 90, 80);
+
+fn panel_style() -> Style {
+    Style::default().bg(PANEL_BG).fg(Color::White)
+}
+
+fn panel_row_style(selected: bool) -> Style {
+    if selected {
+        Style::default().bg(PANEL_SELECTED_BG).fg(Color::White)
+    } else {
+        panel_style()
+    }
+}
+
+fn paint_area(frame: &mut Frame, area: Rect, bg: Color) {
+    if area.width == 0 || area.height == 0 {
+        return;
+    }
+
+    let buf = frame.buffer_mut();
+    for y in area.y..area.y.saturating_add(area.height) {
+        for x in area.x..area.x.saturating_add(area.width) {
+            buf[(x, y)].set_char(' ').set_bg(bg).set_fg(bg);
+        }
+    }
+}
+
+fn centered_modal(area: Rect, width: u16, height: u16) -> Rect {
+    let width = width.min(area.width.saturating_sub(2)).max(32);
+    let height = height.min(area.height.saturating_sub(2)).max(6);
+    Rect {
+        x: area.x + (area.width.saturating_sub(width)) / 2,
+        y: area.y + (area.height.saturating_sub(height)) / 2,
+        width,
+        height,
+    }
+}
+
+fn render_form(frame: &mut Frame, form: &ActiveForm, area: Rect) {
+    let (width, height) = form.modal_dimensions();
+    let popup = centered_modal(area, width, height);
+
+    if popup.x.saturating_add(1) < area.width && popup.y.saturating_add(1) < area.height {
+        let shadow = Rect {
+            x: popup.x.saturating_add(1),
+            y: popup.y.saturating_add(1),
+            width: popup.width,
+            height: popup.height,
+        };
+        paint_area(frame, shadow, OVERLAY_BG);
+    }
+
+    paint_area(frame, popup, PANEL_BG);
+
+    match form {
+        ActiveForm::AddAssetType { selected } => {
+            let lines: Vec<Line> = AssetType::ALL
+                .iter()
+                .enumerate()
+                .map(|(index, asset_type)| {
+                    Line::from(Span::styled(
+                        format!(
+                            "{} {}",
+                            if index == *selected { "›" } else { " " },
+                            asset_type.label()
+                        ),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Enter choose · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::AddNetworkMode { selected } => {
+            let options = ["Create new network", "Add from preset"];
+            let lines: Vec<Line> = options
+                .iter()
+                .enumerate()
+                .map(|(index, label)| {
+                    Line::from(Span::styled(
+                        format!(
+                            "{} {}",
+                            if index == *selected { "›" } else { " " },
+                            label
+                        ),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Enter choose · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::AddNetworkPreset { presets, selected } => {
+            let lines: Vec<Line> = presets
+                .iter()
+                .enumerate()
+                .map(|(index, preset)| {
+                    Line::from(Span::styled(
+                        format!(
+                            "{} {} ({})",
+                            if index == *selected { "›" } else { " " },
+                            preset.network_name,
+                            preset.network_identity.0
+                        ),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Enter add preset · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::AddAsset {
+            asset_type,
+            form: text_form,
+            touched,
+            hints,
+            discovery,
+            ..
+        } => render_add_asset_form(
+            frame,
+            popup,
+            *asset_type,
+            text_form,
+            touched,
+            hints,
+            discovery,
+        ),
+        ActiveForm::AddNetwork(text_form) => {
+            render_text_form(frame, popup, form.title(), text_form, false);
+        }
+        ActiveForm::AddEndpoint { form: text_form, .. } => {
+            render_text_form(frame, popup, form.title(), text_form, false);
+        }
+    }
+}
+
+fn render_panel(frame: &mut Frame, area: Rect, title: &str, lines: Vec<Line>) {
+    frame.render_widget(
+        Paragraph::new(lines)
+            .style(panel_style())
+            .block(panel_block(title)),
+        area,
+    );
+}
+
+fn panel_block(title: &str) -> Block<'_> {
+    Block::default()
+        .borders(Borders::ALL)
+        .border_style(panel_style())
+        .style(panel_style())
+        .title(format!(" {title} "))
+}
+
+fn render_add_asset_form(
+    frame: &mut Frame,
+    area: Rect,
+    asset_type: AssetType,
+    form: &TextForm,
+    touched: &[bool],
+    hints: &super::form::AssetFieldHints,
+    discovery: &DiscoveryState,
+) {
+    let mut lines = Vec::new();
+
+    for (index, field) in form.fields.iter().enumerate() {
+        lines.push(asset_field_line(
+            index == form.focus,
+            &field.label,
+            field.required,
+            &field.value,
+            touched.get(index).copied().unwrap_or(false),
+            hints.hint_display(asset_type, index),
+        ));
+    }
+
+    if discovery.is_loading() {
+        lines.push(Line::from(Span::styled(
+            "  discovering metadata…",
+            Style::default().fg(HINT_FG).bg(PANEL_BG),
+        )));
+    }
+
+    lines.push(Line::from(Span::raw("")));
+    lines.push(Line::from(Span::styled(
+        "↑↓ field · Tab accept hint · Enter save · Esc cancel",
+        Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+    )));
+
+    render_panel(frame, area, &form.title, lines);
+}
+
+fn asset_field_line(
+    focused: bool,
+    label: &str,
+    required: bool,
+    value: &str,
+    touched: bool,
+    hint: Option<String>,
+) -> Line<'static> {
+    let label = if required {
+        format!("{label} *")
+    } else {
+        label.to_string()
+    };
+    let marker = if focused { "›" } else { " " };
+    let label_style = if focused {
+        Style::default().fg(Color::Cyan).bg(PANEL_BG)
+    } else {
+        panel_style()
+    };
+
+    let mut spans = vec![
+        Span::styled(format!("{marker} "), label_style),
+        Span::styled(format!("{label}: "), label_style),
+    ];
+
+    if value.is_empty() {
+        if !touched {
+            if let Some(hint) = hint {
+                spans.push(Span::styled(
+                    hint,
+                    Style::default().fg(HINT_FG).bg(PANEL_BG),
+                ));
+                if focused {
+                    spans.push(Span::styled(
+                        "  tab",
+                        Style::default().fg(HINT_ACCEPT_FG).bg(PANEL_BG),
+                    ));
+                }
+            } else {
+                spans.push(Span::styled("_", label_style));
+            }
+        } else {
+            spans.push(Span::styled("_", label_style));
+        }
+    } else {
+        spans.push(Span::styled(value.to_string(), label_style));
+    }
+
+    Line::from(spans)
+}
+
+fn render_text_form(frame: &mut Frame, area: Rect, title: &str, form: &TextForm, _with_hints: bool) {
+    let mut lines = Vec::new();
+    for (index, field) in form.fields.iter().enumerate() {
+        let focused = index == form.focus;
+        let label = if field.required {
+            format!("{} *", field.label)
+        } else {
+            field.label.clone()
+        };
+        let value = if field.value.is_empty() {
+            "_".to_string()
+        } else {
+            field.value.clone()
+        };
+        lines.push(Line::from(Span::styled(
+            format!(
+                "{} {}: {}",
+                if focused { "›" } else { " " },
+                label,
+                value
+            ),
+            if focused {
+                Style::default().fg(Color::Cyan).bg(PANEL_BG)
+            } else {
+                panel_style()
+            },
+        )));
+    }
+    lines.push(Line::from(Span::raw("")));
+    lines.push(Line::from(Span::styled(
+        "↑↓ field · Enter save · Esc cancel",
+        Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+    )));
+
+    frame.render_widget(
+        Paragraph::new(lines)
+            .style(panel_style())
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(panel_style())
+                    .style(panel_style())
+                    .title(format!(" {title} ")),
+            ),
+        area,
+    );
 }
 
 fn truncate(value: &str, max: usize) -> String {

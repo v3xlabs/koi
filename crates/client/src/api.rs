@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::{Context, Result};
 use koi::models::{
     account::{balances::AccountBalances, Account},
-    asset::Asset,
+    asset::{metadata::AssetMetadataDiscovery, Asset},
     network::{endpoint::NetworkEndpoint, pool::RpcPoolStats, Network},
     quoter::Quoter,
     tx::Tx,
@@ -113,6 +113,27 @@ impl ApiClient {
         .await
     }
 
+    pub async fn network_endpoint_next_id(&self, network_identity: u64) -> Result<i32> {
+        self.get(&format!("/net/{network_identity}/endpoints/next-id"))
+            .await
+    }
+
+    pub async fn create_network(&self, network: &Network) -> Result<Network> {
+        self.post_json("/net", network).await
+    }
+
+    pub async fn create_network_endpoint(
+        &self,
+        network_identity: u64,
+        endpoint: &NetworkEndpoint,
+    ) -> Result<NetworkEndpoint> {
+        self.post_json(
+            &format!("/net/{network_identity}/endpoints"),
+            endpoint,
+        )
+        .await
+    }
+
     pub async fn assets(&self) -> Result<HashMap<String, Asset>> {
         let response: AssetsResponse = self.get("/asset").await?;
         Ok(response
@@ -124,6 +145,17 @@ impl ApiClient {
 
     pub async fn delete_asset(&self, asset_identity: &str) -> Result<()> {
         self.delete(&format!("/asset/{asset_identity}")).await
+    }
+
+    pub async fn create_asset(&self, asset: &Asset) -> Result<Asset> {
+        self.post_json("/asset", asset).await
+    }
+
+    pub async fn asset_metadata_discovery(
+        &self,
+        asset_identity: &str,
+    ) -> Result<AssetMetadataDiscovery> {
+        self.get(&format!("/asset/{asset_identity}/metadata")).await
     }
 
     pub async fn quoters(&self) -> Result<Vec<Quoter>> {
@@ -207,5 +239,33 @@ impl ApiClient {
         }
 
         Ok(())
+    }
+
+    async fn post_json<T: serde::Serialize, R: for<'de> Deserialize<'de>>(
+        &self,
+        path: &str,
+        payload: &T,
+    ) -> Result<R> {
+        let url = format!("{}{path}", self.base);
+        let response = self
+            .client
+            .post(&url)
+            .header("Authorization", format!("Bearer {AUTH_TOKEN}"))
+            .header("Content-Type", "application/json")
+            .json(payload)
+            .send()
+            .await
+            .with_context(|| format!("request failed: POST {url}"))?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            anyhow::bail!("POST {url} returned {status}: {body}");
+        }
+
+        response
+            .json()
+            .await
+            .with_context(|| format!("failed to decode response from POST {url}"))
     }
 }

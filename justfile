@@ -5,6 +5,7 @@ install:
     cd ui && pnpm install
     cd crates/app && cargo fmt
     cd crates/bin && cargo fmt
+    cd crates/gui && cargo fmt
 
 ui:
     cd crates/web && pnpm dev
@@ -14,9 +15,15 @@ dev:
     cd crates/bin && cargo run
 tui:
     cd crates/bin && cargo run -- tui
+
+gui:
+    cd crates/web && pnpm build
+    cd crates/bin && cargo run -- gui
+
 lint:
     cd crates/app && cargo fmt && cargo clippy
     cd crates/bin && cargo fmt && cargo clippy
+    cd crates/gui && cargo fmt && cargo clippy
     cd ui && pnpm lint --fix
 bacon:
     cd crates/bin && bacon

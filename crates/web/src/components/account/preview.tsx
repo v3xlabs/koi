@@ -32,10 +32,10 @@ export const AccountPreview: Component<AccountPreviewProperties> = (props) => {
     const accountQuery = useAccount(() => ({ path: { account_identity } }));
 
     return (
-        <div class="w-full">
+        <div class="min-w-0 flex-1">
             <Show when={accountQuery.data}>
                 {acc => (
-                    <div class="flex items-center gap-3 w-full">
+                    <div class="flex items-center gap-3 min-w-0 w-full">
                         <Show when={narrow(() => acc().metadata, x => "evm_address" in x)}>
                             {
                                 x => <AccountIcon address={() => x().evm_address} class="w-10 h-10 rounded-lg" />

@@ -4,7 +4,7 @@ use tokio::sync::mpsc;
 
 use koi::models::{
     account::{Account, balances::AccountBalances},
-    asset::Asset,
+    asset::{metadata::AssetMetadataDiscovery, Asset},
     network::{Network, pool::RpcPoolStats},
     tx::Tx,
 };
@@ -68,6 +68,16 @@ pub enum BackgroundUpdate {
     Settings {
         generation: u64,
         state: ResourceState<SettingsSnapshot>,
+    },
+    EndpointNextId {
+        generation: u64,
+        network_id: u64,
+        next_id: i32,
+    },
+    AssetMetadata {
+        generation: u64,
+        identity: String,
+        result: Result<AssetMetadataDiscovery, String>,
     },
     Notice {
         generation: u64,
@@ -245,6 +255,113 @@ impl Loader {
                     if enabled { "Enabled" } else { "Disabled" }
                 ),
                 Err(error) => format!("Vendor update failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_settings_fetch(client, tx, generation, network_ids);
+        });
+    }
+
+    pub fn fetch_asset_metadata(&self, generation: u64, identity: String) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let result = match client.asset_metadata_discovery(&identity).await {
+                Ok(discovery) => Ok(discovery),
+                Err(error) => Err(error.to_string()),
+            };
+            let _ = tx.send(BackgroundUpdate::AssetMetadata {
+                generation,
+                identity,
+                result,
+            });
+        });
+    }
+
+    pub fn fetch_endpoint_next_id(&self, generation: u64, network_id: u64) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let next_id = match client.network_endpoint_next_id(network_id).await {
+                Ok(next_id) => next_id,
+                Err(error) => {
+                    let _ = tx.send(BackgroundUpdate::Notice {
+                        generation,
+                        notice: format!("Could not fetch endpoint id: {error:#}"),
+                    });
+                    1
+                }
+            };
+            let _ = tx.send(BackgroundUpdate::EndpointNextId {
+                generation,
+                network_id,
+                next_id,
+            });
+        });
+    }
+
+    pub fn create_asset(&self, generation: u64, asset: koi::models::asset::Asset, network_ids: Vec<u64>) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client.create_asset(&asset).await {
+                Ok(created) => format!("Created asset {}", created.asset_identity),
+                Err(error) => format!("Create asset failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            if let Ok(assets) = client.assets().await {
+                let _ = tx.send(BackgroundUpdate::AssetsLoaded {
+                    generation,
+                    assets,
+                    notice: None,
+                });
+            }
+            spawn_settings_fetch(client, tx, generation, network_ids);
+        });
+    }
+
+    pub fn create_network(&self, generation: u64, network: koi::models::network::Network, network_ids: Vec<u64>) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client.create_network(&network).await {
+                Ok(created) => format!("Created network {}", created.network_name),
+                Err(error) => format!("Create network failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            if let Ok(networks) = client.networks().await {
+                let _ = tx.send(BackgroundUpdate::NetworksLoaded {
+                    generation,
+                    networks,
+                    notice: None,
+                });
+            }
+            let refreshed_ids = client
+                .networks()
+                .await
+                .map(|networks| {
+                    networks
+                        .iter()
+                        .map(|network| network.network_identity.0)
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or(network_ids);
+            spawn_settings_fetch(client, tx, generation, refreshed_ids);
+        });
+    }
+
+    pub fn create_network_endpoint(
+        &self,
+        generation: u64,
+        endpoint: koi::models::network::endpoint::NetworkEndpoint,
+        network_ids: Vec<u64>,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        let network_id = endpoint.network_identity.0;
+        tokio::spawn(async move {
+            let notice = match client.create_network_endpoint(network_id, &endpoint).await {
+                Ok(created) => format!("Created endpoint #{}", created.endpoint_identity),
+                Err(error) => format!("Create endpoint failed: {error:#}"),
             };
             let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
             spawn_settings_fetch(client, tx, generation, network_ids);

@@ -11,6 +11,7 @@ path = "src/main.rs"
 koi = { path = "../app", package = "koi-app" }
 koi-cli = { path = "../cli" }
 clap = { version = "4", features = ["derive"] }
+koi-gui = { path = "../gui" }
 koi-tui = { path = "../tui" }
 anyhow = "1"
 dotenvy = "0.15.7"

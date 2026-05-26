@@ -33,6 +33,7 @@ impl SettingsSection {
 pub struct SettingsState {
     pub section_index: usize,
     pub row_index: usize,
+    pub row_scroll: usize,
     pub nested_network: Option<u64>,
     pub notice: Option<String>,
 }
@@ -42,6 +43,7 @@ impl SettingsState {
         Self {
             section_index: 0,
             row_index: 0,
+            row_scroll: 0,
             nested_network: None,
             notice: None,
         }
@@ -55,6 +57,7 @@ impl SettingsState {
         let next = self.section_index as i32 + delta;
         self.section_index = next.clamp(0, SettingsSection::ALL.len() as i32 - 1) as usize;
         self.row_index = 0;
+        self.row_scroll = 0;
         self.nested_network = None;
     }
 
