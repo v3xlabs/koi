@@ -94,7 +94,7 @@ impl Loader {
         }
     }
 
-    pub fn spawn_refresh_all(&self, generation: u64) {
+    pub fn spawn_refresh_all(&self, generation: u64, fresh_balances: bool) {
         let client = self.client.clone();
         let tx = self.tx.clone();
 
@@ -181,7 +181,13 @@ impl Loader {
             }
 
             for account_id in account_ids {
-                spawn_balance_fetch(client.clone(), tx.clone(), generation, account_id);
+                spawn_balance_fetch(
+                    client.clone(),
+                    tx.clone(),
+                    generation,
+                    account_id,
+                    fresh_balances,
+                );
             }
 
             spawn_settings_fetch(client.clone(), tx.clone(), generation, network_ids);
@@ -189,7 +195,13 @@ impl Loader {
     }
 
     pub fn spawn_balance(&self, generation: u64, account_id: u64) {
-        spawn_balance_fetch(self.client.clone(), self.tx.clone(), generation, account_id);
+        spawn_balance_fetch(
+            self.client.clone(),
+            self.tx.clone(),
+            generation,
+            account_id,
+            true,
+        );
     }
 
     pub fn spawn_defi(&self, generation: u64, account_id: u64, holder: String) {
@@ -414,15 +426,10 @@ fn spawn_balance_fetch(
     tx: mpsc::UnboundedSender<BackgroundUpdate>,
     generation: u64,
     account_id: u64,
+    fresh: bool,
 ) {
-    let _ = tx.send(BackgroundUpdate::Balance {
-        generation,
-        account_id,
-        state: ResourceState::Loading,
-    });
-
     tokio::spawn(async move {
-        let state = match client.account_balances(account_id).await {
+        let state = match client.account_balances(account_id, fresh).await {
             Ok(balances) => ResourceState::Ready(balances),
             Err(error) => ResourceState::Error(error.to_string()),
         };

@@ -12,7 +12,7 @@ ui:
 openapi:
     cd crates/web && pnpm openapi
 dev:
-    cd crates/bin && cargo run
+    cd crates/bin && cargo run -- serve
 tui:
     cd crates/bin && cargo run -- tui
 

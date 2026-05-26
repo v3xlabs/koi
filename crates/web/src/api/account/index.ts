@@ -1,4 +1,5 @@
 import { queryClient } from "../client";
+import { api } from "../index";
 import { createApi, createApiMutation } from "../query";
 import { components } from "../schema.gen";
 
@@ -12,6 +13,19 @@ export const accountKeys = {
     assets: (account_identity: number | string) => ["account", account_identity.toString(), "assets"] as const,
     balances: (account_identity: number | string, display_currency: string) => ["account", account_identity.toString(), "balances", display_currency] as const,
 };
+
+export function accountBalanceQuery(
+    account_identity: number | string,
+    display_currency: string,
+) {
+    return {
+        path: { account_identity: Number(account_identity) },
+        query: {
+            display_currency,
+            fresh: false,
+        },
+    } as const;
+}
 
 export const useAccount = createApi("/acc/{account_identity}", "get", options => accountKeys.detail(options.path.account_identity));
 export const useAccounts = createApi("/acc", "get", () => accountKeys.all, {
@@ -57,3 +71,27 @@ export const useRemoveAccountAsset = createApiMutation("/acc/{account_identity}/
 });
 
 export const useAccountBalances = createApi("/acc/{account_identity}/balances", "get", options => accountKeys.balances(options.path.account_identity, options.query.display_currency));
+
+export async function refreshAccountBalances(options: {
+    path: { account_identity: number | string; };
+    query: { display_currency: string; };
+}) {
+    const response = await api("/acc/{account_identity}/balances", "get", {
+        path: { account_identity: Number(options.path.account_identity) },
+        query: {
+            display_currency: options.query.display_currency,
+            fresh: true,
+        },
+    });
+
+    if (response.status !== 200) {
+        throw new Error(response.status.toString());
+    }
+
+    queryClient.setQueryData(
+        accountKeys.balances(options.path.account_identity, options.query.display_currency),
+        response.data,
+    );
+
+    return response.data;
+}

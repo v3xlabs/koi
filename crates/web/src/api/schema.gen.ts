@@ -319,6 +319,7 @@ export type paths = {
             parameters: {
                 query: {
                     display_currency: string;
+                    fresh?: boolean;
                 };
                 header?: never;
                 path: {

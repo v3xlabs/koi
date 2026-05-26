@@ -1,6 +1,6 @@
 import { Component } from "solid-js";
 
-import { useAccountBalances } from "#/api/account";
+import { accountBalanceQuery, useAccountBalances } from "#/api/account";
 import { useDisplayCurrency } from "#/api/context";
 
 import { AssetAmount } from "../asset/amount";
@@ -11,7 +11,7 @@ export type AccountBalanceProps = {
 
 export const AccountBalance: Component<AccountBalanceProps> = (props) => {
     const { displayCurrency } = useDisplayCurrency();
-    const balanceQuery = useAccountBalances(() => ({ path: { account_identity: props.account_identity }, query: { display_currency: displayCurrency() } }));
+    const balanceQuery = useAccountBalances(() => accountBalanceQuery(props.account_identity, displayCurrency()));
 
     return (
         <AssetAmount amount={() => BigInt(balanceQuery.data?.total_quote ?? 0)} asset={displayCurrency} />

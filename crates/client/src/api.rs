@@ -74,9 +74,9 @@ impl ApiClient {
         Ok(response.accounts)
     }
 
-    pub async fn account_balances(&self, account_identity: u64) -> Result<AccountBalances> {
+    pub async fn account_balances(&self, account_identity: u64, fresh: bool) -> Result<AccountBalances> {
         self.get(&format!(
-            "/acc/{account_identity}/balances?display_currency={DISPLAY_CURRENCY}"
+            "/acc/{account_identity}/balances?display_currency={DISPLAY_CURRENCY}&fresh={fresh}"
         ))
         .await
     }

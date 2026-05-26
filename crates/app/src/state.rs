@@ -11,7 +11,10 @@ use tracing::info;
 use crate::{
     error::KoiError,
     models::{
-        abi::AbiManager, network::manager::NetworkManager, quoter::man::QuoterManager,
+        abi::AbiManager,
+        account::balance_cache::BalanceCacheManager,
+        network::manager::NetworkManager,
+        quoter::man::QuoterManager,
         vendor::man::VendorManager,
     },
 };
@@ -48,6 +51,7 @@ pub struct State {
     pub database: SqlitePool,
     pub networks: NetworkManager,
     pub quoters: QuoterManager,
+    pub balances: BalanceCacheManager,
     pub vendors: VendorManager,
     pub abis: AbiManager,
 }
@@ -66,11 +70,13 @@ impl State {
         let vendors = VendorManager::init(&database).await?;
         let networks = NetworkManager::default();
         let quoters = QuoterManager::init(&database).await?;
+        let balances = BalanceCacheManager::new();
         let abis = AbiManager::new(config.abi_cache_dir.clone().into());
 
         Ok(Arc::new(State {
             networks,
             quoters,
+            balances,
             vendors,
             abis,
             database,

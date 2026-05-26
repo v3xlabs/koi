@@ -5,7 +5,7 @@ import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getS
 import { FiChevronRight, FiChevronUp } from "solid-icons/fi";
 import { Component, createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
-import { useAccountAssets, useAccountBalances } from "#/api/account";
+import { useAccountAssets, accountBalanceQuery, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency, usePrivacyMode } from "#/api/context";
 import { button } from "#/components/input/button";
@@ -97,7 +97,7 @@ const AccountAssetSummaryInner: Component<{ account_identity: number; }> = ({ ac
     }));
 
     const { displayCurrency } = useDisplayCurrency();
-    const accountBalancesQuery = useAccountBalances(() => ({ path: { account_identity }, query: { display_currency: displayCurrency() } }));
+    const accountBalancesQuery = useAccountBalances(() => accountBalanceQuery(account_identity, displayCurrency()));
     const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
 
     const data = createMemo(() => bulk.flatMap((asset): Data[] => {

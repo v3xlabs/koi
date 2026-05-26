@@ -1,6 +1,6 @@
 import { Component, createMemo, For, Show, Suspense } from "solid-js";
 
-import { useAccount, useAccountBalances } from "#/api/account";
+import { useAccount, accountBalanceQuery, useAccountBalances } from "#/api/account";
 import { useDisplayCurrency } from "#/api/context";
 import { truncateAddress } from "#/utils/address";
 import { narrow } from "#/utils/narrow";
@@ -16,7 +16,7 @@ export type AccountPreviewProperties = {
 
 const InlineBalance: Component<{ account_identity: number; }> = (props) => {
     const { displayCurrency } = useDisplayCurrency();
-    const accountQuery = useAccountBalances(() => ({ path: { account_identity: props.account_identity }, query: { display_currency: displayCurrency() } }));
+    const accountQuery = useAccountBalances(() => accountBalanceQuery(props.account_identity, displayCurrency()));
 
     const totalBalance = createMemo(() => accountQuery.data?.total_quote ?? 0);
 

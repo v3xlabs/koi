@@ -39,7 +39,7 @@ pub async fn run(api_url: String) -> Result<()> {
 
     let mut app = App::new();
     let generation = prepare_refresh_all(&mut app);
-    loader.spawn_refresh_all(generation);
+    loader.spawn_refresh_all(generation, false);
     spawn_input_task(input_tx);
     terminal.draw(|frame| ui::render(frame, &mut app))?;
 
@@ -81,7 +81,7 @@ async fn run_loop(
                         KeyAction::Quit => break,
                         KeyAction::RefreshAll => {
                             let generation = prepare_refresh_all(app);
-                            loader.spawn_refresh_all(generation);
+                            loader.spawn_refresh_all(generation, true);
                         }
                         KeyAction::RefreshAccountData(account_id) => {
                             app.prepare_balance_fetch(account_id);
@@ -171,7 +171,7 @@ async fn run_loop(
             _ = tick.tick() => {
                 if app.needs_refresh() {
                     let generation = prepare_refresh_all(app);
-                    loader.spawn_refresh_all(generation);
+                    loader.spawn_refresh_all(generation, false);
                     dirty = true;
                 }
             }

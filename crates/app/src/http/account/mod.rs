@@ -219,13 +219,17 @@ impl AccountApi {
         state: Data<&AppState>,
         account_identity: Path<AccountIdentity>,
         display_currency: Query<AssetIdentity>,
+        fresh: Query<Option<bool>>,
     ) -> Result<Json<AccountBalances>> {
         let _auth_data = auth.unwrap()?;
 
         let account = Account::get_by_id(&state.database, account_identity.0).await?;
 
         Ok(Json(
-            account.get_balances(&state, &display_currency.0).await?,
+            state
+                .balances
+                .get_balances(&state, &account, &display_currency.0, fresh.0.unwrap_or(false))
+                .await?,
         ))
     }
 }

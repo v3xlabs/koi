@@ -5,7 +5,7 @@ import { FaSolidRefresh } from "solid-icons/fa";
 import { FiArrowUpRight, FiChevronUp } from "solid-icons/fi";
 import { Component, createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
-import { useAccountAssets, useAccountBalances } from "#/api/account";
+import { useAccountAssets, accountBalanceQuery, refreshAccountBalances, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency, usePrivacyMode } from "#/api/context";
 import { AssetAmount } from "#/components/asset/amount";
@@ -167,8 +167,21 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
         queries: assetQueries(),
     }));
 
-    const accountBalancesQuery = useAccountBalances(() => ({ path: { account_identity }, query: { display_currency: displayCurrency() } }));
+    const accountBalancesQuery = useAccountBalances(() => accountBalanceQuery(account_identity, displayCurrency()));
     const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
+    const [refreshingBalances, setRefreshingBalances] = createSignal(false);
+
+    const refreshBalances = async () => {
+        setRefreshingBalances(true);
+        try {
+            await refreshAccountBalances({
+                path: { account_identity },
+                query: { display_currency: displayCurrency() },
+            });
+        } finally {
+            setRefreshingBalances(false);
+        }
+    };
 
     const totalValue = createMemo(() => BigInt(accountBalancesQuery.data?.total_quote ?? 0));
 
@@ -224,14 +237,14 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                                 <FormattedTime value={accountBalancesQuery.data?.updated_at} prefix="Updated " />
                             </span>
                         </Suspense>
-                        <Show when={!accountBalancesQuery.isLoading}>
+                        <Show when={!accountBalancesQuery.isLoading || accountBalancesQuery.data}>
                             <button
                               class={button({ variant: "ghost", size: "small", square: true })}
-                              onClick={() => accountBalancesQuery.refetch()}
+                              onClick={() => { void refreshBalances(); }}
                             >
                                 <FaSolidRefresh classList={{
                                     "size-3.5": true,
-                                    "animate-spin": accountBalancesQuery.isRefetching,
+                                    "animate-spin": refreshingBalances(),
                                 }}
                                 />
                             </button>

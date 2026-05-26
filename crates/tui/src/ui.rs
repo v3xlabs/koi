@@ -177,8 +177,11 @@ fn render_accounts_list(frame: &mut Frame, app: &App, area: Rect) {
             .skip(start)
             .take(end.saturating_sub(start))
             .map(|(index, account)| {
-                let (balance_text, balance_style) =
-                    balance_cell(app.balance_state(account.account_identity.0));
+                let (balance_text, balance_style) = balance_cell(
+                    app,
+                    account.account_identity.0,
+                    app.balance_state(account.account_identity.0),
+                );
 
                 let row_style = if index == app.list_index {
                     Style::default().bg(Color::DarkGray).fg(Color::White)
@@ -233,7 +236,11 @@ fn render_selected_account_preview(frame: &mut Frame, app: &App, area: Rect) {
         return;
     };
 
-    let (balance, balance_style) = balance_cell(app.balance_state(account.account_identity.0));
+    let (balance, balance_style) = balance_cell(
+        app,
+        account.account_identity.0,
+        app.balance_state(account.account_identity.0),
+    );
     let mut lines = vec![
         Line::from(Span::styled(
             account.name.clone(),
@@ -719,23 +726,20 @@ fn render_account_detail(frame: &mut Frame, app: &App, area: Rect) {
     let account_id = account.account_identity.0;
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(28), Constraint::Min(0)])
+        .constraints([Constraint::Length(26), Constraint::Min(0)])
         .split(area);
 
-    let (balance_label, balance_amount_style) = balance_cell(app.balance_state(account_id));
+    let (balance_label, balance_amount_style) =
+        balance_cell(app, account_id, app.balance_state(account_id));
 
     let pages = [
         (AccountPanel::Overview, "h", "Overview"),
         (AccountPanel::Assets, "a", "Assets"),
-        (AccountPanel::Defi, "d", "Defi"),
-        (AccountPanel::Transactions, "t", "Transactions"),
+        (AccountPanel::Defi, "d", "DeFi"),
+        (AccountPanel::Transactions, "t", "Tx"),
     ];
 
     let mut sidebar_lines = vec![
-        Line::from(Span::styled(
-            account.name.clone(),
-            Style::default().add_modifier(Modifier::BOLD),
-        )),
         Line::from(Span::styled(
             truncate_address(&account.metadata),
             Style::default().fg(Color::DarkGray),
@@ -748,11 +752,14 @@ fn render_account_detail(frame: &mut Frame, app: &App, area: Rect) {
             Span::styled("Balance ", Style::default().fg(Color::DarkGray)),
             Span::styled(
                 balance_label,
-                balance_amount_style.patch(balance_sidebar_style(app.balance_state(account_id))),
+                balance_amount_style.patch(balance_sidebar_style(
+                    app,
+                    account_id,
+                    app.balance_state(account_id),
+                )),
             ),
         ]),
         Line::from(""),
-        Line::from(Span::styled("Pages", Style::default().fg(Color::DarkGray))),
     ];
 
     for (panel, key, label) in pages {
@@ -765,46 +772,44 @@ fn render_account_detail(frame: &mut Frame, app: &App, area: Rect) {
                 .fg(Color::Cyan)
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default()
+            Style::default().fg(Color::DarkGray)
         };
         sidebar_lines.push(Line::from(Span::styled(
-            format!(" {} {key}:{label}", if selected { "›" } else { " " }),
+            format!(" {key}:{label}{}", if selected { " ›" } else { "" }),
             style,
         )));
     }
 
+    let sidebar_focus = if app.account_focus == AccountFocus::Sidebar {
+        Style::default().fg(Color::Cyan)
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
     sidebar_lines.extend([
         Line::from(""),
-        Line::from(Span::styled(
-            "← sidebar · → content",
-            Style::default().fg(Color::DarkGray),
-        )),
-        Line::from(Span::styled(
-            "↑/↓ choose page",
-            Style::default().fg(Color::DarkGray),
-        )),
+        Line::from(Span::styled("←→ focus pane", sidebar_focus)),
+        Line::from(Span::styled("↑↓ select page", Style::default().fg(Color::DarkGray))),
     ]);
 
-    let sidebar_title = if app.account_focus == AccountFocus::Sidebar {
-        " Account · focus "
-    } else {
-        " Account "
-    };
+    let sidebar_title = truncate(&account.name, 20);
 
     frame.render_widget(
         Paragraph::new(sidebar_lines)
             .wrap(Wrap { trim: true })
-            .block(Block::default().borders(Borders::ALL).title(sidebar_title)),
+            .block({
+                let mut block = Block::default()
+                    .borders(Borders::ALL)
+                    .title(format!(" {sidebar_title} "));
+                if app.account_focus == AccountFocus::Sidebar {
+                    block = block.border_style(Style::default().fg(Color::Cyan));
+                }
+                block
+            }),
         chunks[0],
     );
 
-    let content_title = if app.account_focus == AccountFocus::Content {
-        format!(" {} · focus ", account_panel_title(app.account_panel))
-    } else {
-        format!(" {} ", account_panel_title(app.account_panel))
-    };
-
-    let content = Block::default().borders(Borders::ALL).title(content_title);
+    let content_title = account_content_title(app, account_id);
+    let content = account_content_block(&content_title, app.account_focus == AccountFocus::Content);
     let inner = content.inner(chunks[1]);
     frame.render_widget(content, chunks[1]);
 
@@ -816,19 +821,59 @@ fn render_account_detail(frame: &mut Frame, app: &App, area: Rect) {
     }
 }
 
+fn account_content_block(title: &str, focused: bool) -> Block<'_> {
+    let mut block = Block::default().borders(Borders::ALL).title(format!(" {title} "));
+    if focused {
+        block = block.border_style(Style::default().fg(Color::Cyan));
+    }
+    block
+}
+
+fn account_content_title(app: &App, account_id: u64) -> String {
+    let panel = account_panel_title(app.account_panel);
+    let detail = match app.account_panel {
+        AccountPanel::Defi => match app.defi_state(account_id) {
+            Some(ResourceState::Ready(result)) if !result.errors.is_empty() => {
+                format!(" · {} warning(s)", result.errors.len())
+            }
+            Some(ResourceState::Ready(result)) => {
+                format!(" · {} position(s)", result.positions.len())
+            }
+            _ => String::new(),
+        },
+        AccountPanel::Transactions => match app.tx_state(account_id) {
+            Some(ResourceState::Ready(transactions)) => format!(" · {} tx", transactions.len()),
+            _ => String::new(),
+        },
+        AccountPanel::Overview | AccountPanel::Assets => String::new(),
+    };
+    format!("{panel}{detail}")
+}
+
 fn account_panel_title(panel: AccountPanel) -> &'static str {
     match panel {
         AccountPanel::Overview => "Overview",
         AccountPanel::Assets => "Assets",
-        AccountPanel::Defi => "Defi",
+        AccountPanel::Defi => "DeFi",
         AccountPanel::Transactions => "Transactions",
     }
+}
+
+fn render_horizontal_rule(frame: &mut Frame, area: Rect) {
+    let width = area.width.saturating_sub(1) as usize;
+    frame.render_widget(
+        Paragraph::new(Line::from(Span::styled(
+            "─".repeat(width.max(1)),
+            Style::default().fg(Color::DarkGray),
+        ))),
+        area,
+    );
 }
 
 fn render_account_overview(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(6), Constraint::Min(0)])
+        .constraints([Constraint::Length(5), Constraint::Length(1), Constraint::Min(0)])
         .split(area);
 
     let state = app.balance_state(account_identity);
@@ -886,18 +931,24 @@ fn render_account_overview(frame: &mut Frame, app: &App, account_identity: u64, 
     }
 
     summary_lines.push(Line::from(Span::styled(
-        format!("Updated {updated}"),
+        if app.is_balance_refreshing(account_identity) {
+            format!("Updated {updated} · refreshing")
+        } else {
+            format!("Updated {updated}")
+        },
         Style::default().fg(Color::DarkGray),
     )));
 
-    let summary = Paragraph::new(summary_lines)
-        .block(Block::default().borders(Borders::ALL).title(" Dashboard "));
-
-    frame.render_widget(summary, chunks[0]);
-    render_account_assets(frame, app, account_identity, chunks[1]);
+    frame.render_widget(Paragraph::new(summary_lines), chunks[0]);
+    render_horizontal_rule(frame, chunks[1]);
+    render_account_asset_table(frame, app, account_identity, chunks[2]);
 }
 
 fn render_account_assets(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
+    render_account_asset_table(frame, app, account_identity, area);
+}
+
+fn render_account_asset_table(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
     let state = app.balance_state(account_identity);
 
     let table_rows: Vec<Row> = match state {
@@ -933,12 +984,7 @@ fn render_account_assets(frame: &mut Frame, app: &App, account_identity: u64, ar
     )
     .header(
         Row::new(vec!["Asset", "Balance", "Value", "24h"])
-            .style(Style::default().add_modifier(Modifier::BOLD)),
-    )
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(" Asset overview "),
+            .style(Style::default().add_modifier(Modifier::BOLD).fg(Color::DarkGray)),
     )
     .column_spacing(2);
 
@@ -947,6 +993,38 @@ fn render_account_assets(frame: &mut Frame, app: &App, account_identity: u64, ar
 
 fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
     let state = app.defi_state(account_identity);
+    let show_notice = matches!(
+        state,
+        Some(ResourceState::Ready(result)) if !result.errors.is_empty()
+    );
+    let chunks = if show_notice {
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(1), Constraint::Min(0)])
+            .split(area)
+    } else {
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Min(0)])
+            .split(area)
+    };
+
+    if show_notice {
+        if let Some(ResourceState::Ready(result)) = state {
+            frame.render_widget(
+                Paragraph::new(Line::from(Span::styled(
+                    format!(
+                        "{} protocol warning(s) — some positions may be missing",
+                        result.errors.len()
+                    ),
+                    Style::default().fg(Color::Yellow),
+                ))),
+                chunks[0],
+            );
+        }
+    }
+
+    let table_area = if show_notice { chunks[1] } else { chunks[0] };
 
     let rows: Vec<Row> = match state {
         None | Some(ResourceState::Idle) => vec![Row::new(vec![
@@ -979,13 +1057,6 @@ fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area
         Some(ResourceState::Ready(result)) => defi_rows(result),
     };
 
-    let title = match state {
-        Some(ResourceState::Ready(result)) if !result.errors.is_empty() => {
-            format!(" DeFi positions · {} warning(s) ", result.errors.len())
-        }
-        _ => " DeFi positions ".to_string(),
-    };
-
     let table = Table::new(
         rows,
         [
@@ -1008,12 +1079,11 @@ fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area
             "APR",
             "7d earned",
         ])
-        .style(Style::default().add_modifier(Modifier::BOLD)),
+        .style(Style::default().add_modifier(Modifier::BOLD).fg(Color::DarkGray)),
     )
-    .block(Block::default().borders(Borders::ALL).title(title))
     .column_spacing(2);
 
-    frame.render_widget(table, area);
+    frame.render_widget(table, table_area);
 }
 
 fn render_account_transactions(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
@@ -1047,13 +1117,6 @@ fn render_account_transactions(frame: &mut Frame, app: &App, account_identity: u
         Some(ResourceState::Ready(transactions)) => transaction_rows(transactions),
     };
 
-    let title = match state {
-        Some(ResourceState::Ready(transactions)) => {
-            format!(" Transaction history · {} tx ", transactions.len())
-        }
-        _ => " Transaction history ".to_string(),
-    };
-
     let table = Table::new(
         rows,
         [
@@ -1067,9 +1130,8 @@ fn render_account_transactions(frame: &mut Frame, app: &App, account_identity: u
     )
     .header(
         Row::new(vec!["Nonce", "Status", "Date", "Action", "Target", "Hash"])
-            .style(Style::default().add_modifier(Modifier::BOLD)),
+            .style(Style::default().add_modifier(Modifier::BOLD).fg(Color::DarkGray)),
     )
-    .block(Block::default().borders(Borders::ALL).title(title))
     .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -1267,7 +1329,7 @@ fn render_footer(frame: &mut Frame, app: &App, area: Rect) {
             "form  ↑↓ field · Tab next · Enter save · Esc cancel"
         }
     } else if app.selected_account.is_some() {
-        "account workspace  ← sidebar  → content  ↑↓ choose page in sidebar  h/a/d/t jump  r refresh  b back  q quit"
+        "account  ←→ focus pane  ↑↓ page  h/a/d/t jump  r refresh  b back  q quit"
     } else if app.tab == Tab::Assets {
         "assets workspace  ↑↓/jk row  PgUp/PgDn scroll  n add  x delete  r reload  q quit"
     } else if app.tab == Tab::Prices {
@@ -1293,7 +1355,11 @@ fn render_footer(frame: &mut Frame, app: &App, area: Rect) {
     );
 }
 
-fn balance_cell(state: Option<&ResourceState<AccountBalances>>) -> (String, Style) {
+fn balance_cell(
+    app: &App,
+    account_id: u64,
+    state: Option<&ResourceState<AccountBalances>>,
+) -> (String, Style) {
     match state {
         None | Some(ResourceState::Idle) => ("—".to_string(), Style::default()),
         Some(ResourceState::Loading) => ("…".to_string(), Style::default().fg(Color::Yellow)),
@@ -1306,17 +1372,23 @@ fn balance_cell(state: Option<&ResourceState<AccountBalances>>) -> (String, Styl
                     text: "—".to_string(),
                     style: super::format::AmountStyle::Normal,
                 });
-            let style = formatted.ratatui_style();
+            let style = if app.is_balance_refreshing(account_id) {
+                Style::default().fg(Color::Yellow)
+            } else {
+                formatted.ratatui_style()
+            };
             (formatted.text, style)
         }
         Some(ResourceState::Error(_)) => ("error".to_string(), Style::default().fg(Color::Red)),
     }
 }
 
-fn balance_sidebar_style(state: Option<&ResourceState<AccountBalances>>) -> Style {
+fn balance_sidebar_style(app: &App, account_id: u64, state: Option<&ResourceState<AccountBalances>>) -> Style {
     match state {
         Some(ResourceState::Error(_)) => Style::default().fg(Color::Red),
-        Some(ResourceState::Loading) => Style::default().fg(Color::Yellow),
+        Some(ResourceState::Loading) | _ if app.is_balance_refreshing(account_id) => {
+            Style::default().fg(Color::Yellow)
+        }
         _ => Style::default().fg(Color::Green),
     }
 }

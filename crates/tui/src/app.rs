@@ -67,6 +67,7 @@ pub struct App {
     pub assets: HashMap<String, Asset>,
     pub rpc_states: HashMap<u64, ResourceState<RpcPoolStats>>,
     pub balance_states: HashMap<u64, ResourceState<AccountBalances>>,
+    balance_refreshing: HashSet<u64>,
     pub defi_states: HashMap<u64, ResourceState<DefiResult>>,
     pub tx_states: HashMap<u64, ResourceState<Vec<Tx>>>,
     pub settings: SettingsState,
@@ -96,6 +97,7 @@ impl App {
             assets: HashMap::new(),
             rpc_states: HashMap::new(),
             balance_states: HashMap::new(),
+            balance_refreshing: HashSet::new(),
             defi_states: HashMap::new(),
             tx_states: HashMap::new(),
             settings: SettingsState::new(),
@@ -142,9 +144,13 @@ impl App {
             self.rpc_states
                 .insert(network.network_identity.0, ResourceState::Loading);
         }
-        for account in &self.accounts {
-            self.balance_states
-                .insert(account.account_identity.0, ResourceState::Loading);
+        let account_ids: Vec<u64> = self
+            .accounts
+            .iter()
+            .map(|account| account.account_identity.0)
+            .collect();
+        for account_id in account_ids {
+            self.prepare_balance_fetch(account_id);
         }
 
         self.refresh_generation
@@ -207,10 +213,13 @@ impl App {
                     .retain(|account_id, _| account_ids.contains(account_id));
                 self.tx_states
                     .retain(|account_id, _| account_ids.contains(account_id));
-                for account in &self.accounts {
-                    self.balance_states
-                        .entry(account.account_identity.0)
-                        .or_insert(ResourceState::Loading);
+                let account_ids: Vec<u64> = self
+                    .accounts
+                    .iter()
+                    .map(|account| account.account_identity.0)
+                    .collect();
+                for account_id in account_ids {
+                    self.prepare_balance_fetch(account_id);
                 }
                 self.update_status();
             }
@@ -280,12 +289,14 @@ impl App {
                     return;
                 }
                 self.balance_states.insert(account_id, state);
+                self.balance_refreshing.remove(&account_id);
                 self.update_status();
 
                 let pending = self
                     .balance_states
                     .values()
                     .any(|state| matches!(state, ResourceState::Loading))
+                    || !self.balance_refreshing.is_empty()
                     || self
                         .rpc_states
                         .values()
@@ -357,6 +368,7 @@ impl App {
             .balance_states
             .values()
             .any(|state| matches!(state, ResourceState::Loading))
+            || !self.balance_refreshing.is_empty()
             || self
                 .rpc_states
                 .values()
@@ -369,8 +381,19 @@ impl App {
     }
 
     pub fn prepare_balance_fetch(&mut self, account_id: u64) {
-        self.balance_states
-            .insert(account_id, ResourceState::Loading);
+        if matches!(
+            self.balance_states.get(&account_id),
+            Some(ResourceState::Ready(_))
+        ) {
+            self.balance_refreshing.insert(account_id);
+        } else {
+            self.balance_states
+                .insert(account_id, ResourceState::Loading);
+        }
+    }
+
+    pub fn is_balance_refreshing(&self, account_id: u64) -> bool {
+        self.balance_refreshing.contains(&account_id)
     }
 
     pub fn prepare_defi_fetch(&mut self, account_id: u64) {

@@ -12,6 +12,7 @@ use crate::{
     state::DB,
 };
 
+pub mod balance_cache;
 pub mod balances;
 pub mod identity;
 pub mod metadata;

@@ -106,7 +106,7 @@ async fn quote_nom(
 }
 
 impl Account {
-    pub async fn get_balances(
+    pub async fn fetch_balances(
         &self,
         state: &AppState,
         asset_out: &AssetIdentity,
