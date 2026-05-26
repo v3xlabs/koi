@@ -175,13 +175,10 @@ console.log("Koi GUI diagnostics:", {
   mediaDevices: typeof navigator.mediaDevices
 });
 window.addEventListener("error", (event) => {
-  document.body.innerHTML = `<pre style="white-space: pre-wrap; padding: 24px; color: #ffb4b4; background: #111; min-height: 100vh;">Koi GUI JavaScript error:
-${event.message}
-${event.filename}:${event.lineno}:${event.colno}</pre>`;
+  console.error("Koi GUI JavaScript error:", event.message, event.filename, event.lineno, event.colno, event.error);
 });
 window.addEventListener("unhandledrejection", (event) => {
-  document.body.innerHTML = `<pre style="white-space: pre-wrap; padding: 24px; color: #ffb4b4; background: #111; min-height: 100vh;">Koi GUI unhandled promise rejection:
-${event.reason?.stack ?? event.reason}</pre>`;
+  console.error("Koi GUI unhandled promise rejection:", event.reason);
 });
 "#;
 

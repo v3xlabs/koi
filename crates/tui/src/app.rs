@@ -445,7 +445,10 @@ impl App {
                             KeyAction::RefreshAccountData(account_id)
                         }
                     }
-                } else if matches!(self.tab, Tab::Assets | Tab::Prices | Tab::Networks | Tab::Settings) {
+                } else if matches!(
+                    self.tab,
+                    Tab::Assets | Tab::Prices | Tab::Networks | Tab::Settings
+                ) {
                     KeyAction::RefreshSettings
                 } else {
                     self.dirty = true;
@@ -545,7 +548,10 @@ impl App {
                 self.account_panel = AccountPanel::Transactions;
                 self.account_focus = AccountFocus::Sidebar;
                 let account_id = self.selected_account.unwrap();
-                if matches!(self.tx_states.get(&account_id), Some(ResourceState::Ready(_))) {
+                if matches!(
+                    self.tx_states.get(&account_id),
+                    Some(ResourceState::Ready(_))
+                ) {
                     KeyAction::None
                 } else {
                     KeyAction::RefreshTransactions(account_id)
@@ -646,18 +652,12 @@ impl App {
             }
             FormAction::SubmitCreateAsset(asset) => {
                 self.form = None;
-                self.settings.notice = Some(format!(
-                    "Creating asset {}…",
-                    asset.asset_identity
-                ));
+                self.settings.notice = Some(format!("Creating asset {}…", asset.asset_identity));
                 KeyAction::CreateAsset(asset)
             }
             FormAction::SubmitCreateNetwork(network) => {
                 self.form = None;
-                self.settings.notice = Some(format!(
-                    "Creating network {}…",
-                    network.network_name
-                ));
+                self.settings.notice = Some(format!("Creating network {}…", network.network_name));
                 KeyAction::CreateNetwork(network)
             }
             FormAction::SubmitCreateEndpoint(endpoint) => {
@@ -691,12 +691,18 @@ impl App {
 
         match self.account_panel {
             AccountPanel::Defi
-                if !matches!(self.defi_states.get(&account_id), Some(ResourceState::Ready(_))) =>
+                if !matches!(
+                    self.defi_states.get(&account_id),
+                    Some(ResourceState::Ready(_))
+                ) =>
             {
                 KeyAction::RefreshDefi(account_id)
             }
             AccountPanel::Transactions
-                if !matches!(self.tx_states.get(&account_id), Some(ResourceState::Ready(_))) =>
+                if !matches!(
+                    self.tx_states.get(&account_id),
+                    Some(ResourceState::Ready(_))
+                ) =>
             {
                 KeyAction::RefreshTransactions(account_id)
             }
@@ -987,7 +993,11 @@ impl App {
 
     fn selected_vendor_toggle(&self) -> Option<(String, bool)> {
         let snapshot = self.settings_snapshot()?;
-        let flag = snapshot.all_vendors.get(self.settings.row_index)?.flag.to_string();
+        let flag = snapshot
+            .all_vendors
+            .get(self.settings.row_index)?
+            .flag
+            .to_string();
         let enabled = snapshot.enabled_vendors.contains(&flag);
         Some((flag, enabled))
     }
@@ -999,7 +1009,10 @@ impl App {
     }
 
     fn uses_resource_rows(&self) -> bool {
-        matches!(self.tab, Tab::Assets | Tab::Prices | Tab::Networks | Tab::Settings)
+        matches!(
+            self.tab,
+            Tab::Assets | Tab::Prices | Tab::Networks | Tab::Settings
+        )
     }
 }
 

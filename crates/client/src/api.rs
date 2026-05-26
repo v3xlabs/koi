@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use anyhow::{Context, Result};
 use koi::models::{
-    account::{balances::AccountBalances, Account},
-    asset::{metadata::AssetMetadataDiscovery, Asset},
-    network::{endpoint::NetworkEndpoint, pool::RpcPoolStats, Network},
+    account::{Account, balances::AccountBalances},
+    asset::{Asset, metadata::AssetMetadataDiscovery},
+    network::{Network, endpoint::NetworkEndpoint, pool::RpcPoolStats},
     quoter::Quoter,
     tx::Tx,
     vendor::flags::{VendorFlag, VendorFlagInfo},
@@ -95,11 +95,9 @@ impl ApiClient {
         self.get(&format!("/net/{network_identity}/rpc")).await
     }
 
-    pub async fn network_endpoints(
-        &self,
-        network_identity: u64,
-    ) -> Result<Vec<NetworkEndpoint>> {
-        self.get(&format!("/net/{network_identity}/endpoints")).await
+    pub async fn network_endpoints(&self, network_identity: u64) -> Result<Vec<NetworkEndpoint>> {
+        self.get(&format!("/net/{network_identity}/endpoints"))
+            .await
     }
 
     pub async fn delete_network_endpoint(
@@ -127,11 +125,8 @@ impl ApiClient {
         network_identity: u64,
         endpoint: &NetworkEndpoint,
     ) -> Result<NetworkEndpoint> {
-        self.post_json(
-            &format!("/net/{network_identity}/endpoints"),
-            endpoint,
-        )
-        .await
+        self.post_json(&format!("/net/{network_identity}/endpoints"), endpoint)
+            .await
     }
 
     pub async fn assets(&self) -> Result<HashMap<String, Asset>> {

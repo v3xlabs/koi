@@ -119,7 +119,12 @@ fn format_amount(raw: &str, decimals: u8, precision: u8, currency: bool) -> Disp
     }
 }
 
-fn format_fraction_with_whole(whole: u128, fraction: u128, precision: u8, currency: bool) -> String {
+fn format_fraction_with_whole(
+    whole: u128,
+    fraction: u128,
+    precision: u8,
+    currency: bool,
+) -> String {
     let whole_str = format_with_commas(whole);
     let precision = precision as usize;
     let frac_str = format!("{fraction:0precision$}");

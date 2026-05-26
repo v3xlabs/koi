@@ -2,16 +2,8 @@ use std::str::FromStr;
 
 use crossterm::event::KeyCode;
 use koi::models::{
-    asset::{
-        identity::AssetIdentity,
-        metadata::AssetMetadataDiscovery,
-        Asset,
-    },
-    network::{
-        endpoint::NetworkEndpoint,
-        identity::NetworkIdentity,
-        Network,
-    },
+    asset::{Asset, identity::AssetIdentity, metadata::AssetMetadataDiscovery},
+    network::{Network, endpoint::NetworkEndpoint, identity::NetworkIdentity},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -165,7 +157,9 @@ impl TextForm {
 
 #[derive(Debug)]
 pub enum ActiveForm {
-    AddAssetType { selected: usize },
+    AddAssetType {
+        selected: usize,
+    },
     AddAsset {
         asset_type: AssetType,
         form: TextForm,
@@ -175,7 +169,9 @@ pub enum ActiveForm {
         pending_identity: Option<String>,
         discovered_identity: Option<String>,
     },
-    AddNetworkMode { selected: usize },
+    AddNetworkMode {
+        selected: usize,
+    },
     AddNetwork(TextForm),
     AddNetworkPreset {
         presets: Vec<Network>,
@@ -245,14 +241,14 @@ impl ActiveForm {
     pub fn modal_dimensions(&self) -> (u16, u16) {
         match self {
             Self::AddAssetType { .. } => (46, 9),
-            Self::AddAsset { form, discovery, .. } => {
+            Self::AddAsset {
+                form, discovery, ..
+            } => {
                 let extra = usize::from(discovery.is_loading());
                 (74, (form.fields.len() + extra + 5).min(24) as u16)
             }
             Self::AddNetworkMode { .. } => (48, 9),
-            Self::AddNetworkPreset { presets, .. } => {
-                (74, (presets.len() + 5).min(20) as u16)
-            }
+            Self::AddNetworkPreset { presets, .. } => (74, (presets.len() + 5).min(20) as u16),
             Self::AddNetwork(form) => (58, (form.fields.len() + 5) as u16),
             Self::AddEndpoint { form, .. } => (62, (form.fields.len() + 5) as u16),
         }
@@ -319,11 +315,13 @@ impl ActiveForm {
                 }
                 KeyCode::Enter => presets
                     .get(*selected)
-                    .map(|network| FormAction::SubmitCreateNetwork(Network {
-                        network_identity: network.network_identity.clone(),
-                        network_name: network.network_name.clone(),
-                        network_icon_url: network.network_icon_url.clone(),
-                    }))
+                    .map(|network| {
+                        FormAction::SubmitCreateNetwork(Network {
+                            network_identity: network.network_identity.clone(),
+                            network_name: network.network_name.clone(),
+                            network_icon_url: network.network_icon_url.clone(),
+                        })
+                    })
                     .unwrap_or(FormAction::None),
                 _ => FormAction::None,
             },
@@ -345,9 +343,9 @@ impl ActiveForm {
                 pending_identity,
                 discovered_identity,
             ),
-            Self::AddNetwork(form) => {
-                handle_text_form(code, form, |form| build_network(form).map(FormAction::SubmitCreateNetwork))
-            }
+            Self::AddNetwork(form) => handle_text_form(code, form, |form| {
+                build_network(form).map(FormAction::SubmitCreateNetwork)
+            }),
             Self::AddEndpoint {
                 network_id,
                 next_id,
@@ -461,9 +459,9 @@ fn handle_add_asset_key(
                 hints,
             )
         }
-        KeyCode::Enter if form.can_submit() => {
-            build_asset(asset_type, form).map(FormAction::SubmitCreateAsset).unwrap_or(FormAction::None)
-        }
+        KeyCode::Enter if form.can_submit() => build_asset(asset_type, form)
+            .map(FormAction::SubmitCreateAsset)
+            .unwrap_or(FormAction::None),
         _ => FormAction::None,
     }
 }
@@ -652,11 +650,7 @@ fn asset_form(asset_type: AssetType) -> TextForm {
 fn network_form() -> TextForm {
     TextForm::new(
         "Add network · new",
-        vec![
-            ("Chain ID", true),
-            ("Name", true),
-            ("Icon URL", false),
-        ],
+        vec![("Chain ID", true), ("Name", true), ("Icon URL", false)],
     )
 }
 
@@ -666,7 +660,8 @@ fn build_asset(asset_type: AssetType, form: &TextForm) -> Option<Asset> {
         AssetType::Erc20 => {
             let network_id = form.field(0)?.trim().parse::<u64>().ok()?;
             let address = form.field(1)?.trim();
-            let identity = AssetIdentity::from_str(&format!("erc20:{network_id}:{address}")).ok()?;
+            let identity =
+                AssetIdentity::from_str(&format!("erc20:{network_id}:{address}")).ok()?;
             Some(Asset {
                 asset_identity: identity,
                 asset_name: form.field(2)?.trim().to_string(),
@@ -720,11 +715,7 @@ fn build_network(form: &TextForm) -> Option<Network> {
     })
 }
 
-fn build_endpoint(
-    network_id: u64,
-    next_id: i32,
-    form: &TextForm,
-) -> Option<NetworkEndpoint> {
+fn build_endpoint(network_id: u64, next_id: i32, form: &TextForm) -> Option<NetworkEndpoint> {
     let url = form.field(1)?.trim().to_string();
     if url.is_empty() {
         return None;

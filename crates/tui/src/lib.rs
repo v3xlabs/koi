@@ -14,14 +14,14 @@ use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use ratatui::{backend::CrosstermBackend, Terminal};
+use ratatui::{Terminal, backend::CrosstermBackend};
 use tokio::sync::mpsc;
 
-use koi_client::ApiClient;
 use app::{App, KeyAction};
-use loader::{prepare_refresh_all, BackgroundUpdate, Loader};
+use koi_client::ApiClient;
+use loader::{BackgroundUpdate, Loader, prepare_refresh_all};
 
 const TICK_MS: u64 = 50;
 
@@ -195,15 +195,17 @@ async fn run_loop(
 }
 
 fn spawn_input_task(tx: mpsc::UnboundedSender<KeyCode>) {
-    tokio::task::spawn_blocking(move || loop {
-        match event::read() {
-            Ok(Event::Key(key)) if key.kind == KeyEventKind::Press => {
-                if tx.send(key.code).is_err() {
-                    break;
+    tokio::task::spawn_blocking(move || {
+        loop {
+            match event::read() {
+                Ok(Event::Key(key)) if key.kind == KeyEventKind::Press => {
+                    if tx.send(key.code).is_err() {
+                        break;
+                    }
                 }
+                Ok(_) => {}
+                Err(_) => break,
             }
-            Ok(_) => {}
-            Err(_) => break,
         }
     });
 }

@@ -1,9 +1,9 @@
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap},
-    Frame,
 };
 
 use koi::models::{
@@ -15,7 +15,7 @@ use super::{
     app::{AccountFocus, AccountPanel, App, ResourceState, Tab},
     defi::DefiResult,
     form::{ActiveForm, AssetType, DiscoveryState, TextForm},
-    format::{format_token, format_usd, percent_change, DisplayAmount},
+    format::{DisplayAmount, format_token, format_usd, percent_change},
     scroll::visible_window,
     settings::SettingsSection,
 };
@@ -87,11 +87,7 @@ fn render_top_bar(frame: &mut Frame, app: &App, area: Rect) {
         nav_spans.push(Span::styled(format!(" {key}:{label} "), style));
     }
 
-    let status_text = format!(
-        "{} {}",
-        if app.connected { "●" } else { "○" },
-        status
-    );
+    let status_text = format!("{} {}", if app.connected { "●" } else { "○" }, status);
     let status_width = status_text.chars().count().saturating_add(2) as u16;
     let nav_width = area.width.saturating_sub(status_width).max(1);
 
@@ -218,14 +214,10 @@ fn render_accounts_list(frame: &mut Frame, app: &App, area: Rect) {
         Row::new(vec!["Name", "Type", "Address", "Balance"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(format!(
-                " Accounts {} ",
-                position_label(app.accounts.len(), app.list_index)
-            )),
-    )
+    .block(Block::default().borders(Borders::ALL).title(format!(
+        " Accounts {} ",
+        position_label(app.accounts.len(), app.list_index)
+    )))
     .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -234,11 +226,8 @@ fn render_accounts_list(frame: &mut Frame, app: &App, area: Rect) {
 fn render_selected_account_preview(frame: &mut Frame, app: &App, area: Rect) {
     let Some(account) = app.accounts.get(app.list_index) else {
         frame.render_widget(
-            Paragraph::new("No account selected").block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(" Preview "),
-            ),
+            Paragraph::new("No account selected")
+                .block(Block::default().borders(Borders::ALL).title(" Preview ")),
             area,
         );
         return;
@@ -255,7 +244,10 @@ fn render_selected_account_preview(frame: &mut Frame, app: &App, area: Rect) {
             Style::default().fg(Color::DarkGray),
         )),
         Line::from(""),
-        Line::from(Span::styled("Total balance", Style::default().fg(Color::DarkGray))),
+        Line::from(Span::styled(
+            "Total balance",
+            Style::default().fg(Color::DarkGray),
+        )),
         Line::from(Span::styled(
             balance,
             Style::default()
@@ -297,21 +289,21 @@ fn render_settings(frame: &mut Frame, app: &App, area: Rect) {
 
     let section_line = Line::from(
         SettingsSection::ALL
-        .iter()
-        .enumerate()
-        .map(|(index, section)| {
-            let selected = index == app.settings.section_index;
-            let style = if selected {
-                Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD)
-            } else {
-                Style::default().fg(Color::DarkGray)
-            };
+            .iter()
+            .enumerate()
+            .map(|(index, section)| {
+                let selected = index == app.settings.section_index;
+                let style = if selected {
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD)
+                } else {
+                    Style::default().fg(Color::DarkGray)
+                };
 
-            Span::styled(format!(" {} ", section.title()), style)
-        })
-        .collect::<Vec<_>>(),
+                Span::styled(format!(" {} ", section.title()), style)
+            })
+            .collect::<Vec<_>>(),
     );
 
     frame.render_widget(
@@ -362,13 +354,11 @@ fn render_settings_general(frame: &mut Frame, app: &App, area: Rect) {
     }
 
     frame.render_widget(
-        Paragraph::new(lines)
-            .wrap(Wrap { trim: true })
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(" General settings "),
-            ),
+        Paragraph::new(lines).wrap(Wrap { trim: true }).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(" General settings "),
+        ),
         area,
     );
 }
@@ -380,7 +370,10 @@ fn render_settings_networks(frame: &mut Frame, app: &App, area: Rect) {
     }
 
     let rows = if app.networks.is_empty() {
-        vec![Row::new(vec![Cell::from("No networks configured"), Cell::from("")])]
+        vec![Row::new(vec![
+            Cell::from("No networks configured"),
+            Cell::from(""),
+        ])]
     } else {
         let height = table_body_height(area);
         let (start, end) = visible_window(app.networks.len(), app.settings.row_scroll, height);
@@ -411,20 +404,19 @@ fn render_settings_networks(frame: &mut Frame, app: &App, area: Rect) {
             .collect()
     };
 
-    let table = Table::new(rows, [Constraint::Percentage(55), Constraint::Percentage(45)])
-        .header(
-            Row::new(vec!["Network", "RPC endpoints"])
-                .style(Style::default().add_modifier(Modifier::BOLD)),
-        )
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title(format!(
-                    " Networks · Enter endpoints · n add {} ",
-                    position_label(app.networks.len(), app.settings.row_index)
-                )),
-        )
-        .column_spacing(2);
+    let table = Table::new(
+        rows,
+        [Constraint::Percentage(55), Constraint::Percentage(45)],
+    )
+    .header(
+        Row::new(vec!["Network", "RPC endpoints"])
+            .style(Style::default().add_modifier(Modifier::BOLD)),
+    )
+    .block(Block::default().borders(Borders::ALL).title(format!(
+        " Networks · Enter endpoints · n add {} ",
+        position_label(app.networks.len(), app.settings.row_index)
+    )))
+    .column_spacing(2);
 
     frame.render_widget(table, area);
 }
@@ -443,8 +435,7 @@ fn render_settings_endpoints(frame: &mut Frame, app: &App, network_id: u64, area
         ])],
         Some(endpoints) => {
             let height = table_body_height(area);
-            let (start, end) =
-                visible_window(endpoints.len(), app.settings.row_scroll, height);
+            let (start, end) = visible_window(endpoints.len(), app.settings.row_scroll, height);
             endpoints
                 .iter()
                 .enumerate()
@@ -475,7 +466,7 @@ fn render_settings_endpoints(frame: &mut Frame, app: &App, network_id: u64, area
                     ])
                     .style(style)
                 })
-            .collect()
+                .collect()
         }
         None => vec![Row::new(vec![
             Cell::from("Loading endpoints…"),
@@ -500,17 +491,13 @@ fn render_settings_endpoints(frame: &mut Frame, app: &App, network_id: u64, area
         Row::new(vec!["ID", "Label", "Type", "Status", "URL"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(format!(
-                " Endpoints for network {network_id} · n add · x delete · b back {} ",
-                position_label(
-                    endpoints.map(|items| items.len()).unwrap_or(0),
-                    app.settings.row_index,
-                )
-            )),
-    )
+    .block(Block::default().borders(Borders::ALL).title(format!(
+        " Endpoints for network {network_id} · n add · x delete · b back {} ",
+        position_label(
+            endpoints.map(|items| items.len()).unwrap_or(0),
+            app.settings.row_index,
+        )
+    )))
     .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -537,17 +524,19 @@ fn render_settings_assets(frame: &mut Frame, app: &App, area: Rect) {
             .filter_map(|(index, identity)| {
                 let asset = app.assets.get(identity)?;
                 let selected = index == app.settings.row_index;
-                Some(Row::new(vec![
-                    Cell::from(format!(
-                        "{} {}",
-                        if selected { "›" } else { " " },
-                        asset.asset_symbol
-                    )),
-                    Cell::from(truncate(&asset.asset_name, 26)),
-                    Cell::from(asset.asset_decimals.to_string()),
-                    Cell::from(truncate(&asset.asset_identity.to_string(), 42)),
-                ])
-                .style(selected_row_style(selected)))
+                Some(
+                    Row::new(vec![
+                        Cell::from(format!(
+                            "{} {}",
+                            if selected { "›" } else { " " },
+                            asset.asset_symbol
+                        )),
+                        Cell::from(truncate(&asset.asset_name, 26)),
+                        Cell::from(asset.asset_decimals.to_string()),
+                        Cell::from(truncate(&asset.asset_identity.to_string(), 42)),
+                    ])
+                    .style(selected_row_style(selected)),
+                )
             })
             .collect()
     };
@@ -565,14 +554,10 @@ fn render_settings_assets(frame: &mut Frame, app: &App, area: Rect) {
         Row::new(vec!["Symbol", "Name", "Decimals", "Identity"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(format!(
-                " Assets · n add · x delete {} ",
-                position_label(identities.len(), app.settings.row_index)
-            )),
-    )
+    .block(Block::default().borders(Borders::ALL).title(format!(
+        " Assets · n add · x delete {} ",
+        position_label(identities.len(), app.settings.row_index)
+    )))
     .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -604,12 +589,12 @@ fn render_settings_price_feeds(frame: &mut Frame, app: &App, area: Rect) {
                             if selected { "›" } else { " " },
                             quoter.quoter_name
                         )),
-                        Cell::from(if quoter.enabled { "enabled" } else { "disabled" }),
-                        Cell::from(format!(
-                            "{} -> {}",
-                            quoter.token_a,
-                            quoter.token_b
-                        )),
+                        Cell::from(if quoter.enabled {
+                            "enabled"
+                        } else {
+                            "disabled"
+                        }),
+                        Cell::from(format!("{} -> {}", quoter.token_a, quoter.token_b)),
                         Cell::from(truncate(&quoter.quoter_identity, 16)),
                     ])
                     .style(selected_row_style(selected))
@@ -642,14 +627,10 @@ fn render_settings_price_feeds(frame: &mut Frame, app: &App, area: Rect) {
         Row::new(vec!["Name", "Status", "Pair", "ID"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(format!(
-                " Price feeds {} ",
-                position_label(quoter_count, app.settings.row_index)
-            )),
-    )
+    .block(Block::default().borders(Borders::ALL).title(format!(
+        " Price feeds {} ",
+        position_label(quoter_count, app.settings.row_index)
+    )))
     .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -677,16 +658,14 @@ fn render_settings_vendors(frame: &mut Frame, app: &App, area: Rect) {
                     let enabled = snapshot.enabled_vendors.contains(&flag);
                     let selected = index == app.settings.row_index;
                     Row::new(vec![
-                        Cell::from(format!(
-                            "{} {}",
-                            if selected { "›" } else { " " },
-                            flag
-                        )),
-                        Cell::from(if enabled { "enabled" } else { "disabled" }).style(if enabled {
-                            Style::default().fg(Color::Green)
-                        } else {
-                            Style::default().fg(Color::DarkGray)
-                        }),
+                        Cell::from(format!("{} {}", if selected { "›" } else { " " }, flag)),
+                        Cell::from(if enabled { "enabled" } else { "disabled" }).style(
+                            if enabled {
+                                Style::default().fg(Color::Green)
+                            } else {
+                                Style::default().fg(Color::DarkGray)
+                            },
+                        ),
                         Cell::from(if vendor.unfinished { "unfinished" } else { "" }),
                         Cell::from(vendor.comment.clone()),
                     ])
@@ -773,10 +752,7 @@ fn render_account_detail(frame: &mut Frame, app: &App, area: Rect) {
             ),
         ]),
         Line::from(""),
-        Line::from(Span::styled(
-            "Pages",
-            Style::default().fg(Color::DarkGray),
-        )),
+        Line::from(Span::styled("Pages", Style::default().fg(Color::DarkGray))),
     ];
 
     for (panel, key, label) in pages {
@@ -883,11 +859,7 @@ fn render_account_overview(frame: &mut Frame, app: &App, account_identity: u64, 
             Style::default().fg(Color::Red),
             "—".to_string(),
         ),
-        _ => (
-            "—".to_string(),
-            Style::default(),
-            "—".to_string(),
-        ),
+        _ => ("—".to_string(), Style::default(), "—".to_string()),
     };
 
     let mut summary_lines = vec![
@@ -918,11 +890,8 @@ fn render_account_overview(frame: &mut Frame, app: &App, account_identity: u64, 
         Style::default().fg(Color::DarkGray),
     )));
 
-    let summary = Paragraph::new(summary_lines).block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(" Dashboard "),
-    );
+    let summary = Paragraph::new(summary_lines)
+        .block(Block::default().borders(Borders::ALL).title(" Dashboard "));
 
     frame.render_widget(summary, chunks[0]);
     render_account_assets(frame, app, account_identity, chunks[1]);
@@ -1039,7 +1008,7 @@ fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area
             "APR",
             "7d earned",
         ])
-            .style(Style::default().add_modifier(Modifier::BOLD)),
+        .style(Style::default().add_modifier(Modifier::BOLD)),
     )
     .block(Block::default().borders(Borders::ALL).title(title))
     .column_spacing(2);
@@ -1131,7 +1100,11 @@ fn defi_rows(result: &DefiResult) -> Vec<Row<'static>> {
             let value = if position.value_usd > 0.0 {
                 format_fiat(position.value_usd)
             } else {
-                format!("{} {}", format_float(position.value, 4), position.underlying_symbol)
+                format!(
+                    "{} {}",
+                    format_float(position.value, 4),
+                    position.underlying_symbol
+                )
             };
             let earned = if position.earned_7d_usd > 0.0 {
                 format!("+{}", format_fiat(position.earned_7d_usd))
@@ -1233,18 +1206,13 @@ fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
                 balance.asset_quote.as_deref(),
                 balance.asset_24h_quote.as_deref(),
             ) {
-                (Some(current), Some(previous)) => percent_change(current, previous).map(|change| {
-                    (change.label(), change.ratatui_style())
-                }),
+                (Some(current), Some(previous)) => percent_change(current, previous)
+                    .map(|change| (change.label(), change.ratatui_style())),
                 _ => None,
             };
 
-            let (change_text, change_style) = change.unwrap_or_else(|| {
-                (
-                    "—".to_string(),
-                    Style::default().fg(Color::DarkGray),
-                )
-            });
+            let (change_text, change_style) =
+                change.unwrap_or_else(|| ("—".to_string(), Style::default().fg(Color::DarkGray)));
 
             let sort_value = balance
                 .balance_quote
@@ -1278,14 +1246,16 @@ fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
 
     entries
         .into_iter()
-        .map(|(_, name, amount, value, amount_style, change, change_style, value_style)| {
-            Row::new(vec![
-                Cell::from(name),
-                Cell::from(amount).style(amount_style),
-                Cell::from(value).style(value_style),
-                Cell::from(change).style(change_style),
-            ])
-        })
+        .map(
+            |(_, name, amount, value, amount_style, change, change_style, value_style)| {
+                Row::new(vec![
+                    Cell::from(name),
+                    Cell::from(amount).style(amount_style),
+                    Cell::from(value).style(value_style),
+                    Cell::from(change).style(change_style),
+                ])
+            },
+        )
         .collect()
 }
 
@@ -1492,11 +1462,7 @@ fn render_form(frame: &mut Frame, form: &ActiveForm, area: Rect) {
                 .enumerate()
                 .map(|(index, label)| {
                     Line::from(Span::styled(
-                        format!(
-                            "{} {}",
-                            if index == *selected { "›" } else { " " },
-                            label
-                        ),
+                        format!("{} {}", if index == *selected { "›" } else { " " }, label),
                         panel_row_style(index == *selected),
                     ))
                 })
@@ -1550,7 +1516,9 @@ fn render_form(frame: &mut Frame, form: &ActiveForm, area: Rect) {
         ActiveForm::AddNetwork(text_form) => {
             render_text_form(frame, popup, form.title(), text_form, false);
         }
-        ActiveForm::AddEndpoint { form: text_form, .. } => {
+        ActiveForm::AddEndpoint {
+            form: text_form, ..
+        } => {
             render_text_form(frame, popup, form.title(), text_form, false);
         }
     }
@@ -1662,7 +1630,13 @@ fn asset_field_line(
     Line::from(spans)
 }
 
-fn render_text_form(frame: &mut Frame, area: Rect, title: &str, form: &TextForm, _with_hints: bool) {
+fn render_text_form(
+    frame: &mut Frame,
+    area: Rect,
+    title: &str,
+    form: &TextForm,
+    _with_hints: bool,
+) {
     let mut lines = Vec::new();
     for (index, field) in form.fields.iter().enumerate() {
         let focused = index == form.focus;
@@ -1677,12 +1651,7 @@ fn render_text_form(frame: &mut Frame, area: Rect, title: &str, form: &TextForm,
             field.value.clone()
         };
         lines.push(Line::from(Span::styled(
-            format!(
-                "{} {}: {}",
-                if focused { "›" } else { " " },
-                label,
-                value
-            ),
+            format!("{} {}: {}", if focused { "›" } else { " " }, label, value),
             if focused {
                 Style::default().fg(Color::Cyan).bg(PANEL_BG)
             } else {
@@ -1697,15 +1666,13 @@ fn render_text_form(frame: &mut Frame, area: Rect, title: &str, form: &TextForm,
     )));
 
     frame.render_widget(
-        Paragraph::new(lines)
-            .style(panel_style())
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .border_style(panel_style())
-                    .style(panel_style())
-                    .title(format!(" {title} ")),
-            ),
+        Paragraph::new(lines).style(panel_style()).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(panel_style())
+                .style(panel_style())
+                .title(format!(" {title} ")),
+        ),
         area,
     );
 }
@@ -1714,7 +1681,10 @@ fn truncate(value: &str, max: usize) -> String {
     if value.chars().count() <= max {
         return value.to_string();
     }
-    let mut output = value.chars().take(max.saturating_sub(1)).collect::<String>();
+    let mut output = value
+        .chars()
+        .take(max.saturating_sub(1))
+        .collect::<String>();
     output.push('…');
     output
 }
@@ -1781,7 +1751,9 @@ fn transaction_status(tx: &Tx) -> String {
     let successful = safe
         .is_successful
         .or_else(|| safe_bool_extra(safe, "isSuccessful"));
-    let executed = safe.is_executed.or_else(|| safe_bool_extra(safe, "isExecuted"));
+    let executed = safe
+        .is_executed
+        .or_else(|| safe_bool_extra(safe, "isExecuted"));
 
     match (successful, executed) {
         (Some(true), _) => "Success",
@@ -1887,6 +1859,10 @@ fn short_hash(value: &str) -> String {
     if value.len() <= 14 {
         value.to_string()
     } else {
-        format!("{}…{}", &value[..10], &value[value.len().saturating_sub(4)..])
+        format!(
+            "{}…{}",
+            &value[..10],
+            &value[value.len().saturating_sub(4)..]
+        )
     }
 }

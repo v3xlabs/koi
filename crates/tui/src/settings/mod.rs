@@ -1,9 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use koi::models::{
-    network::endpoint::NetworkEndpoint,
-    quoter::Quoter,
-    vendor::flags::VendorFlagInfo,
+    network::endpoint::NetworkEndpoint, quoter::Quoter, vendor::flags::VendorFlagInfo,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -27,7 +25,6 @@ impl SettingsSection {
             SettingsSection::Vendors => "Vendors",
         }
     }
-
 }
 
 pub struct SettingsState {

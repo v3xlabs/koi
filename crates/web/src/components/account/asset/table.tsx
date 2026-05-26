@@ -46,11 +46,18 @@ const columns = [
             return (
                 <div class="flex items-center gap-2 py-3.5">
                     <span class="min-w-4">
-                        <Skeleton visible={row.original.price === undefined} class="skeleton">
+                        <Show
+                          when={row.original.price !== undefined}
+                          fallback={(
+                            <span class="text-muted">
+                                ---
+                            </span>
+                          )}
+                        >
                             <span class="tabular-nums" title={privateAmountTitle(privacyMode(), row.original.price === undefined ? undefined : formatAmount(row.original.price, { decimals: 6, precision: 2, currency: displayCurrency() }))}>
                                 {row.original.price === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.price, { decimals: 6, precision: 2, notation: "compact", currency: displayCurrency() }))}
                             </span>
-                        </Skeleton>
+                        </Show>
                     </span>
                 </div>
             );
@@ -98,11 +105,20 @@ const columns = [
 
             return (
                 <div class="space-y-1 items-end flex flex-col justify-end">
-                    <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
+                    {/* <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md"> */}
+                    <Show
+                      when={row.original.value !== undefined}
+                      fallback={(
+                            <span>
+                                -
+                            </span>
+                          )}
+                    >
                         <span class="tabular-nums">
                             {row.original.value === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() }))}
                         </span>
-                    </Skeleton>
+                    </Show>
+                    {/* </Skeleton> */}
                     <div class="">
                         <span classList={{
                             "text-xs flex items-center gap-0.5": true,

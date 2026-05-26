@@ -4,7 +4,7 @@ use tokio::sync::mpsc;
 
 use koi::models::{
     account::{Account, balances::AccountBalances},
-    asset::{metadata::AssetMetadataDiscovery, Asset},
+    asset::{Asset, metadata::AssetMetadataDiscovery},
     network::{Network, pool::RpcPoolStats},
     tx::Tx,
 };
@@ -128,7 +128,10 @@ impl Loader {
                     Vec::new()
                 }
             };
-            let account_ids: Vec<u64> = accounts.iter().map(|account| account.account_identity.0).collect();
+            let account_ids: Vec<u64> = accounts
+                .iter()
+                .map(|account| account.account_identity.0)
+                .collect();
             let _ = tx.send(BackgroundUpdate::AccountsLoaded {
                 generation,
                 accounts,
@@ -146,7 +149,10 @@ impl Loader {
                     Vec::new()
                 }
             };
-            let network_ids: Vec<u64> = networks.iter().map(|network| network.network_identity.0).collect();
+            let network_ids: Vec<u64> = networks
+                .iter()
+                .map(|network| network.network_identity.0)
+                .collect();
             let _ = tx.send(BackgroundUpdate::NetworksLoaded {
                 generation,
                 networks,
@@ -201,7 +207,12 @@ impl Loader {
     }
 
     pub fn spawn_settings(&self, generation: u64, network_ids: Vec<u64>) {
-        spawn_settings_fetch(self.client.clone(), self.tx.clone(), generation, network_ids);
+        spawn_settings_fetch(
+            self.client.clone(),
+            self.tx.clone(),
+            generation,
+            network_ids,
+        );
     }
 
     pub fn delete_network_endpoint(
@@ -239,13 +250,7 @@ impl Loader {
         });
     }
 
-    pub fn set_vendor(
-        &self,
-        generation: u64,
-        flag: String,
-        enabled: bool,
-        network_ids: Vec<u64>,
-    ) {
+    pub fn set_vendor(&self, generation: u64, flag: String, enabled: bool, network_ids: Vec<u64>) {
         let client = self.client.clone();
         let tx = self.tx.clone();
         tokio::spawn(async move {
@@ -299,7 +304,12 @@ impl Loader {
         });
     }
 
-    pub fn create_asset(&self, generation: u64, asset: koi::models::asset::Asset, network_ids: Vec<u64>) {
+    pub fn create_asset(
+        &self,
+        generation: u64,
+        asset: koi::models::asset::Asset,
+        network_ids: Vec<u64>,
+    ) {
         let client = self.client.clone();
         let tx = self.tx.clone();
         tokio::spawn(async move {
@@ -319,7 +329,12 @@ impl Loader {
         });
     }
 
-    pub fn create_network(&self, generation: u64, network: koi::models::network::Network, network_ids: Vec<u64>) {
+    pub fn create_network(
+        &self,
+        generation: u64,
+        network: koi::models::network::Network,
+        network_ids: Vec<u64>,
+    ) {
         let client = self.client.clone();
         let tx = self.tx.clone();
         tokio::spawn(async move {
@@ -517,7 +532,10 @@ fn spawn_settings_fetch(
         };
 
         let enabled_vendors = match client.vendors().await {
-            Ok(vendors) => vendors.into_iter().map(|vendor| vendor.to_string()).collect(),
+            Ok(vendors) => vendors
+                .into_iter()
+                .map(|vendor| vendor.to_string())
+                .collect(),
             Err(error) => {
                 let _ = tx.send(BackgroundUpdate::Notice {
                     generation,
