@@ -2,7 +2,7 @@ use std::ffi::OsString;
 
 use clap::Parser;
 use dotenvy::dotenv;
-use koi::{http, state::State, DEFAULT_API_URL};
+use koi::{DEFAULT_API_URL, http, state::State};
 use koi_cli::{Cli, Commands};
 use tracing::{info, warn};
 

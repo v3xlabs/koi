@@ -10,7 +10,11 @@ use crate::{
 use super::ApiTags;
 use alloy::primitives::U256;
 use poem::{Result, web::Data};
-use poem_openapi::{Object, OpenApi, param::{Path, Query}, payload::Json};
+use poem_openapi::{
+    Object, OpenApi,
+    param::{Path, Query},
+    payload::Json,
+};
 use serde::{Deserialize, Serialize};
 
 pub struct AssetApi;

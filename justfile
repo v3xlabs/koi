@@ -2,7 +2,7 @@ default:
     just --list
 
 install:
-    cd ui && pnpm install
+    cd crates/web && pnpm install
     cd crates/app && cargo fmt
     cd crates/bin && cargo fmt
     cd crates/gui && cargo fmt

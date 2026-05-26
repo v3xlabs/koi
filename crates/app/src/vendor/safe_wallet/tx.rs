@@ -90,7 +90,11 @@ impl TryInto<TxBase> for SafeWalletTx {
     fn try_into(self) -> Result<TxBase, Self::Error> {
         let tx_hash = match self.transaction_hash {
             Some(tx_hash) => tx_hash,
-            None => return Err(KoiError::Internal("Transaction hash is required".to_string())),
+            None => {
+                return Err(KoiError::Internal(
+                    "Transaction hash is required".to_string(),
+                ));
+            }
         };
 
         let from = match self.from {
@@ -115,7 +119,7 @@ impl TryInto<TxBase> for SafeWalletTx {
                     is_successful: None,
                     is_executed: None,
                     origin: self.origin,
-                    extra: self.extra
+                    extra: self.extra,
                 }),
             },
         })

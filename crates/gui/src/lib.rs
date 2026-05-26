@@ -6,8 +6,8 @@ use tao::{
     window::{Icon as WindowIcon, WindowBuilder},
 };
 use tray_icon::{
-    menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem},
     Icon as TrayIconImage, MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent,
+    menu::{Menu, MenuEvent, MenuId, MenuItem, PredefinedMenuItem},
 };
 #[cfg(not(target_os = "linux"))]
 use wry::{PageLoadEvent, WebView, WebViewBuilder};
