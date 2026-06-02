@@ -16,11 +16,15 @@ use super::{
     defi::DefiResult,
     form::{ActiveForm, AssetType, DiscoveryState, TextForm},
     format::{DisplayAmount, format_token, format_usd, percent_change},
+    icon::IconRenderer,
+    layout::{AccountSidebarLayout, ListTableLayout, table_body_height},
     scroll::visible_window,
     settings::SettingsSection,
 };
 
 pub fn render(frame: &mut Frame, app: &mut App) {
+    app.layout.clear();
+
     let vertical = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -30,8 +34,18 @@ pub fn render(frame: &mut Frame, app: &mut App) {
         ])
         .split(frame.area());
 
+    app.layout.body = vertical[1];
+    let viewport_rows = if app.selected_account.is_none() && app.tab == Tab::Accounts {
+        if account_icons_enabled(app) {
+            super::layout::table_visible_rows(vertical[1], IconRenderer::list_row_height())
+        } else {
+            table_body_height(vertical[1])
+        }
+    } else {
+        table_body_height(vertical[1])
+    };
+    app.reconcile_scroll(viewport_rows);
     render_top_bar(frame, app, vertical[0]);
-    app.reconcile_scroll(table_body_height(vertical[1]));
     render_body(frame, app, vertical[1]);
     render_footer(frame, app, vertical[2]);
 
@@ -40,7 +54,7 @@ pub fn render(frame: &mut Frame, app: &mut App) {
     }
 }
 
-fn render_top_bar(frame: &mut Frame, app: &App, area: Rect) {
+fn render_top_bar(frame: &mut Frame, app: &mut App, area: Rect) {
     let status = if app.loading_core {
         "Loading accounts & networks…".to_string()
     } else if let Some(notice) = &app.notice {
@@ -91,6 +105,13 @@ fn render_top_bar(frame: &mut Frame, app: &App, area: Rect) {
     let status_width = status_text.chars().count().saturating_add(2) as u16;
     let nav_width = area.width.saturating_sub(status_width).max(1);
 
+    app.layout.nav = Rect {
+        x: area.x,
+        y: area.y,
+        width: nav_width,
+        height: area.height,
+    };
+
     frame.render_widget(
         Paragraph::new(Line::from(nav_spans))
             .wrap(Wrap { trim: true })
@@ -124,7 +145,7 @@ fn render_top_bar(frame: &mut Frame, app: &App, area: Rect) {
     );
 }
 
-fn render_body(frame: &mut Frame, app: &App, area: Rect) {
+fn render_body(frame: &mut Frame, app: &mut App, area: Rect) {
     if app.selected_account.is_some() {
         render_account_detail(frame, app, area);
         return;
@@ -139,19 +160,19 @@ fn render_body(frame: &mut Frame, app: &App, area: Rect) {
     }
 }
 
-fn render_assets_workspace(frame: &mut Frame, app: &App, area: Rect) {
+fn render_assets_workspace(frame: &mut Frame, app: &mut App, area: Rect) {
     render_settings_assets(frame, app, area);
 }
 
-fn render_prices_workspace(frame: &mut Frame, app: &App, area: Rect) {
+fn render_prices_workspace(frame: &mut Frame, app: &mut App, area: Rect) {
     render_settings_price_feeds(frame, app, area);
 }
 
-fn render_networks_workspace(frame: &mut Frame, app: &App, area: Rect) {
+fn render_networks_workspace(frame: &mut Frame, app: &mut App, area: Rect) {
     render_settings_networks(frame, app, area);
 }
 
-fn render_accounts_home(frame: &mut Frame, app: &App, area: Rect) {
+fn render_accounts_home(frame: &mut Frame, app: &mut App, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(58), Constraint::Percentage(42)])
@@ -161,15 +182,36 @@ fn render_accounts_home(frame: &mut Frame, app: &App, area: Rect) {
     render_selected_account_preview(frame, app, chunks[1]);
 }
 
-fn render_accounts_list(frame: &mut Frame, app: &App, area: Rect) {
-    let height = table_body_height(area);
+fn render_accounts_list(frame: &mut Frame, app: &mut App, area: Rect) {
+    let show_icons = account_icons_enabled(app);
+    let row_height = if show_icons {
+        IconRenderer::list_row_height()
+    } else {
+        1
+    };
+    let height = if show_icons {
+        super::layout::table_visible_rows(area, row_height)
+    } else {
+        table_body_height(area)
+    };
     let (start, end) = visible_window(app.accounts.len(), app.list_scroll, height);
     let rows: Vec<Row> = if app.accounts.is_empty() {
-        vec![Row::new(vec![
-            Cell::from("No accounts yet"),
-            Cell::from(""),
-            Cell::from(""),
-        ])]
+        if show_icons {
+            vec![Row::new(vec![
+                Cell::from("No accounts yet"),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+            ])]
+        } else {
+            vec![Row::new(vec![
+                Cell::from("No accounts yet"),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+            ])]
+        }
     } else {
         app.accounts
             .iter()
@@ -189,7 +231,11 @@ fn render_accounts_list(frame: &mut Frame, app: &App, area: Rect) {
                     Style::default()
                 };
 
-                Row::new(vec![
+                let mut cells = Vec::new();
+                if show_icons {
+                    cells.push(Cell::from(""));
+                }
+                cells.extend([
                     Cell::from(format!(
                         "{} {}",
                         if index == app.list_index { "›" } else { " " },
@@ -199,34 +245,82 @@ fn render_accounts_list(frame: &mut Frame, app: &App, area: Rect) {
                     Cell::from(wallet_type_label(&account.metadata)).style(row_style),
                     Cell::from(truncate_address(&account.metadata)).style(row_style),
                     Cell::from(balance_text).style(row_style.patch(balance_style)),
-                ])
+                ]);
+
+                let mut row = Row::new(cells).style(row_style);
+                if show_icons {
+                    row = row.height(row_height);
+                }
+                row
             })
             .collect()
     };
 
-    let table = Table::new(
-        rows,
-        [
-            Constraint::Percentage(35),
+    let constraints = if show_icons {
+        vec![
+            Constraint::Length(IconRenderer::list_column_width()),
+            Constraint::Percentage(32),
+            Constraint::Length(8),
+            Constraint::Percentage(28),
+            Constraint::Length(16),
+        ]
+    } else {
+        vec![
+            Constraint::Percentage(34),
             Constraint::Length(8),
             Constraint::Percentage(30),
             Constraint::Length(16),
-        ],
-    )
-    .header(
+        ]
+    };
+
+    let header = if show_icons {
+        Row::new(vec!["", "Name", "Type", "Address", "Balance"])
+    } else {
         Row::new(vec!["Name", "Type", "Address", "Balance"])
-            .style(Style::default().add_modifier(Modifier::BOLD)),
-    )
-    .block(Block::default().borders(Borders::ALL).title(format!(
-        " Accounts {} ",
-        position_label(app.accounts.len(), app.list_index)
-    )))
-    .column_spacing(2);
+    };
+
+    let table = Table::new(rows, constraints)
+        .header(
+            header.style(Style::default().add_modifier(Modifier::BOLD)),
+        )
+        .block(Block::default().borders(Borders::ALL).title(format!(
+            " Accounts {} ",
+            position_label(app.accounts.len(), app.list_index)
+        )))
+        .column_spacing(2);
 
     frame.render_widget(table, area);
+
+    if show_icons {
+        if let Some(renderer) = app.icon_renderer.as_mut() {
+            for (visible_row, account) in app
+                .accounts
+                .iter()
+                .skip(start)
+                .take(end.saturating_sub(start))
+                .enumerate()
+            {
+                let Some(address) = account_evm_address(&account.metadata) else {
+                    continue;
+                };
+                renderer.render_list_icon(
+                    frame,
+                    account_list_icon_rect(area, visible_row, row_height),
+                    &address,
+                );
+            }
+        }
+    }
+
+    app.layout.list_table = Some(ListTableLayout {
+        area,
+        scroll: app.list_scroll,
+        len: app.accounts.len(),
+        row_height,
+    });
 }
 
-fn render_selected_account_preview(frame: &mut Frame, app: &App, area: Rect) {
+fn render_selected_account_preview(frame: &mut Frame, app: &mut App, area: Rect) {
     let Some(account) = app.accounts.get(app.list_index) else {
         frame.render_widget(
             Paragraph::new("No account selected")
@@ -280,15 +374,29 @@ fn render_selected_account_preview(frame: &mut Frame, app: &App, area: Rect) {
         )));
     }
 
-    frame.render_widget(
-        Paragraph::new(lines)
-            .wrap(Wrap { trim: true })
-            .block(Block::default().borders(Borders::ALL).title(" Preview ")),
-        area,
-    );
+    let block = Block::default().borders(Borders::ALL).title(" Preview ");
+    let inner = block.inner(area);
+    let address = account_evm_address(&account.metadata);
+
+    if let Some(address) = address.as_deref() {
+        if account_icons_enabled(app) {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Length(IconRenderer::icon_height()), Constraint::Min(0)])
+                .split(inner);
+            render_account_icon(frame, app, chunks[0], address);
+            frame.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), chunks[1]);
+        } else {
+            frame.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), inner);
+        }
+    } else {
+        frame.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), inner);
+    }
+
+    frame.render_widget(block, area);
 }
 
-fn render_settings(frame: &mut Frame, app: &App, area: Rect) {
+fn render_settings(frame: &mut Frame, app: &mut App, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
@@ -325,7 +433,7 @@ fn render_settings(frame: &mut Frame, app: &App, area: Rect) {
     render_settings_detail(frame, app, chunks[1]);
 }
 
-fn render_settings_detail(frame: &mut Frame, app: &App, area: Rect) {
+fn render_settings_detail(frame: &mut Frame, app: &mut App, area: Rect) {
     match app.settings.section() {
         SettingsSection::General => render_settings_general(frame, app, area),
         SettingsSection::Networks => render_settings_networks(frame, app, area),
@@ -370,7 +478,7 @@ fn render_settings_general(frame: &mut Frame, app: &App, area: Rect) {
     );
 }
 
-fn render_settings_networks(frame: &mut Frame, app: &App, area: Rect) {
+fn render_settings_networks(frame: &mut Frame, app: &mut App, area: Rect) {
     if let Some(network_id) = app.settings.nested_network {
         render_settings_endpoints(frame, app, network_id, area);
         return;
@@ -426,9 +534,10 @@ fn render_settings_networks(frame: &mut Frame, app: &App, area: Rect) {
     .column_spacing(2);
 
     frame.render_widget(table, area);
+    register_resource_list_table(app, area, app.networks.len());
 }
 
-fn render_settings_endpoints(frame: &mut Frame, app: &App, network_id: u64, area: Rect) {
+fn render_settings_endpoints(frame: &mut Frame, app: &mut App, network_id: u64, area: Rect) {
     let endpoints = app
         .settings_snapshot()
         .and_then(|snapshot| snapshot.endpoints.get(&network_id));
@@ -508,9 +617,14 @@ fn render_settings_endpoints(frame: &mut Frame, app: &App, network_id: u64, area
     .column_spacing(2);
 
     frame.render_widget(table, area);
+    register_resource_list_table(
+        app,
+        area,
+        endpoints.map(|items| items.len()).unwrap_or(0),
+    );
 }
 
-fn render_settings_assets(frame: &mut Frame, app: &App, area: Rect) {
+fn render_settings_assets(frame: &mut Frame, app: &mut App, area: Rect) {
     let identities = app.settings_asset_identities();
 
     let rows = if identities.is_empty() {
@@ -568,9 +682,10 @@ fn render_settings_assets(frame: &mut Frame, app: &App, area: Rect) {
     .column_spacing(2);
 
     frame.render_widget(table, area);
+    register_resource_list_table(app, area, identities.len());
 }
 
-fn render_settings_price_feeds(frame: &mut Frame, app: &App, area: Rect) {
+fn render_settings_price_feeds(frame: &mut Frame, app: &mut App, area: Rect) {
     let rows = match app.settings_snapshot() {
         Some(snapshot) if snapshot.quoters.is_empty() => vec![Row::new(vec![
             Cell::from("No price feeds configured"),
@@ -641,9 +756,10 @@ fn render_settings_price_feeds(frame: &mut Frame, app: &App, area: Rect) {
     .column_spacing(2);
 
     frame.render_widget(table, area);
+    register_resource_list_table(app, area, quoter_count);
 }
 
-fn render_settings_vendors(frame: &mut Frame, app: &App, area: Rect) {
+fn render_settings_vendors(frame: &mut Frame, app: &mut App, area: Rect) {
     let rows = match app.settings_snapshot() {
         Some(snapshot) if snapshot.all_vendors.is_empty() => vec![Row::new(vec![
             Cell::from("No vendor flags returned"),
@@ -716,9 +832,12 @@ fn render_settings_vendors(frame: &mut Frame, app: &App, area: Rect) {
     .column_spacing(2);
 
     frame.render_widget(table, area);
+    if let Some(snapshot) = app.settings_snapshot() {
+        register_resource_list_table(app, area, snapshot.all_vendors.len());
+    }
 }
 
-fn render_account_detail(frame: &mut Frame, app: &App, area: Rect) {
+fn render_account_detail(frame: &mut Frame, app: &mut App, area: Rect) {
     let Some(account) = app.selected_account() else {
         return;
     };
@@ -792,21 +911,49 @@ fn render_account_detail(frame: &mut Frame, app: &App, area: Rect) {
     ]);
 
     let sidebar_title = truncate(&account.name, 20);
+    let sidebar_block = {
+        let mut block = Block::default()
+            .borders(Borders::ALL)
+            .title(format!(" {sidebar_title} "));
+        if app.account_focus == AccountFocus::Sidebar {
+            block = block.border_style(Style::default().fg(Color::Cyan));
+        }
+        block
+    };
+    let sidebar_inner = sidebar_block.inner(chunks[0]);
 
-    frame.render_widget(
-        Paragraph::new(sidebar_lines)
-            .wrap(Wrap { trim: true })
-            .block({
-                let mut block = Block::default()
-                    .borders(Borders::ALL)
-                    .title(format!(" {sidebar_title} "));
-                if app.account_focus == AccountFocus::Sidebar {
-                    block = block.border_style(Style::default().fg(Color::Cyan));
-                }
-                block
-            }),
-        chunks[0],
-    );
+    if let Some(address) = account_evm_address(&account.metadata) {
+        if account_icons_enabled(app) {
+            let body = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Length(IconRenderer::icon_height()),
+                    Constraint::Min(0),
+                ])
+                .split(sidebar_inner);
+            render_account_icon(frame, app, body[0], &address);
+            let text_area = body[1];
+            frame.render_widget(
+                Paragraph::new(sidebar_lines).wrap(Wrap { trim: true }),
+                text_area,
+            );
+            register_account_sidebar_panels(app, chunks[0], text_area);
+        } else {
+            frame.render_widget(
+                Paragraph::new(sidebar_lines).wrap(Wrap { trim: true }),
+                sidebar_inner,
+            );
+            register_account_sidebar_panels(app, chunks[0], sidebar_inner);
+        }
+    } else {
+        frame.render_widget(
+            Paragraph::new(sidebar_lines).wrap(Wrap { trim: true }),
+            sidebar_inner,
+        );
+        register_account_sidebar_panels(app, chunks[0], sidebar_inner);
+    }
+
+    frame.render_widget(sidebar_block, chunks[0]);
 
     let content_title = account_content_title(app, account_id);
     let content = account_content_block(&content_title, app.account_focus == AccountFocus::Content);
@@ -1329,21 +1476,21 @@ fn render_footer(frame: &mut Frame, app: &App, area: Rect) {
             "form  ↑↓ field · Tab next · Enter save · Esc cancel"
         }
     } else if app.selected_account.is_some() {
-        "account  ←→ focus pane  ↑↓ page  h/a/d/t jump  r refresh  b back  q quit"
+        "account  click sidebar pages · scroll · ←→ focus  r refresh  b back  q quit"
     } else if app.tab == Tab::Assets {
-        "assets workspace  ↑↓/jk row  PgUp/PgDn scroll  n add  x delete  r reload  q quit"
+        "assets  click/hover rows · scroll · n add  x delete  r reload  q quit"
     } else if app.tab == Tab::Prices {
-        "prices workspace  ↑↓/jk row  PgUp/PgDn scroll  r reload  q quit"
+        "prices  click/hover rows · scroll · r reload  q quit"
     } else if app.tab == Tab::Networks {
         if app.settings.nested_network.is_some() {
-            "endpoints  ↑↓/jk row  PgUp/PgDn scroll  n add  x delete  b back  r reload  q quit"
+            "endpoints  click/hover rows · scroll · n add  x delete  b back  r reload  q quit"
         } else {
-            "networks workspace  ↑↓/jk row  PgUp/PgDn scroll  n add  Enter endpoints  r reload  q quit"
+            "networks  click/hover rows · scroll · n add  Enter endpoints  r reload  q quit"
         }
     } else if app.tab == Tab::Settings {
-        "settings workspace  ←→ section  ↑↓/jk row  PgUp/PgDn scroll  e/x action  r reload  q quit"
+        "settings  click tabs/rows · scroll · e/x action  r reload  q quit"
     } else {
-        "accounts workspace  ↑↓/jk row  PgUp/PgDn scroll  Enter open  r reload  q quit"
+        "accounts  click/hover rows · scroll · Enter open  r reload  q quit"
     };
 
     frame.render_widget(
@@ -1401,6 +1548,33 @@ fn truncate_error(error: &str) -> String {
     }
 }
 
+fn account_icons_enabled(app: &App) -> bool {
+    app.icon_renderer
+        .as_ref()
+        .is_some_and(IconRenderer::uses_graphics)
+}
+
+fn account_list_icon_rect(table_area: Rect, visible_row: usize, row_height: u16) -> Rect {
+    Rect {
+        x: table_area.x + 1,
+        y: table_area.y + 2 + visible_row as u16 * row_height,
+        width: IconRenderer::list_column_width(),
+        height: row_height,
+    }
+}
+
+fn render_account_icon(frame: &mut Frame, app: &mut App, area: Rect, address: &str) {
+    if let Some(renderer) = app.icon_renderer.as_mut() {
+        renderer.render_large(frame, area, address);
+    }
+}
+
+fn account_evm_address(metadata: &WalletType) -> Option<String> {
+    metadata
+        .unwrap_address()
+        .map(|address| address.to_string())
+}
+
 fn wallet_type_label(metadata: &WalletType) -> String {
     match metadata {
         WalletType::Safe(_) => "safe".to_string(),
@@ -1425,9 +1599,44 @@ fn truncate_address(metadata: &WalletType) -> String {
     }
 }
 
-fn table_body_height(area: Rect) -> usize {
-    // border top/bottom + header row
-    area.height.saturating_sub(3) as usize
+fn register_resource_list_table(app: &mut App, area: Rect, len: usize) {
+    app.layout.list_table = Some(ListTableLayout {
+        area,
+        scroll: app.settings.row_scroll,
+        len,
+        row_height: 1,
+    });
+}
+
+fn register_account_sidebar_panels(app: &mut App, sidebar: Rect, text_area: Rect) {
+    let panel_start = text_area.y + 4;
+    let panels = [
+        AccountPanel::Overview,
+        AccountPanel::Assets,
+        AccountPanel::Defi,
+        AccountPanel::Transactions,
+    ];
+
+    app.layout.account_sidebar = Some(AccountSidebarLayout {
+        area: sidebar,
+        panel_rows: panels.map(|panel| {
+            let index = match panel {
+                AccountPanel::Overview => 0,
+                AccountPanel::Assets => 1,
+                AccountPanel::Defi => 2,
+                AccountPanel::Transactions => 3,
+            };
+            (
+                Rect {
+                    x: text_area.x,
+                    y: panel_start + index,
+                    width: text_area.width,
+                    height: 1,
+                },
+                panel,
+            )
+        }),
+    });
 }
 
 fn position_label(len: usize, selected: usize) -> String {

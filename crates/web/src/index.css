@@ -87,7 +87,7 @@ textarea.input {
 }
 
 .nav-icon-button {
-    @apply w-12 self-stretch inline-flex shrink-0 items-center justify-center text-muted hover:bg-surface-alt hover:text-foreground outline-none transition-colors cursor-pointer;
+    @apply size-10 self-stretch inline-flex shrink-0 items-center justify-center text-muted rounded-lg bg-surface hover:bg-surface-alt hover:text-foreground outline-none transition-colors cursor-pointer;
 
     &:focus-visible {
         @apply ring-2 ring-primary/50 ring-inset;

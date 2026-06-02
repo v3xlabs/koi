@@ -1,13 +1,10 @@
 import { createRootRoute, Outlet } from "@tanstack/solid-router";
 import { Suspense } from "solid-js";
 
-import { Navbar } from "#/components/navbar";
-
 export const Route = createRootRoute({
   component: () => (
     <>
       <div class="w-full h-screen max-h-screen min-w-0 bg-background flex flex-col justify-stretch">
-          <Navbar />
           <div class="flex-1 min-h-0 min-w-0 w-full overflow-x-clip">
             <Suspense fallback={<div>Loading...</div>}>
               <Outlet />

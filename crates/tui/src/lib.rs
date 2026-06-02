@@ -1,7 +1,10 @@
 mod app;
+mod blo;
 mod defi;
 mod form;
 mod format;
+mod icon;
+mod layout;
 mod loader;
 mod scroll;
 mod settings;
@@ -12,7 +15,9 @@ use std::time::Duration;
 
 use anyhow::Result;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    event::{
+        self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, MouseEvent,
+    },
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
@@ -24,6 +29,11 @@ use koi_client::ApiClient;
 use loader::{BackgroundUpdate, Loader, prepare_refresh_all};
 
 const TICK_MS: u64 = 50;
+
+enum InputEvent {
+    Key(KeyCode),
+    Mouse(MouseEvent),
+}
 
 pub async fn run(api_url: String) -> Result<()> {
     enable_raw_mode()?;
@@ -38,6 +48,7 @@ pub async fn run(api_url: String) -> Result<()> {
     let loader = Loader::new(client, update_tx);
 
     let mut app = App::new();
+    app.init_icons();
     let generation = prepare_refresh_all(&mut app);
     loader.spawn_refresh_all(generation, false);
     spawn_input_task(input_tx);
@@ -67,7 +78,7 @@ async fn run_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     mut app: &mut App,
     rx: &mut mpsc::UnboundedReceiver<BackgroundUpdate>,
-    input_rx: &mut mpsc::UnboundedReceiver<KeyCode>,
+    input_rx: &mut mpsc::UnboundedReceiver<InputEvent>,
     loader: &Loader,
 ) -> Result<()> {
     let mut tick = tokio::time::interval(Duration::from_millis(TICK_MS));
@@ -75,9 +86,13 @@ async fn run_loop(
 
     loop {
         tokio::select! {
-            code = input_rx.recv() => {
-                if let Some(code) = code {
-                    match app.handle_key(code) {
+            input = input_rx.recv() => {
+                if let Some(input) = input {
+                    let action = match input {
+                        InputEvent::Key(code) => app.handle_key(code),
+                        InputEvent::Mouse(event) => app.handle_mouse(event),
+                    };
+                    match action {
                         KeyAction::Quit => break,
                         KeyAction::RefreshAll => {
                             let generation = prepare_refresh_all(app);
@@ -194,12 +209,17 @@ async fn run_loop(
     Ok(())
 }
 
-fn spawn_input_task(tx: mpsc::UnboundedSender<KeyCode>) {
+fn spawn_input_task(tx: mpsc::UnboundedSender<InputEvent>) {
     tokio::task::spawn_blocking(move || {
         loop {
             match event::read() {
                 Ok(Event::Key(key)) if key.kind == KeyEventKind::Press => {
-                    if tx.send(key.code).is_err() {
+                    if tx.send(InputEvent::Key(key.code)).is_err() {
+                        break;
+                    }
+                }
+                Ok(Event::Mouse(mouse)) => {
+                    if tx.send(InputEvent::Mouse(mouse)).is_err() {
                         break;
                     }
                 }

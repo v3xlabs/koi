@@ -1,15 +1,17 @@
 import { createFileRoute, Outlet } from "@tanstack/solid-router";
 import { Suspense } from "solid-js";
 
+import { Navbar } from "#/components/navbar";
 import { Sidebar } from "#/components/sidebar";
 
 export const Route = createFileRoute("/acc/$account")({
   component: () => (
-    <div class="w-full h-full grid grid-cols-[auto_1fr] max-h-[calc(100vh-54px)]">
+    <div class="w-full h-full grid grid-cols-[auto_1fr] max-h-screen">
       <div class="h-full">
         <Sidebar />
       </div>
       <div class="w-full h-full overflow-y-auto">
+        <Navbar />
         <Suspense>
           <Outlet />
         </Suspense>

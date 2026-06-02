@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, MouseButton, MouseEvent, MouseEventKind};
 
 use koi::models::{
     account::{Account, balances::AccountBalances, metadata::WalletType},
@@ -14,6 +14,8 @@ use koi::models::{
 
 use super::defi::DefiResult;
 use super::form::{ActiveForm, FormAction, available_presets};
+use super::icon::IconRenderer;
+use super::layout::{UiLayout, table_body_height};
 use super::settings::{SettingsSection, SettingsSnapshot, SettingsState};
 
 const REFRESH_INTERVAL: Duration = Duration::from_secs(30);
@@ -84,6 +86,8 @@ pub struct App {
     refresh_generation: u64,
     last_refresh: Instant,
     pub(crate) dirty: bool,
+    pub icon_renderer: Option<IconRenderer>,
+    pub layout: UiLayout,
 }
 
 impl App {
@@ -114,7 +118,13 @@ impl App {
             refresh_generation: 0,
             last_refresh: Instant::now(),
             dirty: true,
+            icon_renderer: None,
+            layout: UiLayout::default(),
         }
+    }
+
+    pub fn init_icons(&mut self) {
+        self.icon_renderer = Some(IconRenderer::new());
     }
 
     pub fn needs_refresh(&self) -> bool {
@@ -402,6 +412,126 @@ impl App {
 
     pub fn prepare_transactions_fetch(&mut self, account_id: u64) {
         self.tx_states.insert(account_id, ResourceState::Loading);
+    }
+
+    pub fn handle_mouse(&mut self, event: MouseEvent) -> KeyAction {
+        if self.form.is_some() {
+            return KeyAction::None;
+        }
+
+        match event.kind {
+            MouseEventKind::Moved => {
+                self.handle_mouse_move(event.column, event.row);
+                KeyAction::None
+            }
+            MouseEventKind::Down(MouseButton::Left) => self.handle_mouse_click(event.column, event.row),
+            MouseEventKind::ScrollUp => {
+                self.handle_mouse_scroll(event.column, event.row, -3);
+                KeyAction::None
+            }
+            MouseEventKind::ScrollDown => {
+                self.handle_mouse_scroll(event.column, event.row, 3);
+                KeyAction::None
+            }
+            _ => KeyAction::None,
+        }
+    }
+
+    fn handle_mouse_move(&mut self, column: u16, row: u16) {
+        if let Some(panel) = self.layout.account_panel_at(column, row) {
+            if self.selected_account.is_some() {
+                self.account_panel = panel;
+                self.account_focus = AccountFocus::Sidebar;
+            }
+            return;
+        }
+
+        if let Some(index) = self.layout.list_row_at(column, row) {
+            if self.selected_account.is_some() {
+                return;
+            }
+
+            if self.uses_resource_rows() {
+                if self.settings.row_index != index {
+                    self.settings.row_index = index;
+                    self.reconcile_scroll(table_body_height(self.layout.body));
+                }
+            } else if self.tab == Tab::Accounts && self.list_index != index {
+                self.list_index = index;
+                self.reconcile_scroll(table_body_height(self.layout.body));
+            }
+        }
+    }
+
+    fn handle_mouse_click(&mut self, column: u16, row: u16) -> KeyAction {
+        if let Some(tab) = self.layout.tab_at(column, row) {
+            self.switch_tab(tab);
+            if tab == Tab::Settings || tab == Tab::Prices {
+                if matches!(self.settings_state, ResourceState::Idle) {
+                    return KeyAction::RefreshSettings;
+                }
+            }
+            return KeyAction::None;
+        }
+
+        if let Some(panel) = self.layout.account_panel_at(column, row) {
+            self.account_panel = panel;
+            self.account_focus = AccountFocus::Sidebar;
+            if let Some(account_id) = self.selected_account {
+                return match panel {
+                    AccountPanel::Defi
+                        if !matches!(
+                            self.defi_states.get(&account_id),
+                            Some(ResourceState::Ready(_))
+                        ) =>
+                    {
+                        KeyAction::RefreshDefi(account_id)
+                    }
+                    AccountPanel::Transactions
+                        if !matches!(
+                            self.tx_states.get(&account_id),
+                            Some(ResourceState::Ready(_))
+                        ) =>
+                    {
+                        KeyAction::RefreshTransactions(account_id)
+                    }
+                    _ => KeyAction::None,
+                };
+            }
+            return KeyAction::None;
+        }
+
+    if let Some(index) = self.layout.list_row_at(column, row) {
+            if self.uses_resource_rows() {
+                self.settings.row_index = index;
+            } else if self.tab == Tab::Accounts {
+                self.list_index = index;
+            }
+            return self.activate();
+        }
+
+        KeyAction::None
+    }
+
+    fn handle_mouse_scroll(&mut self, column: u16, row: u16, delta: i32) {
+        if self.selected_account.is_some() {
+            return;
+        }
+
+        let Some(table) = self.layout.list_table else {
+            return;
+        };
+        if !super::layout::contains(table.area, column, row) {
+            return;
+        }
+
+        if self.uses_resource_rows() {
+            self.settings.move_row(delta, self.settings_row_count());
+            self.reconcile_scroll(table_body_height(self.layout.body));
+        } else if self.tab == Tab::Accounts {
+            self.move_selection(delta);
+            self.reconcile_scroll(table_body_height(self.layout.body));
+        }
     }
 
     pub fn handle_key(&mut self, code: KeyCode) -> KeyAction {
