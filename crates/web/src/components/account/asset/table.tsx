@@ -288,7 +288,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                     <tbody class="">
                         <For each={table.getRowModel().rows}>
                             {row => (
-                                <tr class="group relative hover:bg-surface-alt rounded-2xl transition-colors w-full after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px after:bg-border">
+                                <tr class="group relative hover:bg-surface-alt rounded-2xl transition-colors w-full after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px not-last:after:bg-border">
                                     <For each={row.getVisibleCells()}>
                                         {(cell, index) => (
                                             <td

@@ -27,7 +27,7 @@ export const Navbar = () => {
 
     return (
         <div class="px-4 flex items-stretch justify-between w-full min-w-0 shrink-0 py-2 mt-1">
-            <div class="flex min-w-0 items-center gap-2 bg-surface">
+            <div class="flex min-w-0 items-center gap-2 bg-surface rounded-md px-3 py-1">
                 <div class="flex items-center gap-2 pl-1 pr-2 py-2 w-full min-w-64">
                     <div class="size-9 bg-surface-alt rounded-md">
                         <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
