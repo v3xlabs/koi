@@ -5,7 +5,7 @@ import { FaSolidRefresh } from "solid-icons/fa";
 import { FiArrowUpRight, FiChevronUp } from "solid-icons/fi";
 import { Component, createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
-import { useAccountAssets, accountBalanceQuery, refreshAccountBalances, useAccountBalances } from "#/api/account";
+import { accountBalanceQuery, refreshAccountBalances, useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency, usePrivacyMode } from "#/api/context";
 import { AssetAmount } from "#/components/asset/amount";
@@ -16,6 +16,7 @@ import { privateAmount, privateAmountTitle } from "#/utils/privacy";
 import { formatAmount, percentNumber } from "#/utils/units";
 
 import { AssetIcon } from "../../asset/icon";
+import { AccountAssetManage } from "./manage";
 
 type Data = { asset: Asset; price: bigint | undefined; price_24h: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; weight: number | undefined; };
 const helper = createColumnHelper<Data>();
@@ -173,12 +174,14 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
 
     const refreshBalances = async () => {
         setRefreshingBalances(true);
+
         try {
             await refreshAccountBalances({
                 path: { account_identity },
                 query: { display_currency: displayCurrency() },
             });
-        } finally {
+        }
+ finally {
             setRefreshingBalances(false);
         }
     };
@@ -251,9 +254,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                         </Show>
                     </div>
                     <div class="flex items-center gap-2 justify-end">
-                        <button class={button({ variant: "outline", class: "text-sm" })}>
-                            Manage assets
-                        </button>
+                        <AccountAssetManage account_identity={account_identity} />
                         <DisplayCurrencySelector />
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 import { Dialog, Root as DialogRoot } from "@kobalte/core/dialog";
 import { FaSolidXmark } from "solid-icons/fa";
+import { Component, JSX } from "solid-js";
 
 const CloseButton: typeof Dialog.CloseButton = props => (props.children
   ? (
@@ -27,10 +28,21 @@ const Overlay: typeof Dialog.Overlay = props => (
   <Dialog.Overlay
     classList={{
       [props.class]: true,
-      "fixed inset-0 bg-background/50": true,
+      "fixed inset-0 z-50 bg-background/50": true,
     }}
     {...props}
   />
+);
+
+const Positioner: Component<{ class?: string; children: JSX.Element; }> = props => (
+  <div
+    classList={{
+      "fixed inset-0 z-50": true,
+      [props.class ?? ""]: true,
+    }}
+  >
+    {props.children}
+  </div>
 );
 
 const Title: typeof Dialog.Title = props => (
@@ -61,5 +73,6 @@ export const Modal = Object.assign(Root, {
   CloseButton,
   Content,
   Overlay,
+  Positioner,
   Title,
 });
