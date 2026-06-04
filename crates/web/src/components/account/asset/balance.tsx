@@ -32,28 +32,33 @@ export const AccountAssetEntryBalance: Component<AccountAssetEntryBalanceProps> 
         }),
     );
 
-    const hasBalance = () => {
+    const formattedBalance = () => {
         const balance = balanceQuery.data?.balance;
 
-        return balance !== undefined && BigInt(balance) > 0n;
+        if (balance === undefined) return undefined;
+
+        const amount = privateAmount(
+            privacyMode(),
+            formatAmount(BigInt(balance), {
+                decimals: props.asset.asset_decimals,
+                notation: "compact",
+            }),
+        );
+
+        return `${amount} ${props.asset.asset_symbol}`;
     };
 
     return (
-        <Show when={balanceQuery.isLoading || hasBalance()}>
+        <Show when={balanceQuery.isLoading || balanceQuery.isFetched}>
             <div class="text-xs text-muted text-right tabular-nums shrink-0 min-w-20">
                 <Show
                   when={balanceQuery.isLoading}
                   fallback={(
-                    <>
-                        <div>
-                            {privateAmount(
-                                privacyMode(),
-                                formatAmount(BigInt(balanceQuery.data!.balance!), {
-                                    decimals: props.asset.asset_decimals,
-                                    notation: "compact",
-                                }),
-                            )}
-                        </div>
+                    <Show
+                      when={balanceQuery.data?.balance !== undefined}
+                      fallback={<span>—</span>}
+                    >
+                        <div>{formattedBalance()}</div>
                         <Show when={balanceQuery.data?.balance_quote}>
                             <div>
                                 {privateAmount(
@@ -67,8 +72,8 @@ export const AccountAssetEntryBalance: Component<AccountAssetEntryBalanceProps> 
                                 )}
                             </div>
                         </Show>
-                    </>
-                )}
+                    </Show>
+                  )}
                 >
                     <span class="inline-block animate-pulse">···</span>
                 </Show>

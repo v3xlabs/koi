@@ -102,23 +102,25 @@ export const AccountAssetManage: Component<AccountAssetManageProps> = (props) =>
                                     <For each={assets()}>
                                         {({ asset, enabled }) => (
                                             <li class="hover:bg-surface-alt p-2 rounded-md flex items-center justify-between gap-3">
-                                                <AssetPreview asset={asset} />
-                                                <AccountAssetEntryBalance
-                                                  account_identity={account_identity}
-                                                  asset={asset}
-                                                  enabled={open()}
-                                                />
+                                                <div class="grow flex justify-between items-center gap-3">
+                                                    <AssetPreview asset={asset} />
+                                                    <AccountAssetEntryBalance
+                                                      account_identity={account_identity}
+                                                      asset={asset}
+                                                      enabled={open()}
+                                                    />
+                                                </div>
                                                 <Show
                                                   when={enabled}
                                                   fallback={(
-                                                    <button
-                                                      class={button({ variant: "primary", square: true })}
-                                                      title="Enable asset"
-                                                      onClick={() => linkAsset.mutate({ account_identity, asset_identity: asset.asset_identity })}
-                                                    >
-                                                        <FiPlus />
-                                                    </button>
-                                                  )}
+                                                        <button
+                                                          class={button({ variant: "primary", square: true })}
+                                                          title="Enable asset"
+                                                          onClick={() => linkAsset.mutate({ account_identity, asset_identity: asset.asset_identity })}
+                                                        >
+                                                            <FiPlus />
+                                                        </button>
+                                                    )}
                                                 >
                                                     <button
                                                       class={button({ variant: "secondary", square: true })}
@@ -137,9 +139,9 @@ export const AccountAssetManage: Component<AccountAssetManageProps> = (props) =>
                                       type="button"
                                       class="hover:bg-surface-alt p-2 rounded-md flex items-center gap-3 w-full text-muted cursor-pointer"
                                       onClick={() => {
-                                          setOpen(false);
-                                          onAddAsset?.();
-                                      }}
+                                            setOpen(false);
+                                            onAddAsset?.();
+                                        }}
                                     >
                                         <div class="size-8 rounded-full border border-dashed border-border flex items-center justify-center">
                                             <FiPlus class="size-4" />
