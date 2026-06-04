@@ -237,6 +237,46 @@ textarea.input {
     }
 }
 
+/* Kobalte positioner uses min-width: max-content, which ignores sameWidth */
+[data-popper-positioner]:has(> .account-switcher-popover) {
+    min-width: 0 !important;
+}
+
+.account-switcher-popover {
+    @apply border-0 shadow-lg;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    animation: dropdownHide 100ms ease-in forwards;
+
+    &[data-expanded] {
+        animation: dropdownShow 100ms ease-in forwards;
+    }
+}
+
+@keyframes dropdownShow {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dropdownHide {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
 @keyframes contentShow {
 	from {
 		opacity: 0;
