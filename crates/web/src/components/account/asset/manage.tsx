@@ -7,6 +7,8 @@ import { AssetPreview } from "#/components/asset/preview";
 import { Modal } from "#/components/dialog";
 import { button } from "#/components/input/button";
 
+import { AccountAssetEntryBalance } from "./balance";
+
 const matchesSearch = (asset: Asset, query: string) => {
     const normalized = query.trim().toLowerCase();
 
@@ -27,8 +29,27 @@ const isRelevantAsset = (asset: Asset, accountNetworks: number[] | undefined) =>
     return accountNetworks?.includes(Number(network_identity)) ?? false;
 };
 
-export const AccountAssetManage: Component<{ account_identity: number; children?: JSX.Element; }> = ({ account_identity, children }) => {
+type AccountAssetManageProps = {
+    account_identity: number;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    onAddAsset?: () => void;
+    children?: JSX.Element;
+};
+
+export const AccountAssetManage: Component<AccountAssetManageProps> = (props) => {
+    const { account_identity, onAddAsset } = props;
+    const [internalOpen, setInternalOpen] = createSignal(false);
     const [search, setSearch] = createSignal("");
+
+    const open = () => props.open ?? internalOpen();
+    const setOpen = (value: boolean) => {
+        props.onOpenChange?.(value);
+
+        if (props.open === undefined) {
+            setInternalOpen(value);
+        }
+    };
 
     const assetsQuery = useAssets();
     const accountQuery = useAccount(() => ({ path: { account_identity } }));
@@ -53,9 +74,12 @@ export const AccountAssetManage: Component<{ account_identity: number; children?
         }));
 
     return (
-        <Modal>
-            <Modal.Trigger class={children ? "" : button({ variant: "outline", class: "text-sm" })}>
-                {children ?? "Manage assets"}
+        <Modal
+          open={open()}
+          onOpenChange={setOpen}
+        >
+            <Modal.Trigger class={props.children ? "" : button({ variant: "outline", class: "text-sm" })}>
+                {props.children ?? "Manage assets"}
             </Modal.Trigger>
             <Modal.Portal>
                 <Modal.Overlay />
@@ -74,11 +98,16 @@ export const AccountAssetManage: Component<{ account_identity: number; children?
                               onInput={event => setSearch(event.currentTarget.value)}
                             />
                             <ul class="max-h-[60vh] overflow-y-auto space-y-1">
-                                <Show when={assets().length > 0} fallback={<div class="text-center text-muted py-2">No assets found</div>}>
+                                <Show when={assets().length > 0}>
                                     <For each={assets()}>
                                         {({ asset, enabled }) => (
-                                            <li class="hover:bg-surface-alt p-2 rounded-md flex items-center justify-between">
+                                            <li class="hover:bg-surface-alt p-2 rounded-md flex items-center justify-between gap-3">
                                                 <AssetPreview asset={asset} />
+                                                <AccountAssetEntryBalance
+                                                  account_identity={account_identity}
+                                                  asset={asset}
+                                                  enabled={open()}
+                                                />
                                                 <Show
                                                   when={enabled}
                                                   fallback={(
@@ -103,6 +132,21 @@ export const AccountAssetManage: Component<{ account_identity: number; children?
                                         )}
                                     </For>
                                 </Show>
+                                <li>
+                                    <button
+                                      type="button"
+                                      class="hover:bg-surface-alt p-2 rounded-md flex items-center gap-3 w-full text-muted cursor-pointer"
+                                      onClick={() => {
+                                          setOpen(false);
+                                          onAddAsset?.();
+                                      }}
+                                    >
+                                        <div class="size-8 rounded-full border border-dashed border-border flex items-center justify-center">
+                                            <FiPlus class="size-4" />
+                                        </div>
+                                        Add a new asset
+                                    </button>
+                                </li>
                             </ul>
                         </div>
                     </Modal.Content>

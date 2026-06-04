@@ -212,4 +212,38 @@ impl Account {
             asset: asset_out.clone(),
         })
     }
+
+    pub async fn fetch_asset_balance(
+        &self,
+        state: &AppState,
+        asset_identity: &AssetIdentity,
+    ) -> Result<AccountBalance, KoiError> {
+        let asset = Asset::get_by_id(&state.database, asset_identity).await?;
+        let network_identity = asset_identity
+            .unwrap_network()
+            .ok_or(KoiError::Internal("Asset has no network".to_string()))?;
+
+        if !self.networks.contains(&network_identity) {
+            return Err(KoiError::Internal(
+                "Account is not on the network".to_string(),
+            ));
+        }
+
+        let provider = state
+            .networks
+            .get_pool(&network_identity)
+            .get_first_rpc(state)
+            .await?;
+        let rpc = provider
+            .get_provider()
+            .ok_or(KoiError::Internal("No provider found for RPC".to_string()))?;
+        let block = rpc
+            .get_block_number()
+            .await
+            .map_err(|_e| KoiError::Internal("Failed to get block number".to_string()))?;
+
+        let balance = Asset::fetch_balance(state, asset_identity, self).await;
+
+        Ok(quote_nom(&asset, balance, state, &rpc, block).await)
+    }
 }

@@ -11,6 +11,7 @@ export const accountKeys = {
     detail: (account_identity: number | string) => ["account", account_identity.toString()] as const,
     nextId: ["next-account-id"] as const,
     assets: (account_identity: number | string) => ["account", account_identity.toString(), "assets"] as const,
+    assetBalance: (account_identity: number | string, asset_identity: string, display_currency: string) => ["account", account_identity.toString(), "asset", asset_identity, "balance", display_currency] as const,
     balances: (account_identity: number | string, display_currency: string) => ["account", account_identity.toString(), "balances", display_currency] as const,
 };
 
@@ -59,6 +60,7 @@ export const useUpdateAccount = createApiMutation("/acc/{account_identity}", "pu
 });
 
 export const useAccountAssets = createApi("/acc/{account_identity}/assets", "get", options => accountKeys.assets(options.path.account_identity));
+export const useAccountAssetBalance = createApi("/acc/{account_identity}/asset/{asset_identity}/balance", "get", options => accountKeys.assetBalance(options.path.account_identity, options.path.asset_identity, options.query.display_currency));
 export const useAddAccountAsset = createApiMutation("/acc/{account_identity}/asset/{asset_identity}", "post", {
     onSuccess: (_, variables) => {
         queryClient.invalidateQueries({ queryKey: accountKeys.assets(variables.account_identity) });

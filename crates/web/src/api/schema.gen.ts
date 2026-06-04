@@ -304,6 +304,49 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/acc/{account_identity}/asset/{asset_identity}/balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the balance of a single asset for an account
+         * @description GET /api/acc/:account_identity/asset/:asset_identity/balance
+         */
+        get: {
+            parameters: {
+                query: {
+                    display_currency: string;
+                };
+                header?: never;
+                path: {
+                    account_identity: number;
+                    asset_identity: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountBalance"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/acc/{account_identity}/balances": {
         parameters: {
             query?: never;

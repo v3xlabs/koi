@@ -2,12 +2,13 @@ import { Skeleton } from "@kobalte/core/skeleton";
 import { createQueries } from "@tanstack/solid-query";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
 import { FaSolidRefresh } from "solid-icons/fa";
-import { FiArrowUpRight, FiChevronUp } from "solid-icons/fi";
+import { FiArrowUpRight, FiChevronUp, FiPlus } from "solid-icons/fi";
 import { Component, createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
 import { accountBalanceQuery, refreshAccountBalances, useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency, usePrivacyMode } from "#/api/context";
+import { AssetAdd } from "#/components/asset/add";
 import { AssetAmount } from "#/components/asset/amount";
 import { button } from "#/components/input/button";
 import { DisplayCurrencySelector } from "#/components/quoter/display";
@@ -171,6 +172,37 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
     const accountBalancesQuery = useAccountBalances(() => accountBalanceQuery(account_identity, displayCurrency()));
     const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
     const [refreshingBalances, setRefreshingBalances] = createSignal(false);
+    const [manageOpen, setManageOpen] = createSignal(false);
+    const [addOpen, setAddOpen] = createSignal(false);
+    const [afterAddAction, setAfterAddAction] = createSignal<"none" | "back">("none");
+
+    const beginAddAssetFromManage = () => {
+        setAfterAddAction("back");
+        setManageOpen(false);
+        setAddOpen(true);
+    };
+
+    const onAssetCreated = () => {
+        setAddOpen(false);
+
+        if (afterAddAction() === "back") {
+            setManageOpen(true);
+        }
+
+        setAfterAddAction("none");
+    };
+
+    const onAddOpenChange = (open: boolean) => {
+        setAddOpen(open);
+
+        if (!open) {
+            if (afterAddAction() === "back") {
+                setManageOpen(true);
+            }
+
+            setAfterAddAction("none");
+        }
+    };
 
     const refreshBalances = async () => {
         setRefreshingBalances(true);
@@ -223,6 +255,11 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
 
     return (
         <div class="w-full space-y-4">
+            <AssetAdd
+              open={addOpen()}
+              onOpenChange={onAddOpenChange}
+              onSuccess={onAssetCreated}
+            />
             <div class="flex justify-between items-center">
                 <div>
                     <div class="text-sm text-muted font-bold">Total assets value</div>
@@ -254,7 +291,12 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                         </Show>
                     </div>
                     <div class="flex items-center gap-2 justify-end">
-                        <AccountAssetManage account_identity={account_identity} />
+                        <AccountAssetManage
+                          account_identity={account_identity}
+                          open={manageOpen()}
+                          onOpenChange={setManageOpen}
+                          onAddAsset={beginAddAssetFromManage}
+                        />
                         <DisplayCurrencySelector />
                     </div>
                 </div>
@@ -316,6 +358,24 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                                 </tr>
                             )}
                         </For>
+                        <Show when={table.getRowModel().rows.length === 0}>
+                            <tr
+                              class="group relative hover:bg-surface-alt rounded-2xl transition-colors w-full cursor-pointer"
+                              onClick={() => setManageOpen(true)}
+                            >
+                                <td
+                                  colspan={table.getVisibleLeafColumns().length}
+                                  class="pl-5 py-3.5"
+                                >
+                                    <div class="flex items-center gap-3 text-muted">
+                                        <div class="size-8 rounded-full border border-dashed border-border flex items-center justify-center">
+                                            <FiPlus class="size-4" />
+                                        </div>
+                                        Add a new asset
+                                    </div>
+                                </td>
+                            </tr>
+                        </Show>
                     </tbody>
                     <tfoot>
                         <For each={table.getFooterGroups()}>
