@@ -68,12 +68,16 @@ export const findInsertion = (x: number, y: number, drag: DragItem): Insertion |
     const groupHeader = el.closest("[data-drop-group-header]");
 
     if (groupHeader) {
-        const group_identity = Number(groupHeader.getAttribute("data-drop-group-header"));
+        const headerAttr = groupHeader.getAttribute("data-drop-group-header");
+        const isUngroupedHeader = headerAttr === "ungrouped";
+        const group_identity = isUngroupedHeader
+            ? undefined
+            : normalizeGroupId(Number(headerAttr));
 
         if (drag.type === "group") {
-            if (group_identity === drag.group_identity) return null;
+            if (isUngroupedHeader || group_identity === drag.group_identity) return null;
 
-            return { kind: "before-group", group_identity };
+            return { kind: "before-group", group_identity: group_identity! };
         }
 
         if (drag.type === "account") {

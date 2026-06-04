@@ -398,8 +398,8 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
                           data-drop-group-zone={group.group_identity}
                           class="rounded-lg"
                           classList={{
-                                "min-h-8 border border-dashed border-primary/40 bg-primary/5": props.editing()
-                                    && accountsForGroup(accounts(), group.group_identity).length === 0
+                                "min-h-8": props.editing(),
+                                "border border-dashed border-primary/40 bg-primary/5": props.editing()
                                     && matchesInsertionGroupEnd(insertion(), group.group_identity),
                             }}
                         >
@@ -416,7 +416,15 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
             <Show when={hasUngrouped()}>
                 <section class="space-y-1">
                     <Show when={showUngroupedHeader()}>
-                        <div class="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-muted">
+                        <div
+                          data-drop-group-header="ungrouped"
+                          class="relative flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-muted"
+                          classList={{
+                                "bg-primary/10 ring-1 ring-primary/50 text-foreground": props.editing()
+                                    && dragItem()?.type === "account"
+                                    && matchesInsertionGroupEnd(insertion(), undefined),
+                            }}
+                        >
                             <Show when={props.editing()}>
                                 <span class="size-4" />
                             </Show>
@@ -436,8 +444,8 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
                       data-drop-group-zone="ungrouped"
                       class="rounded-lg"
                       classList={{
-                            "min-h-8 border border-dashed border-primary/40 bg-primary/5": props.editing()
-                                && ungroupedAccounts().length === 0
+                            "min-h-8": props.editing(),
+                            "border border-dashed border-primary/40 bg-primary/5": props.editing()
                                 && matchesInsertionGroupEnd(insertion(), undefined),
                         }}
                     >
