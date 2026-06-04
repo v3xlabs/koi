@@ -35,7 +35,6 @@ export const VendorEdit: Component = () => {
 
     const enabledVendors = createMemo(() => vendorsQuery.data?.vendors ?? []);
 
-    // grouped by first word of the string
     const allVendorsGrouped = createMemo(() => Object.entries(allVendorsQuery.data?.vendors.reduce((acc, vendor) => {
         const firstWord = vendor.flag.toString().split("_")[0];
 
@@ -49,23 +48,23 @@ export const VendorEdit: Component = () => {
     }, {} as Record<string, VendorFlagInfo[]>) ?? {}));
 
     return (
-        <div>
-            <div>
+        <div class="w-full space-y-4">
+            <div class="text-xl font-bold">
                 Vendors
             </div>
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<div class="py-8 text-center text-muted">Loading...</div>}>
                 <Show when={allVendorsGrouped()}>
                     {data => (
-                        <div class="space-y-2">
+                        <div class="divide-y divide-border">
                             <For each={data()}>
                                 {group => (
-                                    <div class="bg-surface p-4 rounded-md space-y-2">
-                                        <div class="flex justify-between items-center">
+                                    <div class="space-y-3 py-4 first:pt-0 last:pb-0">
+                                        <div class="flex justify-between items-center px-2">
                                             <div class="font-bold">
                                                 {capitalFirst(group[0])}
                                             </div>
                                             <label class="group flex justify-between items-center gap-2">
-                                                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-sm text-muted">
                                                     Enable all
                                                 </span>
                                                 <Toggle
@@ -74,20 +73,14 @@ export const VendorEdit: Component = () => {
                                                         const direction = group[1].every(vendor => enabledVendors().includes(vendor.flag)) ? "enable" : "disable";
 
                                                         // TODO: Implement
-                                                        // if (direction === "enable") {
-                                                        //     group[1].forEach(vendor => enableVendorFlag(vendor.flag));
-                                                        // }
-                                                        // else {
-                                                        //     group[1].forEach(vendor => disableVendorFlag(vendor.flag));
-                                                        // }
                                                     }}
                                                 />
                                             </label>
                                         </div>
-                                        <ul class="space-y-2">
+                                        <ul class="space-y-1">
                                             <For each={group[1]}>
                                                 {vendor => (
-                                                    <li class="flex justify-between items-center">
+                                                    <li class="px-2 py-1 rounded-lg hover:bg-surface-alt">
                                                         <VendorFlagToggle
                                                           info={vendor}
                                                           state={() => enabledVendors().includes(vendor.flag)}

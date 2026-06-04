@@ -10,23 +10,23 @@ export const Route = createFileRoute("/settings/networks")({
     const networksQuery = useNetworks();
 
     return (
-      <div class="w-full space-y-2">
-        <div class="flex justify-between items-end">
-          <div class="text-lg">
+      <div class="w-full space-y-4">
+        <div class="flex justify-between items-center">
+          <div class="text-xl font-bold">
             Networks
           </div>
-          <div>
-            <NetworkAdd />
-          </div>
+          <NetworkAdd />
         </div>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div class="py-8 text-center text-muted">Loading...</div>}>
           <Show when={networksQuery.data}>
             {data => (
-              <For each={data().networks}>
-                {network => (
-                  <NetworkEdit network_identity={network.network_identity} />
-                )}
-              </For>
+              <div class="space-y-6">
+                <For each={data().networks}>
+                  {network => (
+                    <NetworkEdit network_identity={network.network_identity} embedded />
+                  )}
+                </For>
+              </div>
             )}
           </Show>
         </Suspense>

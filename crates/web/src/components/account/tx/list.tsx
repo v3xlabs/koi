@@ -5,6 +5,7 @@ import { Component, createMemo, For, JSX, Show, Suspense } from "solid-js";
 
 import { AccountTx, useAccountTxAll } from "#/api/account/tx";
 import { AddressPreview } from "#/components/link/address";
+import { TxHashPreview } from "#/components/link/txhash";
 import { NetworkIcon } from "#/components/net/icon";
 import { FormattedTime } from "#/components/time";
 import { truncateAddress } from "#/utils/address";
@@ -121,6 +122,17 @@ const CompactHashField: Component<{ label: string; value: string | undefined; }>
         <code class="block truncate rounded bg-foreground/10 px-1.5 py-0.5 text-xs" title={value()}>
           {value()}
         </code>
+      </div>
+    )}
+  </Show>
+);
+
+const CompactTxHashField: Component<{ label: string; value: string | undefined; network_identity: number; }> = props => (
+  <Show when={props.value}>
+    {value => (
+      <div class="min-w-0 space-y-1">
+        <div class="text-[11px] font-medium uppercase tracking-wide text-muted">{props.label}</div>
+        <TxHashPreview txhash={value()} network_identity={props.network_identity} truncate={false} />
       </div>
     )}
   </Show>
@@ -245,7 +257,7 @@ const TransactionMeta: Component<{ tx: AccountTx; }> = props => (
   <aside>
     <div class="text-sm font-medium">Transaction</div>
     <div class="space-y-3">
-      <CompactHashField label="Tx hash" value={props.tx.tx_hash} />
+      <CompactTxHashField label="Tx hash" value={props.tx.tx_hash} network_identity={props.tx.network_identity} />
       <CompactHashField label="Safe tx hash" value={props.tx.extra.safe_wallet?.safe_tx_hash} />
       <CompactNetworkField network_identity={props.tx.network_identity} />
     </div>
@@ -334,7 +346,16 @@ const TransactionCard: Component<{ tx: AccountTx; }> = props => (
           </div>
           <div class="min-w-0">
             <div class="truncate font-medium">{summaryTitle(props.tx)}</div>
-            <div class="truncate text-xs text-muted">{summarySubtitle(props.tx)}</div>
+            <Show
+              when={props.tx.tx_hash}
+              fallback={<div class="truncate text-xs text-muted">{summarySubtitle(props.tx)}</div>}
+            >
+              {txhash => (
+                <div class="mt-0.5" onClick={event => event.stopPropagation()}>
+                  <TxHashPreview txhash={txhash()} network_identity={props.tx.network_identity} />
+                </div>
+              )}
+            </Show>
           </div>
           <div class="hidden text-sm text-muted md:block">
             <FormattedTime value={effectiveSafeDate(props.tx) as string | number | Date | null | undefined} />

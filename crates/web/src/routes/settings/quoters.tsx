@@ -10,29 +10,25 @@ export const Route = createFileRoute("/settings/quoters")({
     const quotersQuery = useQuoters();
 
     return (
-      <div class="w-full space-y-2">
-        <div class="flex justify-between items-end">
-          <div class="text-lg">Quoters</div>
-          <div>
-            <QuoterAdd />
-          </div>
+      <div class="w-full space-y-4">
+        <div class="flex justify-between items-center">
+          <div class="text-xl font-bold">Price Feeds</div>
+          <QuoterAdd />
         </div>
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<div class="py-8 text-center text-muted">Loading...</div>}>
           <Show when={quotersQuery.data}>
             {data => (
-              <div class="w-full space-y-2 bg-surface rounded-md p-4">
-                <Show when={data().quoters.length > 0} fallback={<div class="text-center text-muted">No quoters found</div>}>
-                  <ul>
+              <Show when={data().quoters.length > 0} fallback={<div class="py-8 text-center text-muted">No quoters found</div>}>
+                <ul class="space-y-1">
                   <For each={data().quoters}>
                     {quoter => (
-                      <div class="py-2 px-4 hover:bg-surface-alt cursor-pointer rounded-md">
+                      <li class="py-2 px-2 hover:bg-surface-alt rounded-lg">
                         <QuoterPreview quoter_identity={quoter.quoter_identity} />
-                      </div>
+                      </li>
                     )}
                   </For>
-                  </ul>
-                </Show>
-              </div>
+                </ul>
+              </Show>
             )}
           </Show>
         </Suspense>

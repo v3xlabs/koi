@@ -4,10 +4,14 @@ import { createApi, createApiMutation } from "../query";
 import { components } from "../schema.gen";
 
 export type Account = components["schemas"]["Account"];
+export type AccountGroup = components["schemas"]["AccountGroup"];
+export type AccountLayout = components["schemas"]["AccountLayout"];
+export type AccountLayoutUpdate = components["schemas"]["AccountLayoutUpdate"];
 export type WalletType = components["schemas"]["WalletType"];
 
 export const accountKeys = {
     all: ["accounts"] as const,
+    layout: ["account-layout"] as const,
     detail: (account_identity: number | string) => ["account", account_identity.toString()] as const,
     nextId: ["next-account-id"] as const,
     assets: (account_identity: number | string) => ["account", account_identity.toString(), "assets"] as const,
@@ -28,22 +32,30 @@ export function accountBalanceQuery(
     } as const;
 }
 
+const invalidateAccountLists = () => {
+    queryClient.invalidateQueries({ queryKey: accountKeys.all });
+    queryClient.invalidateQueries({ queryKey: accountKeys.layout });
+};
+
 export const useAccount = createApi("/acc/{account_identity}", "get", options => accountKeys.detail(options.path.account_identity));
 export const useAccounts = createApi("/acc", "get", () => accountKeys.all, {
+    onData: data => data.accounts.forEach(account => queryClient.setQueryData(accountKeys.detail(account.account_identity), account)),
+});
+export const useAccountLayout = createApi("/acc/layout", "get", () => accountKeys.layout, {
     onData: data => data.accounts.forEach(account => queryClient.setQueryData(accountKeys.detail(account.account_identity), account)),
 });
 
 export const useNextAccountId = createApi("/acc/next-id", "get", () => accountKeys.nextId);
 export const useCreateAccount = createApiMutation("/acc", "post", {
     onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: accountKeys.all });
+        invalidateAccountLists();
         queryClient.invalidateQueries({ queryKey: accountKeys.nextId });
     },
 });
 
 export const useDeleteAccount = createApiMutation("/acc/{account_identity}", "delete", {
     onSuccess: (_, variables) => {
-        queryClient.invalidateQueries({ queryKey: accountKeys.all });
+        invalidateAccountLists();
 
         if (variables.account_identity) {
             queryClient.removeQueries({ queryKey: accountKeys.detail(variables.account_identity) });
@@ -54,8 +66,33 @@ export const useDeleteAccount = createApiMutation("/acc/{account_identity}", "de
 
 export const useUpdateAccount = createApiMutation("/acc/{account_identity}", "put", {
     onSuccess: (account) => {
-        queryClient.invalidateQueries({ queryKey: accountKeys.all });
+        invalidateAccountLists();
         queryClient.invalidateQueries({ queryKey: accountKeys.detail(account.account_identity) });
+    },
+});
+
+export const useUpdateAccountLayout = createApiMutation("/acc/layout", "put", {
+    onSuccess: (layout) => {
+        queryClient.setQueryData(accountKeys.layout, layout);
+        invalidateAccountLists();
+    },
+});
+
+export const useCreateAccountGroup = createApiMutation("/acc/groups", "post", {
+    onSuccess: () => {
+        invalidateAccountLists();
+    },
+});
+
+export const useUpdateAccountGroup = createApiMutation("/acc/groups/{group_identity}", "put", {
+    onSuccess: () => {
+        invalidateAccountLists();
+    },
+});
+
+export const useDeleteAccountGroup = createApiMutation("/acc/groups/{group_identity}", "delete", {
+    onSuccess: () => {
+        invalidateAccountLists();
     },
 });
 
@@ -96,4 +133,54 @@ export async function refreshAccountBalances(options: {
     );
 
     return response.data;
+}
+
+export function normalizeGroupId(group_id?: number | null): number | undefined {
+    if (group_id === undefined || group_id === null || group_id === 0) {
+        return undefined;
+    }
+
+    return group_id;
+}
+
+export function isUngroupedAccount(account: Pick<Account, "group_id">) {
+    return normalizeGroupId(account.group_id) === undefined;
+}
+
+export function buildLayoutUpdate(layout: AccountLayout): AccountLayoutUpdate {
+    return {
+        groups: layout.groups.map(group => ({
+            group_identity: group.group_identity,
+            name: group.name,
+            display_order: group.display_order,
+        })),
+        accounts: layout.accounts.map(account => ({
+            account_identity: account.account_identity,
+            group_id: normalizeGroupId(account.group_id),
+            display_order: account.display_order,
+        })),
+    };
+}
+
+export function moveAccountToGroup(
+    layout: AccountLayout,
+    account_identity: number,
+    group_id: number | undefined,
+): AccountLayout {
+    const accounts = layout.accounts.map((account) => {
+        if (account.account_identity !== account_identity) return account;
+
+        const normalizedGroupId = normalizeGroupId(group_id);
+        const siblings = layout.accounts.filter(
+            candidate => normalizeGroupId(candidate.group_id) === normalizedGroupId
+                && candidate.account_identity !== account_identity,
+        );
+        const display_order = siblings.length > 0
+            ? Math.max(...siblings.map(sibling => sibling.display_order)) + 1
+            : 0;
+
+        return { ...account, group_id: normalizedGroupId, display_order };
+    });
+
+    return { ...layout, accounts };
 }

@@ -160,6 +160,160 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/acc/layout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountLayout"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["AccountLayoutUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountLayout"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["AccountGroupCreate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountGroup"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/groups/{group_identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group_identity: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["AccountGroupUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountGroup"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group_identity: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/acc/next-id": {
         parameters: {
             query?: never;
@@ -1677,6 +1831,51 @@ export type components = {
             name: string;
             networks: number[];
             metadata: components["schemas"]["WalletType"];
+            group_id?: number;
+            /** Format: uint32 */
+            display_order: number;
+        };
+        /** AccountGroup */
+        AccountGroup: {
+            /** Format: uint64 */
+            group_identity: number;
+            name: string;
+            /** Format: uint32 */
+            display_order: number;
+        };
+        /** AccountGroupCreate */
+        AccountGroupCreate: {
+            name: string;
+        };
+        /** AccountGroupUpdate */
+        AccountGroupUpdate: {
+            name?: string;
+        };
+        /** AccountLayout */
+        AccountLayout: {
+            groups: components["schemas"]["AccountGroup"][];
+            accounts: components["schemas"]["Account"][];
+        };
+        /** AccountLayoutAccountEntry */
+        AccountLayoutAccountEntry: {
+            /** Format: uint64 */
+            account_identity: number;
+            group_id?: number;
+            /** Format: uint32 */
+            display_order: number;
+        };
+        /** AccountLayoutGroupEntry */
+        AccountLayoutGroupEntry: {
+            /** Format: uint64 */
+            group_identity: number;
+            name: string;
+            /** Format: uint32 */
+            display_order: number;
+        };
+        /** AccountLayoutUpdate */
+        AccountLayoutUpdate: {
+            groups: components["schemas"]["AccountLayoutGroupEntry"][];
+            accounts: components["schemas"]["AccountLayoutAccountEntry"][];
         };
         /** AccountBalance */
         AccountBalance: {

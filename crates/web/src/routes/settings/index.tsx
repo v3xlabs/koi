@@ -4,13 +4,11 @@ import { DisplayCurrencySelector } from "#/components/quoter/display";
 
 export const Route = createFileRoute("/settings/")({
   component: () => (
-    <div class="w-full">
-      <div class="text-lg">
+    <div class="w-full space-y-4">
+      <div class="text-xl font-bold">
         Settings
       </div>
-      <div class="bg-surface p-4 rounded-md w-full">
-        <DisplayCurrencySelector showLabel />
-      </div>
+      <DisplayCurrencySelector showLabel />
     </div>
   ),
 });

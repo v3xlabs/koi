@@ -1,11 +1,10 @@
 import { FiCopy, FiExternalLink } from "solid-icons/fi";
-import { Component, createMemo, For, JSX, Show } from "solid-js";
+import { Component, createMemo, JSX, Show } from "solid-js";
 
 import { useVendors, VendorFlag } from "#/api/vendor";
 import { addressToHue, truncateAddress } from "#/utils/address";
 
-import { Modal } from "../dialog";
-import { NetworkIcon } from "../net/icon";
+import { explorerKeyFromFlag, explorerNameFromFlag, ExplorerLinksModal } from "./explorer";
 
 const EXPLORER_ADDRESS_LINKS: Partial<Record<VendorFlag, Record<number, string>>> = {
     etherscan_link_address: {
@@ -23,53 +22,68 @@ export const AddressExternalLinkModal: Component<{ address: string; networks: nu
     const vendors = createMemo(() => vendorsQuery.data?.vendors);
 
     const links = createMemo(() => {
-        const links: { flag: VendorFlag; network_identity: number; link: string; }[] = [];
+        const items: { flag: VendorFlag; network_identity: number; link: string; }[] = [];
 
         for (const flag of vendors() ?? []) {
             for (const network_identity of props.networks) {
                 const link = EXPLORER_ADDRESS_LINKS[flag as VendorFlag]?.[network_identity]?.replace("$address", props.address);
 
                 if (link) {
-                    links.push({ flag, network_identity, link });
+                    items.push({ flag, network_identity, link });
                 }
             }
         }
 
-        return links;
+        return items
+            .flatMap((item) => {
+                const explorerKey = explorerKeyFromFlag(item.flag);
+
+                if (!explorerKey) return [];
+
+                return [{
+                    link: item.link,
+                    network_identity: item.network_identity,
+                    explorerName: explorerNameFromFlag(item.flag),
+                    explorerKey,
+                }];
+            })
+            .toSorted((a, b) => a.network_identity - b.network_identity || a.explorerName.localeCompare(b.explorerName));
     });
 
+    const hue = createMemo(() => addressToHue(props.address));
+
+    const copyAddress = async () => {
+        await navigator.clipboard.writeText(props.address);
+    };
+
     return (
-        <Modal>
-            <Modal.Trigger class={props.class}>
-                {props.children ?? "Link"}
-            </Modal.Trigger>
-            <Modal.Portal>
-                <Modal.Overlay />
-                <div class="fixed inset-0 z-10">
-                    <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24">
-                        <Modal.CloseButton />
-                        <Modal.Title>Link External</Modal.Title>
-                        <div class="p-4 space-y-4">
-                            <For each={links()}>
-                                {link => (
-                                    <a href={link.link} target="_blank" class="hover:underline">
-                                        <div class="flex items-center gap-2">
-                                            <NetworkIcon network_identity={link.network_identity} />
-                                            <span>
-                                                {link.flag}
-                                            </span>
-                                        </div>
-                                        <div class="wrap-anywhere">
-                                            {link.link}
-                                        </div>
-                                    </a>
-                                )}
-                            </For>
-                        </div>
-                    </Modal.Content>
+        <ExplorerLinksModal
+          title="Open in explorer"
+          description="You're about to open this address on an external block explorer. Review the destination URL before continuing."
+          class={props.class}
+          emptyMessage="No block explorer links are enabled for this address."
+          links={links}
+          subject={(
+                <div class="flex items-start justify-between gap-3">
+                    <code
+                      class="min-w-0 flex-1 break-all text-sm"
+                      style={{ color: `hsl(${hue()} 80% 78%)` }}
+                    >
+                        {props.address}
+                    </code>
+                    <button
+                      type="button"
+                      class="shrink-0 rounded-md p-1.5 text-muted transition-colors hover:bg-surface-alt hover:text-foreground"
+                      title="Copy address"
+                      onClick={copyAddress}
+                    >
+                        <FiCopy class="size-4" />
+                    </button>
                 </div>
-            </Modal.Portal>
-        </Modal>
+            )}
+        >
+            {props.children ?? "Link"}
+        </ExplorerLinksModal>
     );
 };
 

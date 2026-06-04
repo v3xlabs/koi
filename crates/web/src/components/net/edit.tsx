@@ -21,7 +21,7 @@ const NetworkEndpoints: Component<{ network_identity: number; }> = ({ network_id
                 <div>Endpoints</div>
                 <NetworkEndpointAdd network_identity={network_identity} />
             </div>
-            <ul class="border border-border rounded-md">
+            <ul class="border border-border rounded-lg overflow-hidden">
                 <Suspense fallback={<div>Loading...</div>}>
                     <Show when={networkEndpointsQuery.data}>
                         {data => (
@@ -43,10 +43,11 @@ const NetworkEndpoints: Component<{ network_identity: number; }> = ({ network_id
     );
 };
 
-export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_identity }) => {
+export const NetworkEdit: Component<{ network_identity: number; embedded?: boolean; }> = (props) => {
+    const network_identity = () => props.network_identity;
     const networkQuery = useNetwork(() => ({
         path: {
-            network_identity,
+            network_identity: network_identity(),
         },
     }));
     const network = createMemo(() => networkQuery.data);
@@ -59,7 +60,7 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
     // }));
 
     return (
-        <div>
+        <div class={props.embedded ? "border-b border-border pb-6 last:border-0 last:pb-0" : undefined}>
             <Tabs>
                 <div class="flex justify-between items-end">
                     <div class="flex items-center gap-2 px-1 pb-2 pt-1">
@@ -85,9 +86,9 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
                         </Tabs.List>
                     </div>
                 </div>
-                <div class="bg-surface p-4 rounded-md w-full">
+                <div class={props.embedded ? "w-full pt-2" : "bg-surface p-4 rounded-xl w-full"}>
                     <Tabs.Content value="endpoints">
-                        <NetworkEndpoints network_identity={network_identity} />
+                        <NetworkEndpoints network_identity={network_identity()} />
                     </Tabs.Content>
                     <Tabs.Content value="details">
                         <div class="w-full space-y-2">
@@ -140,7 +141,7 @@ export const NetworkEdit: Component<{ network_identity: number; }> = ({ network_
                                 >
                                     Save
                                 </button>
-                                <NetworkDelete network_identity={network_identity} />
+                                <NetworkDelete network_identity={network_identity()} />
                             </div>
                         </div>
                     </Tabs.Content>

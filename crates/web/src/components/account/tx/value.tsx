@@ -1,6 +1,7 @@
 import { Component, For, Show } from "solid-js";
 
 import { AddressPreview } from "#/components/link/address";
+import { TxHashPreview } from "#/components/link/txhash";
 import { truncateAddress } from "#/utils/address";
 
 type JsonRecord = Record<string, unknown>;
@@ -17,6 +18,8 @@ export const titleFromKey = (key: string) => key
 const isHex = (value: string) => /^0x[\da-f]+$/i.test(value);
 
 export const isAddress = (value: string) => /^0x[\da-f]{40}$/i.test(value);
+
+export const isTxHash = (value: string) => /^0x[\da-f]{64}$/i.test(value);
 const isDateString = (value: string) => /^\d{4}-\d{2}-\d{2}T/.test(value) && !Number.isNaN(Date.parse(value));
 
 export const formatTxValue = (value: unknown): string => {
@@ -36,6 +39,8 @@ export const formatTxValue = (value: unknown): string => {
 
   if (isAddress(value)) return truncateAddress(value);
 
+  if (isTxHash(value)) return truncateAddress(value);
+
   if (isDateString(value)) return new Date(value).toLocaleString();
 
   return value;
@@ -48,9 +53,20 @@ export const TxValue: Component<{ value: unknown; class?: string; network_identi
       <Show
         when={typeof props.value === "string" && isAddress(props.value)}
         fallback={(
-          <code class={`break-all rounded bg-foreground/10 px-1.5 py-0.5 text-xs ${props.class ?? ""}`}>
-            {formatTxValue(props.value)}
-          </code>
+          <Show
+            when={typeof props.value === "string" && isTxHash(props.value) && props.network_identity !== undefined}
+            fallback={(
+              <code class={`break-all rounded bg-foreground/10 px-1.5 py-0.5 text-xs ${props.class ?? ""}`}>
+                {formatTxValue(props.value)}
+              </code>
+            )}
+          >
+            <TxHashPreview
+              txhash={props.value as string}
+              network_identity={props.network_identity!}
+              class={props.class}
+            />
+          </Show>
         )}
       >
         <AddressPreview address={props.value as string} network_identity={props.network_identity} class={props.class} />
@@ -81,7 +97,17 @@ export const TxJsonValue: Component<{ value: unknown; network_identity?: number;
         fallback={(
           <Show
             when={typeof props.value === "string" && isAddress(props.value)}
-            fallback={<span class="break-all text-sm">{formatTxValue(props.value)}</span>}
+            fallback={(
+              <Show
+                when={typeof props.value === "string" && isTxHash(props.value) && props.network_identity !== undefined}
+                fallback={<span class="break-all text-sm">{formatTxValue(props.value)}</span>}
+              >
+                <TxHashPreview
+                  txhash={props.value as string}
+                  network_identity={props.network_identity!}
+                />
+              </Show>
+            )}
           >
             <AddressPreview address={props.value as string} network_identity={props.network_identity} />
           </Show>

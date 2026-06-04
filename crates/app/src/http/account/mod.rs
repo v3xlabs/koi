@@ -2,6 +2,8 @@ use crate::{
     http::auth::Auth,
     models::{
         account::{
+            group::{AccountGroup, AccountGroupCreate, AccountGroupUpdate, GroupIdentity},
+            layout::{AccountLayout, AccountLayoutUpdate},
             Account, AccountUpdate, balances::{AccountBalance, AccountBalances}, identity::AccountIdentity,
         },
         asset::identity::AssetIdentity,
@@ -260,6 +262,97 @@ impl AccountApi {
                 .balances
                 .get_balances(&state, &account, &display_currency.0, fresh.0.unwrap_or(false))
                 .await?,
+        ))
+    }
+
+    /// Get account layout (groups + ordered accounts)
+    ///
+    /// GET /api/acc/layout
+    #[oai(path = "/acc/layout", method = "get", tag = "ApiTags::Account")]
+    async fn get_account_layout(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+    ) -> Result<Json<AccountLayout>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(AccountLayout::get(&state.database).await?))
+    }
+
+    /// Update account layout (bulk reorder + group membership)
+    ///
+    /// PUT /api/acc/layout
+    #[oai(path = "/acc/layout", method = "put", tag = "ApiTags::Account")]
+    async fn update_account_layout(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        payload: Json<AccountLayoutUpdate>,
+    ) -> Result<Json<AccountLayout>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(
+            AccountLayout::update(&state.database, payload.0).await?,
+        ))
+    }
+
+    /// Create an account group
+    ///
+    /// POST /api/acc/groups
+    #[oai(path = "/acc/groups", method = "post", tag = "ApiTags::Account")]
+    async fn create_account_group(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        payload: Json<AccountGroupCreate>,
+    ) -> Result<Json<AccountGroup>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(
+            AccountGroup::create(&state.database, payload.0.name).await?,
+        ))
+    }
+
+    /// Update an account group
+    ///
+    /// PUT /api/acc/groups/:group_identity
+    #[oai(
+        path = "/acc/groups/:group_identity",
+        method = "put",
+        tag = "ApiTags::Account"
+    )]
+    async fn update_account_group(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        group_identity: Path<GroupIdentity>,
+        payload: Json<AccountGroupUpdate>,
+    ) -> Result<Json<AccountGroup>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(
+            AccountGroup::update(&state.database, group_identity.0, payload.0).await?,
+        ))
+    }
+
+    /// Delete an account group
+    ///
+    /// DELETE /api/acc/groups/:group_identity
+    #[oai(
+        path = "/acc/groups/:group_identity",
+        method = "delete",
+        tag = "ApiTags::Account"
+    )]
+    async fn delete_account_group(
+        &self,
+        auth: Auth,
+        state: Data<&AppState>,
+        group_identity: Path<GroupIdentity>,
+    ) -> Result<Json<()>> {
+        let _auth_data = auth.unwrap()?;
+
+        Ok(Json(
+            AccountGroup::delete(&state.database, group_identity.0).await?,
         ))
     }
 }
