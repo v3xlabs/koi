@@ -1,12 +1,25 @@
 import { Link, useParams } from "@tanstack/solid-router";
 import { FaSolidAddressCard, FaSolidClock, FaSolidGear, FaSolidGridHorizontal, FaSolidWallet } from "solid-icons/fa";
 import { FiHome, FiPlus } from "solid-icons/fi";
-import { For, Show } from "solid-js";
+import { Component, For, JSXElement, Show } from "solid-js";
 
 import { useAccount } from "#/api/account";
 
-import logo from "../assets/kohaku.svg";
 import { button } from "./input/button";
+import { Branding } from "./navbar/branding";
+
+const NavLink: Component<{ href: string; icon?: Component; children: JSXElement; }> = ({ href, icon, children }) => (
+    <Link
+      to={href}
+      class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt group"
+      activeOptions={{
+            exact: true,
+        }}
+    >
+        {icon && icon({ class: "w-3.5 h-3.5 group-data-[status=active]:text-primary" })}
+        {children}
+    </Link>
+);
 
 export const Sidebar = () => {
     const params = useParams({ from: "/acc/$account" });
@@ -14,16 +27,8 @@ export const Sidebar = () => {
     const account = useAccount(() => ({ path: { account_identity } }));
 
     return (
-        <div class="px-1.5 py-2 min-w-56 max-w-64 bg-surface h-full space-y-2">
-            <Link to="/" class="flex min-w-0 items-center gap-2 p-2">
-                <div class="w-8 h-8 shrink-0">
-                    <img src={logo} alt="Koi" class="w-full h-full object-contain" />
-                </div>
-                <div class="leading-none min-w-0">
-                    <h1 class="font-bold">Koi</h1>
-                    <span class="text-muted text-sm whitespace-nowrap">just a wallet</span>
-                </div>
-            </Link>
+        <div class="px-1.5 py-2 min-w-56 max-w-64 bg-surface h-full space-y-2 flex flex-col">
+            <Branding />
             <Show when={account.data && account.data?.metadata.type !== "view"}>
                 <div>
                     <Link
@@ -36,7 +41,7 @@ export const Sidebar = () => {
                     </Link>
                 </div>
             </Show>
-            <div class="divide-y divide-border flex flex-col justify-between">
+            <div class="divide-y divide-border flex flex-col grow">
                 <For each={[
                     [
                         {
@@ -64,6 +69,23 @@ export const Sidebar = () => {
                             label: "Settings",
                             href: "/acc/$account/settings",
                         }],
+                ]}
+                >
+                    {group => (
+                        <div class="py-2 first:pt-0">
+                            <For each={group}>
+                                {item => (
+                                    <NavLink href={item.href} icon={item.icon}>
+                                        {item.label}
+                                    </NavLink>
+                                )}
+                            </For>
+                        </div>
+                    )}
+                </For>
+            </div>
+            <div>
+                <For each={[
                     [
                         {
                             icon: FaSolidAddressCard,
@@ -82,16 +104,9 @@ export const Sidebar = () => {
                         <div class="py-2 first:pt-0">
                             <For each={group}>
                                 {item => (
-                                    <Link
-                                      to={item.href}
-                                      class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt group"
-                                      activeOptions={{
-                                            exact: true,
-                                        }}
-                                    >
-                                        <item.icon class="w-3.5 h-3.5 group-data-[status=active]:text-primary" />
+                                    <NavLink href={item.href} icon={item.icon}>
                                         {item.label}
-                                    </Link>
+                                    </NavLink>
                                 )}
                             </For>
                         </div>

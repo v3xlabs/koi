@@ -325,13 +325,13 @@ export const QuoterAdd = () => {
             </Modal.Trigger>
             <Modal.Portal>
                 <Modal.Overlay />
-                <div class="fixed inset-0 overflow-y-auto p-4">
+                <Modal.Positioner>
                     <Modal.Content class="w-full max-w-2xl bg-surface rounded-md relative mx-auto mt-20">
                         <Suspense>
                             <QuoterAddInner onClose={() => setOpen(false)} />
                         </Suspense>
                     </Modal.Content>
-                </div>
+                </Modal.Positioner>
             </Modal.Portal>
         </Modal>
     );

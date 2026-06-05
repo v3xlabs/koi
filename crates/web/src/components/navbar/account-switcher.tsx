@@ -16,7 +16,7 @@ import { Modal } from "../dialog";
 
 const TRIGGER_OVERLAP = 52;
 
-const switcherTriggerClass = "flex min-w-80 md:min-w-96 cursor-pointer items-center gap-2 rounded-md bg-surface px-3 py-2 text-left transition-colors hover:bg-surface-alt data-[expanded]:opacity-0";
+const switcherTriggerClass = "flex min-w-80 md:min-w-96 cursor-pointer items-center gap-2 rounded-md bg-surface px-3 h-10 text-left transition-colors hover:bg-surface-alt data-[expanded]:opacity-0";
 
 export const AccountSwitcher = () => {
     const navigate = useNavigate();

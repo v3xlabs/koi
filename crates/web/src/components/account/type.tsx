@@ -10,7 +10,7 @@ export const AccountTypeIcon: Component<{ type: Accessor<WalletType["type"]>; }>
     const icon = createMemo(() => match(props.type())
         .with("eoa", () => FaSolidUser)
         .with("view", () => FaSolidEye)
-        .with("safe", () => () => <img src={SafeIcon} alt="Safe Multisig" class="size-3.5" />)
+        .with("safe", () => () => <img src={SafeIcon} alt="Safe Multisig" class="size-3" />)
         .otherwise(() => FaSolidQuestion));
 
     const tooltip = createMemo(() => match(props.type())
