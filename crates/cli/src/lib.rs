@@ -15,20 +15,20 @@ pub enum Commands {
         #[arg(long, default_value = "http://localhost:7777")]
         api: String,
     },
-    /// Start the HTTP server
-    Serve,
+    /// Launch the terminal UI (requires a running server)
+    Tui {
+        /// Base URL of the koi server (without /api)
+        #[arg(long, default_value = "http://localhost:7777")]
+        api: String,
+    },
+    /// Start the daemon
+    Daemon,
     /// Create the database (if needed) and apply pending migrations
     Migrate {
         /// Mark pending migrations as applied without executing SQL.
         /// Use alone to baseline a pre-existing database, or pass a version to skip through that migration inclusive.
         #[arg(long, num_args = 0..=1)]
         skip: Option<Option<i64>>,
-    },
-    /// Launch the terminal UI (requires a running server)
-    Tui {
-        /// Base URL of the koi server (without /api)
-        #[arg(long, default_value = "http://localhost:7777")]
-        api: String,
     },
 }
 

@@ -25,7 +25,7 @@ run +args:
 build-web:
     cd crates/web && pnpm build
 
-dev: (run "serve")
+dev: (run "daemon")
 tui: (run "tui")
 gui: (build-web) (run "gui")
 migrate: (run "migrate")

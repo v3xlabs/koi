@@ -29,9 +29,9 @@ async fn main() {
                 std::process::exit(1);
             }
         }
-        Commands::Serve => {
+        Commands::Daemon => {
             init_logging(false);
-            info!("Heya");
+            info!("Starting daemon");
             let state = State::new().await.unwrap();
             http::serve(state).await;
         }
