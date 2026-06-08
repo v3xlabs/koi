@@ -8,7 +8,7 @@ use crate::{
         },
         identity::NetworkIdentity,
     },
-    state::Configuration,
+    config::Configuration,
 };
 use alloy::{
     providers::{DynProvider, Provider, ProviderBuilder},

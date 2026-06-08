@@ -35,6 +35,13 @@ async fn main() {
             let state = State::new().await.unwrap();
             http::serve(state).await;
         }
+        Commands::Migrate { skip } => {
+            init_logging(false);
+            if let Err(error) = State::run_migrations(skip).await {
+                eprintln!("Migration error: {error:#}");
+                std::process::exit(1);
+            }
+        }
         Commands::Tui { api } => {
             init_logging(true);
             let (api, _server_handle) = match prepare_client_api(api, explicit_api).await {

@@ -14,6 +14,8 @@ pub enum KoiError {
     Internal(String),
     #[error("database error: {0}")]
     Database(#[from] sqlx::Error),
+    #[error("migration error: {0}")]
+    Migrate(#[from] sqlx::migrate::MigrateError),
     #[error("environment error: {0}")]
     Configuration(#[from] figment::Error),
     #[error("rpc error: {0}")]

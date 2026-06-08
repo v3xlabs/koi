@@ -1,3 +1,6 @@
+koi-db := justfile_directory() / "crates" / "bin" / "koi.db"
+export KOI_DATABASE_URL := "sqlite://" + koi-db
+
 default:
     just --list
 
@@ -6,24 +9,30 @@ install:
     cd crates/app && cargo fmt
     cd crates/bin && cargo fmt
     cd crates/gui && cargo fmt
+    cd crates/tui && cargo fmt
+    cd crates/client && cargo fmt
 
 ui:
     cd crates/web && pnpm dev
 openapi:
     cd crates/web && pnpm openapi
-dev:
-    cd crates/bin && cargo run -- serve
-tui:
-    cd crates/bin && cargo run -- tui
 
+run +args:
+    cd crates/bin && cargo run -- {{args}}
+
+dev:
+    run serve
+tui:
+    run tui
 gui:
     cd crates/web && pnpm build
-    cd crates/bin && cargo run -- gui
-
+    run gui
 lint:
     cd crates/app && cargo fmt && cargo clippy
     cd crates/bin && cargo fmt && cargo clippy
     cd crates/gui && cargo fmt && cargo clippy
+    cd crates/tui && cargo fmt && cargo clippy
+    cd crates/client && cargo fmt && cargo clippy
     cd ui && pnpm lint --fix
 bacon:
     cd crates/bin && bacon
