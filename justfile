@@ -17,16 +17,20 @@ ui:
 openapi:
     cd crates/web && pnpm openapi
 
+[private]
 run +args:
     cd crates/bin && cargo run -- {{args}}
 
-dev:
-    run serve
-tui:
-    run tui
-gui:
+[private]
+build-web:
     cd crates/web && pnpm build
-    run gui
+
+dev: (run "serve")
+tui: (run "tui")
+gui: (build-web) (run "gui")
+migrate: (run "migrate")
+migrate-skip: (run "migrate" "--skip")
+
 lint:
     cd crates/app && cargo fmt && cargo clippy
     cd crates/bin && cargo fmt && cargo clippy
