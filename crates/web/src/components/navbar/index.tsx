@@ -1,6 +1,6 @@
-import { useLocation } from "@tanstack/solid-router";
+import { useMatch } from "@tanstack/solid-router";
 import { FiLock, FiUnlock } from "solid-icons/fi";
-import { createMemo, Show } from "solid-js";
+import { Show } from "solid-js";
 
 import { usePrivacyMode } from "#/api/context";
 
@@ -11,13 +11,12 @@ import { NetworkWidget } from "./networks";
 
 export const Navbar = () => {
     const { privacyMode, setPrivacyMode } = usePrivacyMode();
-    const x = useLocation();
-    const isAccountPage = createMemo(() => x().href.startsWith("/acc/"));
+    const y = useMatch({ from: "/acc/$account", shouldThrow: false });
 
     return (
         <div class="mt-1 flex w-full min-w-0 shrink-0 items-stretch justify-between px-4 py-2">
             <Show
-              when={isAccountPage()}
+              when={y()}
               fallback={(
                     <Branding />
                 )}
