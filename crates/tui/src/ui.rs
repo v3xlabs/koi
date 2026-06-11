@@ -280,9 +280,7 @@ fn render_accounts_list(frame: &mut Frame, app: &mut App, area: Rect) {
     };
 
     let table = Table::new(rows, constraints)
-        .header(
-            header.style(Style::default().add_modifier(Modifier::BOLD)),
-        )
+        .header(header.style(Style::default().add_modifier(Modifier::BOLD)))
         .block(Block::default().borders(Borders::ALL).title(format!(
             " Accounts {} ",
             position_label(app.accounts.len(), app.list_index)
@@ -382,7 +380,10 @@ fn render_selected_account_preview(frame: &mut Frame, app: &mut App, area: Rect)
         if account_icons_enabled(app) {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Length(IconRenderer::icon_height()), Constraint::Min(0)])
+                .constraints([
+                    Constraint::Length(IconRenderer::icon_height()),
+                    Constraint::Min(0),
+                ])
                 .split(inner);
             render_account_icon(frame, app, chunks[0], address);
             frame.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), chunks[1]);
@@ -617,11 +618,7 @@ fn render_settings_endpoints(frame: &mut Frame, app: &mut App, network_id: u64, 
     .column_spacing(2);
 
     frame.render_widget(table, area);
-    register_resource_list_table(
-        app,
-        area,
-        endpoints.map(|items| items.len()).unwrap_or(0),
-    );
+    register_resource_list_table(app, area, endpoints.map(|items| items.len()).unwrap_or(0));
 }
 
 fn render_settings_assets(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -907,7 +904,10 @@ fn render_account_detail(frame: &mut Frame, app: &mut App, area: Rect) {
     sidebar_lines.extend([
         Line::from(""),
         Line::from(Span::styled("←→ focus pane", sidebar_focus)),
-        Line::from(Span::styled("↑↓ select page", Style::default().fg(Color::DarkGray))),
+        Line::from(Span::styled(
+            "↑↓ select page",
+            Style::default().fg(Color::DarkGray),
+        )),
     ]);
 
     let sidebar_title = truncate(&account.name, 20);
@@ -969,7 +969,9 @@ fn render_account_detail(frame: &mut Frame, app: &mut App, area: Rect) {
 }
 
 fn account_content_block(title: &str, focused: bool) -> Block<'_> {
-    let mut block = Block::default().borders(Borders::ALL).title(format!(" {title} "));
+    let mut block = Block::default()
+        .borders(Borders::ALL)
+        .title(format!(" {title} "));
     if focused {
         block = block.border_style(Style::default().fg(Color::Cyan));
     }
@@ -1020,7 +1022,11 @@ fn render_horizontal_rule(frame: &mut Frame, area: Rect) {
 fn render_account_overview(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(5), Constraint::Length(1), Constraint::Min(0)])
+        .constraints([
+            Constraint::Length(5),
+            Constraint::Length(1),
+            Constraint::Min(0),
+        ])
         .split(area);
 
     let state = app.balance_state(account_identity);
@@ -1130,8 +1136,11 @@ fn render_account_asset_table(frame: &mut Frame, app: &App, account_identity: u6
         ],
     )
     .header(
-        Row::new(vec!["Asset", "Balance", "Value", "24h"])
-            .style(Style::default().add_modifier(Modifier::BOLD).fg(Color::DarkGray)),
+        Row::new(vec!["Asset", "Balance", "Value", "24h"]).style(
+            Style::default()
+                .add_modifier(Modifier::BOLD)
+                .fg(Color::DarkGray),
+        ),
     )
     .column_spacing(2);
 
@@ -1226,7 +1235,11 @@ fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area
             "APR",
             "7d earned",
         ])
-        .style(Style::default().add_modifier(Modifier::BOLD).fg(Color::DarkGray)),
+        .style(
+            Style::default()
+                .add_modifier(Modifier::BOLD)
+                .fg(Color::DarkGray),
+        ),
     )
     .column_spacing(2);
 
@@ -1276,8 +1289,11 @@ fn render_account_transactions(frame: &mut Frame, app: &App, account_identity: u
         ],
     )
     .header(
-        Row::new(vec!["Nonce", "Status", "Date", "Action", "Target", "Hash"])
-            .style(Style::default().add_modifier(Modifier::BOLD).fg(Color::DarkGray)),
+        Row::new(vec!["Nonce", "Status", "Date", "Action", "Target", "Hash"]).style(
+            Style::default()
+                .add_modifier(Modifier::BOLD)
+                .fg(Color::DarkGray),
+        ),
     )
     .column_spacing(2);
 
@@ -1530,7 +1546,11 @@ fn balance_cell(
     }
 }
 
-fn balance_sidebar_style(app: &App, account_id: u64, state: Option<&ResourceState<AccountBalances>>) -> Style {
+fn balance_sidebar_style(
+    app: &App,
+    account_id: u64,
+    state: Option<&ResourceState<AccountBalances>>,
+) -> Style {
     match state {
         Some(ResourceState::Error(_)) => Style::default().fg(Color::Red),
         Some(ResourceState::Loading) | _ if app.is_balance_refreshing(account_id) => {
@@ -1570,9 +1590,7 @@ fn render_account_icon(frame: &mut Frame, app: &mut App, area: Rect, address: &s
 }
 
 fn account_evm_address(metadata: &WalletType) -> Option<String> {
-    metadata
-        .unwrap_address()
-        .map(|address| address.to_string())
+    metadata.unwrap_address().map(|address| address.to_string())
 }
 
 fn wallet_type_label(metadata: &WalletType) -> String {

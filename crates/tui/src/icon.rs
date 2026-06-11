@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use ratatui::{
-    layout::{Rect, Size},
     Frame,
+    layout::{Rect, Size},
 };
 use ratatui_image::{
     FilterType, Image, Resize,

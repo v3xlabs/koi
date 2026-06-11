@@ -5,10 +5,7 @@ use moka::future::Cache;
 use super::{Account, balances::AccountBalances};
 use crate::{
     error::KoiError,
-    models::{
-        account::identity::AccountIdentity,
-        asset::identity::AssetIdentity,
-    },
+    models::{account::identity::AccountIdentity, asset::identity::AssetIdentity},
     state::AppState,
 };
 
@@ -55,9 +52,7 @@ impl BalanceCacheManager {
 
         self.cache
             .try_get_with(key, async move {
-                account
-                    .fetch_balances(&state, &display_currency)
-                    .await
+                account.fetch_balances(&state, &display_currency).await
             })
             .await
             .map_err(|error| match Arc::try_unwrap(error) {

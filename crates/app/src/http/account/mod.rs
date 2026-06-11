@@ -2,9 +2,11 @@ use crate::{
     http::auth::Auth,
     models::{
         account::{
+            Account, AccountUpdate,
+            balances::{AccountBalance, AccountBalances},
             group::{AccountGroup, AccountGroupCreate, AccountGroupUpdate, GroupIdentity},
+            identity::AccountIdentity,
             layout::{AccountLayout, AccountLayoutUpdate},
-            Account, AccountUpdate, balances::{AccountBalance, AccountBalances}, identity::AccountIdentity,
         },
         asset::identity::AssetIdentity,
     },
@@ -260,7 +262,12 @@ impl AccountApi {
         Ok(Json(
             state
                 .balances
-                .get_balances(&state, &account, &display_currency.0, fresh.0.unwrap_or(false))
+                .get_balances(
+                    &state,
+                    &account,
+                    &display_currency.0,
+                    fresh.0.unwrap_or(false),
+                )
                 .await?,
         ))
     }

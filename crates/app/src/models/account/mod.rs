@@ -5,11 +5,7 @@ use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
 use crate::{
     error::KoiError,
     models::{
-        account::{
-            group::GroupIdentity,
-            identity::AccountIdentity,
-            metadata::WalletType,
-        },
+        account::{group::GroupIdentity, identity::AccountIdentity, metadata::WalletType},
         asset::{Asset, identity::AssetIdentity},
         network::identity::NetworkIdentity,
     },
@@ -127,13 +123,11 @@ impl Account {
                 .fetch_one(database)
                 .await
             }
-            None => {
-                query_scalar::<_, i64>(
-                    "SELECT COALESCE(MAX(display_order), -1) + 1 FROM accounts WHERE group_id IS NULL",
-                )
-                .fetch_one(database)
-                .await
-            }
+            None => query_scalar::<_, i64>(
+                "SELECT COALESCE(MAX(display_order), -1) + 1 FROM accounts WHERE group_id IS NULL",
+            )
+            .fetch_one(database)
+            .await,
         }?;
 
         Ok(next as u32)

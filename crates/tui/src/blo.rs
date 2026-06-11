@@ -54,7 +54,7 @@ pub fn blo_dynamic_image(address: &str) -> DynamicImage {
     DynamicImage::ImageRgba8(image)
 }
 
-pub(crate) fn blo_rgb_grid(address: &str) -> [[ [u8; 3]; 8]; 8] {
+pub(crate) fn blo_rgb_grid(address: &str) -> [[[u8; 3]; 8]; 8] {
     let image = blo_image(address);
     let background = hsl_to_rgb_bytes(image.background);
     let color = hsl_to_rgb_bytes(image.color);
@@ -86,8 +86,7 @@ fn hsl_to_rgb_bytes(hsl: Hsl) -> [u8; 3] {
 }
 
 pub fn blo_grid(address: &str) -> [[Color; 8]; 8] {
-    blo_rgb_grid(address)
-        .map(|row| row.map(|[red, green, blue]| Color::Rgb(red, green, blue)))
+    blo_rgb_grid(address).map(|row| row.map(|[red, green, blue]| Color::Rgb(red, green, blue)))
 }
 
 pub fn blo_icon_lines(address: &str) -> Vec<Line<'static>> {
@@ -150,10 +149,7 @@ fn random_color(rseed: &mut [u32; 4]) -> Hsl {
         hue: truncate_u16(next_random(rseed) * 360.0),
         saturation: truncate_u16(40.0 + next_random(rseed) * 60.0),
         lightness: truncate_u16(
-            (next_random(rseed)
-                + next_random(rseed)
-                + next_random(rseed)
-                + next_random(rseed))
+            (next_random(rseed) + next_random(rseed) + next_random(rseed) + next_random(rseed))
                 * 25.0,
         ),
     }
@@ -228,11 +224,7 @@ fn average_color(colors: [Color; 4]) -> Color {
         }
     }
 
-    Color::Rgb(
-        (red / 4) as u8,
-        (green / 4) as u8,
-        (blue / 4) as u8,
-    )
+    Color::Rgb((red / 4) as u8, (green / 4) as u8, (blue / 4) as u8)
 }
 
 #[cfg(test)]
@@ -245,8 +237,8 @@ mod tests {
         assert_eq!(
             image.data,
             [
-                0, 0, 0, 0, 1, 0, 2, 1, 1, 0, 0, 1, 1, 0, 0, 2, 1, 2, 2, 0, 0, 2, 0, 0, 1, 1, 0,
-                0, 0, 1, 1, 1
+                0, 0, 0, 0, 1, 0, 2, 1, 1, 0, 0, 1, 1, 0, 0, 2, 1, 2, 2, 0, 0, 2, 0, 0, 1, 1, 0, 0,
+                0, 1, 1, 1
             ]
         );
         assert_eq!(image.background.hue.round() as u16, 17);

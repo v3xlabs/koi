@@ -51,11 +51,12 @@ fn ensure_database_parent_dir(database_url: &str) -> Result<(), KoiError> {
     };
 
     if let Some(parent) = path.parent()
-        && !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent).map_err(|error| {
-                KoiError::Internal(format!("could not create database directory: {error}"))
-            })?;
-        }
+        && !parent.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(parent).map_err(|error| {
+            KoiError::Internal(format!("could not create database directory: {error}"))
+        })?;
+    }
 
     Ok(())
 }
@@ -154,12 +155,11 @@ mod tests {
 
         let pool = connect(&url, Some(Some(5))).await.unwrap();
 
-        let versions = sqlx::query_scalar::<_, i64>(
-            "SELECT version FROM _sqlx_migrations ORDER BY version",
-        )
-        .fetch_all(&pool)
-        .await
-        .unwrap();
+        let versions =
+            sqlx::query_scalar::<_, i64>("SELECT version FROM _sqlx_migrations ORDER BY version")
+                .fetch_all(&pool)
+                .await
+                .unwrap();
         assert_eq!(versions, vec![2, 3, 4, 5]);
     }
 }

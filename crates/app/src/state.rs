@@ -8,11 +8,8 @@ use crate::{
     db::{SkipMigrations, connect},
     error::KoiError,
     models::{
-        abi::AbiManager,
-        account::balance_cache::BalanceCacheManager,
-        network::manager::NetworkManager,
-        quoter::man::QuoterManager,
-        vendor::man::VendorManager,
+        abi::AbiManager, account::balance_cache::BalanceCacheManager,
+        network::manager::NetworkManager, quoter::man::QuoterManager, vendor::man::VendorManager,
     },
 };
 

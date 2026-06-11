@@ -424,7 +424,9 @@ impl App {
                 self.handle_mouse_move(event.column, event.row);
                 KeyAction::None
             }
-            MouseEventKind::Down(MouseButton::Left) => self.handle_mouse_click(event.column, event.row),
+            MouseEventKind::Down(MouseButton::Left) => {
+                self.handle_mouse_click(event.column, event.row)
+            }
             MouseEventKind::ScrollUp => {
                 self.handle_mouse_scroll(event.column, event.row, -3);
                 KeyAction::None
@@ -501,7 +503,7 @@ impl App {
             return KeyAction::None;
         }
 
-    if let Some(index) = self.layout.list_row_at(column, row) {
+        if let Some(index) = self.layout.list_row_at(column, row) {
             if self.uses_resource_rows() {
                 self.settings.row_index = index;
             } else if self.tab == Tab::Accounts {

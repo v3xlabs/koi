@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
+    config::Configuration,
     models::network::{
         endpoint::{
             NetworkEndpoint,
@@ -8,7 +9,6 @@ use crate::{
         },
         identity::NetworkIdentity,
     },
-    config::Configuration,
 };
 use alloy::{
     providers::{DynProvider, Provider, ProviderBuilder},

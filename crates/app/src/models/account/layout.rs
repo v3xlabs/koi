@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use sqlx::query;
 
 use super::{
+    Account,
     group::{AccountGroup, GroupIdentity},
     identity::AccountIdentity,
-    Account,
 };
 use crate::{error::KoiError, state::DB};
 
@@ -57,15 +57,13 @@ impl AccountLayout {
         }
 
         for account in layout.accounts {
-            query(
-                "UPDATE accounts SET group_id = ?, display_order = ? WHERE account_identity = ?",
-            )
-            .bind(account.group_id)
-            .bind(account.display_order as i64)
-            .bind(account.account_identity)
-            .execute(&mut *tx)
-            .await
-            .map_err(KoiError::from)?;
+            query("UPDATE accounts SET group_id = ?, display_order = ? WHERE account_identity = ?")
+                .bind(account.group_id)
+                .bind(account.display_order as i64)
+                .bind(account.account_identity)
+                .execute(&mut *tx)
+                .await
+                .map_err(KoiError::from)?;
         }
 
         tx.commit().await.map_err(KoiError::from)?;

@@ -1,6 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use figment::{Figment, providers::{Env, Serialized}};
+use figment::{
+    Figment,
+    providers::{Env, Serialized},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::error::KoiError;
@@ -32,10 +35,11 @@ impl Default for Configuration {
 
 impl Configuration {
     pub fn load() -> Result<Configuration, KoiError> {
-        let mut config: Configuration = Figment::from(Serialized::defaults(Configuration::default()))
-            .merge(Env::prefixed("KOI_"))
-            .merge(Env::raw().only(&["DATABASE_URL"]))
-            .extract()?;
+        let mut config: Configuration =
+            Figment::from(Serialized::defaults(Configuration::default()))
+                .merge(Env::prefixed("KOI_"))
+                .merge(Env::raw().only(&["DATABASE_URL"]))
+                .extract()?;
 
         if config.database_url == "auto" {
             config.database_url = resolve_database_url()?;

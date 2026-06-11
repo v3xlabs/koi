@@ -103,10 +103,7 @@ impl UiLayout {
 }
 
 pub fn contains(rect: Rect, column: u16, row: u16) -> bool {
-    column >= rect.x
-        && column < rect.right()
-        && row >= rect.y
-        && row < rect.bottom()
+    column >= rect.x && column < rect.right() && row >= rect.y && row < rect.bottom()
 }
 
 pub fn table_body_height(area: Rect) -> usize {
