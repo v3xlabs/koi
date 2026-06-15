@@ -4158,7 +4158,6 @@ dependencies = [
  "clap",
  "dotenvy",
  "koi-app",
- "koi-cli",
  "koi-gui",
  "koi-tui",
  "reqwest 0.12.28",
@@ -4203,13 +4202,6 @@ dependencies = [
  "tracing-log",
  "url",
  "uuid",
-]
-
-[[package]]
-name = "koi-cli"
-version = "0.0.1"
-dependencies = [
- "clap",
 ]
 
 [[package]]

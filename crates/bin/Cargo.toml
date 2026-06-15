@@ -9,9 +9,8 @@ path = "src/main.rs"
 
 [dependencies]
 koi = { path = "../app", package = "koi-app" }
-koi-cli = { path = "../cli" }
 clap = { version = "4", features = ["derive"] }
-koi-gui = { path = "../gui" }
+koi-gui = { path = "../gui", optional = true }
 koi-tui = { path = "../tui" }
 anyhow = "1"
 dotenvy = "0.15.7"
@@ -24,3 +23,7 @@ reqwest = { version = "0.12.5", features = [
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi"] }
+
+[features]
+default = ["gui"]
+gui = ["dep:koi-gui"]

@@ -1,10 +1,62 @@
 use std::ffi::OsString;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
 use koi::{DEFAULT_API_URL, http, state::State};
-use koi_cli::{Cli, Commands};
 use tracing::{info, warn};
+
+#[derive(Parser)]
+#[command(name = "koi", about = "Koi privacy wallet", version)]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Launch the desktop UI (default)
+    #[cfg(feature = "gui")]
+    Gui {
+        /// Base URL of the koi server (without /api)
+        #[arg(long, default_value = "http://localhost:7777")]
+        api: String,
+    },
+    /// Launch the terminal UI (requires a running server)
+    Tui {
+        /// Base URL of the koi server (without /api)
+        #[arg(long, default_value = "http://localhost:7777")]
+        api: String,
+    },
+    /// Start the daemon
+    Daemon,
+    /// Create the database (if needed) and apply pending migrations
+    Migrate {
+        /// Mark pending migrations as applied without executing SQL.
+        /// Use alone to baseline a pre-existing database, or pass a version to skip through that migration inclusive.
+        #[arg(long, num_args = 0..=1)]
+        skip: Option<Option<i64>>,
+    },
+}
+
+impl Cli {
+    fn command(self) -> Commands {
+        self.command.unwrap_or_else(|| default_command())
+    }
+}
+
+#[cfg(feature = "gui")]
+fn default_command() -> Commands {
+    Commands::Gui {
+        api: "http://localhost:7777".to_string(),
+    }
+}
+
+#[cfg(not(feature = "gui"))]
+fn default_command() -> Commands {
+    Commands::Tui {
+        api: "http://localhost:7777".to_string(),
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -14,6 +66,7 @@ async fn main() {
     let explicit_api = api_was_explicit(&args);
 
     match Cli::parse_from(args).command() {
+        #[cfg(feature = "gui")]
         Commands::Gui { api } => {
             init_logging(false);
             let (api, _server_handle) = match prepare_client_api(api, explicit_api).await {

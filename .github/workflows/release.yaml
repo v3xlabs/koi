@@ -1,0 +1,275 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: crates/web/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: crates/web
+
+      - name: Build frontend
+        run: pnpm build
+        working-directory: crates/web
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: crates/web/dist/
+          retention-days: 1
+
+  build-binary:
+    needs: build-web
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            ext: tar.gz
+            appimage: true
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            ext: tar.gz
+          - target: x86_64-apple-darwin
+            os: macos-13
+            ext: tar.gz
+            dmg: true
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            ext: tar.gz
+            dmg: true
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            ext: zip
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
+            ext: zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: crates/web/dist/
+
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux' && matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            libxdo-dev \
+            pkg-config
+
+      - name: Install Linux aarch64 cross-compilation toolchain
+        if: runner.os == 'Linux' && matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            libc6-dev-arm64-cross \
+            pkg-config
+
+          sudo dpkg --add-architecture arm64
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev:arm64 \
+            libwebkit2gtk-4.1-dev:arm64 \
+            libappindicator3-dev:arm64 \
+            libxdo-dev:arm64 \
+            libgdk-pixbuf2.0-dev:arm64 \
+            libcairo2-dev:arm64 \
+            libpango1.0-dev:arm64 \
+            libatk1.0-dev:arm64 \
+            libsoup-3.0-dev:arm64 \
+            libjavascriptcoregtk-4.1-dev:arm64 \
+            libglib2.0-dev:arm64 \
+            libgstreamer1.0-dev:arm64 \
+            libgstreamer-plugins-base1.0-dev:arm64
+
+      - name: Install Windows ARM target
+        if: runner.os == 'Windows' && matrix.target == 'aarch64-pc-windows-msvc'
+        run: rustup target add aarch64-pc-windows-msvc
+
+      - name: Build (x86_64-unknown-linux-gnu)
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: cargo build --release --target ${{ matrix.target }} -p koi
+
+      - name: Build (aarch64-unknown-linux-gnu)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+          CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+          PKG_CONFIG_LIBDIR: /usr/lib/aarch64-linux-gnu/pkgconfig
+          PKG_CONFIG_ALLOW_CROSS: '1'
+        run: cargo build --release --target aarch64-unknown-linux-gnu -p koi
+
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
+        run: cargo build --release --target ${{ matrix.target }} -p koi
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: cargo build --release --target ${{ matrix.target }} -p koi
+
+      - name: Package tar.gz
+        if: matrix.ext == 'tar.gz'
+        run: |
+          cd "target/${{ matrix.target }}/release"
+          tar czf "${{ github.workspace }}/koi-${{ matrix.target }}.tar.gz" koi
+
+      - name: Package zip
+        if: matrix.ext == 'zip'
+        shell: bash
+        run: |
+          cd "target/${{ matrix.target }}/release"
+          7z a "${{ github.workspace }}/koi-${{ matrix.target }}.zip" koi.exe
+
+      - name: Build AppImage
+        if: matrix.appimage
+        run: |
+          set -euo pipefail
+
+          APP="Koi"
+          BIN="target/${{ matrix.target }}/release/koi"
+          APPDIR="AppDir"
+          ICON="crates/web/public/favicon_x64.png"
+
+          mkdir -p "${APPDIR}/usr/bin"
+          mkdir -p "${APPDIR}/usr/share/applications"
+          mkdir -p "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
+
+          cp "${BIN}" "${APPDIR}/usr/bin/koi"
+          cp "${ICON}" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/koi.png"
+
+          cat > "${APPDIR}/usr/share/applications/koi.desktop" << 'DESKTOP'
+          [Desktop Entry]
+          Name=Koi
+          Comment=Privacy-focused Ethereum wallet
+          Exec=koi gui
+          Icon=koi
+          Type=Application
+          Categories=Finance;Network;
+          Terminal=false
+          DESKTOP
+
+          cat > "${APPDIR}/AppRun" << 'APPRUN'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "${0}")")"
+          export PATH="${HERE}/usr/bin:${PATH}"
+          export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
+          exec "${HERE}/usr/bin/koi" gui "$@"
+          APPRUN
+          chmod +x "${APPDIR}/AppRun"
+
+          wget -q "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
+          chmod +x linuxdeploy-x86_64.AppImage
+
+          ./linuxdeploy-x86_64.AppImage \
+            --appdir "${APPDIR}" \
+            --output appimage
+
+          mv Koi-*.AppImage "Koi-${{ matrix.target }}.AppImage"
+
+      - name: Build DMG
+        if: matrix.dmg
+        run: |
+          set -euo pipefail
+
+          APP_DIR="Koi.app"
+          BIN="target/${{ matrix.target }}/release/koi"
+
+          mkdir -p "${APP_DIR}/Contents/MacOS"
+
+          cp "${BIN}" "${APP_DIR}/Contents/MacOS/koi"
+
+          cat > "${APP_DIR}/Contents/Info.plist" << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>Koi</string>
+              <key>CFBundleDisplayName</key>
+              <string>Koi</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.koi.wallet</string>
+              <key>CFBundleVersion</key>
+              <string>0.0.1</string>
+              <key>CFBundleShortVersionString</key>
+              <string>0.0.1</string>
+              <key>CFBundleExecutable</key>
+              <string>koi</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>11.0</string>
+          </dict>
+          </plist>
+          PLIST
+
+          hdiutil create \
+            -volname Koi \
+            -srcfolder "${APP_DIR}" \
+            -ov \
+            -format UDZO \
+            "koi-${{ matrix.target }}.dmg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: koi-${{ matrix.target }}
+          path: |
+            koi-${{ matrix.target }}.tar.gz
+            koi-${{ matrix.target }}.zip
+            koi-${{ matrix.target }}.dmg
+            koi-${{ matrix.target }}.AppImage
+          retention-days: 1
+
+  create-release:
+    needs: build-binary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          for f in *; do
+            sha256sum "$f" >> checksums.txt
+          done
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
