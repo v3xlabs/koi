@@ -12,13 +12,13 @@ jobs:
   build-web:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.5.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -32,7 +32,7 @@ jobs:
         run: pnpm build
         working-directory: crates/web
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: web-dist
           path: crates/web/dist/
@@ -49,9 +49,9 @@ jobs:
             os: ubuntu-latest
             ext: tar.gz
             appimage: true
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-            ext: tar.gz
+          # - target: aarch64-unknown-linux-gnu
+          #   os: ubuntu-latest
+          #   ext: tar.gz
           # - target: x86_64-apple-darwin
           #   os: macos-13
           #   ext: tar.gz
@@ -68,9 +68,9 @@ jobs:
           #   ext: zip
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: web-dist
           path: crates/web/dist/
@@ -240,7 +240,7 @@ jobs:
             -format UDZO \
             "koi-${{ matrix.target }}.dmg"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: koi-${{ matrix.target }}
           path: |
@@ -256,7 +256,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
           merge-multiple: true
@@ -269,7 +269,7 @@ jobs:
           done
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: artifacts/*
           generate_release_notes: true
