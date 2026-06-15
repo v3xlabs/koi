@@ -68,7 +68,6 @@ export const ExplorerLinkCard: Component<ExplorerLink> = props => (
 type ExplorerLinksModalProps = {
     title: string;
     description: string;
-    subject: JSX.Element;
     children?: JSX.Element;
     class?: string;
     emptyMessage?: string;
@@ -90,9 +89,6 @@ export const ExplorerLinksModal: Component<ExplorerLinksModalProps> = props => (
                         <p class="text-sm text-muted">
                             {props.description}
                         </p>
-                        <div class="rounded-lg border border-border bg-surface-alt/40 px-3 py-2.5">
-                            {props.subject}
-                        </div>
                         <Show
                           when={props.links().length > 0}
                           fallback={(

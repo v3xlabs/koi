@@ -63,24 +63,6 @@ export const AddressExternalLinkModal: Component<{ address: string; networks: nu
           class={props.class}
           emptyMessage="No block explorer links are enabled for this address."
           links={links}
-          subject={(
-                <div class="flex items-start justify-between gap-3">
-                    <code
-                      class="min-w-0 flex-1 break-all text-sm"
-                      style={{ color: `hsl(${hue()} 80% 78%)` }}
-                    >
-                        {props.address}
-                    </code>
-                    <button
-                      type="button"
-                      class="shrink-0 rounded-md p-1.5 text-muted transition-colors hover:bg-surface-alt hover:text-foreground"
-                      title="Copy address"
-                      onClick={copyAddress}
-                    >
-                        <FiCopy class="size-4" />
-                    </button>
-                </div>
-            )}
         >
             {props.children ?? "Link"}
         </ExplorerLinksModal>

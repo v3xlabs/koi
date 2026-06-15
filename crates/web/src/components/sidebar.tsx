@@ -72,7 +72,7 @@ export const Sidebar = () => {
                 ]}
                 >
                     {group => (
-                        <div class="py-2 first:pt-0">
+                        <div class="py-2 first:pt-0 space-y-[1px]">
                             <For each={group}>
                                 {item => (
                                     <NavLink href={item.href} icon={item.icon}>

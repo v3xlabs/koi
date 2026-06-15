@@ -55,11 +55,6 @@ export const TxHashExternalLinkModal: Component<{ txhash: string; network_identi
           class={className}
           emptyMessage="No block explorer links are enabled for this transaction."
           links={links}
-          subject={(
-                <code class="block break-all text-sm text-muted">
-                    {txhash}
-                </code>
-            )}
         >
             {children ?? "Link"}
         </ExplorerLinksModal>
