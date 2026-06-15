@@ -12,12 +12,12 @@ export const AssetQuote: Component<{ asset_identity: string; }> = ({ asset_ident
 );
 
 export const AssetQuoteInner: Component<{ asset_identity: string; }> = ({ asset_identity }) => {
-    const quoteQuery = useAssetQuote(() => ({ path: { asset_identity } }));
+    const quoteQuery = useAssetQuote(() => ({ path: { asset_identity } }), {throwOnError: false});
     const { displayCurrency } = useDisplayCurrency();
     const { privacyMode } = usePrivacyMode();
 
     return (
-        <Show when={quoteQuery.data}>
+        <Show when={quoteQuery.data} fallback={<div>---</div>}>
             {data => (
                 <div class="text-nowrap tabular-nums" title={privateAmountTitle(privacyMode(), formatAmount(BigInt(data()), { precision: 2, decimals: 6, currency: displayCurrency() }))}>
                     {privateAmount(privacyMode(), formatAmount(BigInt(data()), { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() }))}

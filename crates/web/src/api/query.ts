@@ -50,7 +50,11 @@ export const createApi = <
                 const response = await api(path, method, options as any);
 
                 if (response.status !== 200) {
-                    throw new Error(response.status.toString());
+                    if (
+                        extraOptions.throwOnError)
+                        throw new Error(response.status.toString());
+
+                    return undefined;
                 }
 
                 const data = response.data as TData;
