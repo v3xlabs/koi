@@ -24,7 +24,7 @@
           rustfmt
           clippy
           nodejs_24
-          pnpm
+          pnpm_11
           pkg-config
           gtk3
           webkitgtk_4_1

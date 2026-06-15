@@ -43,5 +43,6 @@
     "solid-icons": "^1.2.0",
     "solid-js": "^1.9.9",
     "ts-pattern": "^5.9.0"
-  }
+  },
+  "packageManager": "pnpm@11.5.1"
 }
