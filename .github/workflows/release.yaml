@@ -60,9 +60,9 @@ jobs:
             os: macos-latest
             ext: tar.gz
             dmg: true
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            ext: zip
+          # - target: x86_64-pc-windows-msvc
+          #   os: windows-latest
+          #   ext: zip
           # - target: aarch64-pc-windows-msvc
           #   os: windows-latest
           #   ext: zip
@@ -74,6 +74,11 @@ jobs:
         with:
           name: web-dist
           path: crates/web/dist/
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-targets: true
+          cache-on-failure: true
 
       - name: Install Linux native dependencies
         if: runner.os == 'Linux' && matrix.target == 'x86_64-unknown-linux-gnu'
@@ -194,7 +199,7 @@ jobs:
             --appdir "${APPDIR}" \
             --output appimage
 
-          mv Koi-*.AppImage "Koi-${{ matrix.target }}.AppImage"
+          mv Koi-*.AppImage "koi-${{ matrix.target }}.AppImage"
 
       - name: Build DMG
         if: matrix.dmg
@@ -218,7 +223,7 @@ jobs:
               <key>CFBundleDisplayName</key>
               <string>Koi</string>
               <key>CFBundleIdentifier</key>
-              <string>com.koi.wallet</string>
+              <string>company.v3x.koi</string>
               <key>CFBundleVersion</key>
               <string>0.0.1</string>
               <key>CFBundleShortVersionString</key>
@@ -264,7 +269,7 @@ jobs:
       - name: Generate checksums
         run: |
           cd artifacts
-          for f in *; do
+          for f in $(ls -1 artifacts/*); do
             sha256sum "$f" >> checksums.txt
           done
 
