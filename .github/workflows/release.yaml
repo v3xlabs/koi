@@ -123,7 +123,7 @@ jobs:
 
       - name: Build (x86_64-unknown-linux-gnu)
         if: matrix.target == 'x86_64-unknown-linux-gnu'
-        run: cargo build --release --target ${{ matrix.target }} -p koi
+        run: cargo build --release --target ${{ matrix.target }} -p koi --features gui
 
       - name: Build (aarch64-unknown-linux-gnu)
         if: matrix.target == 'aarch64-unknown-linux-gnu'
@@ -132,7 +132,7 @@ jobs:
           CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
           PKG_CONFIG_LIBDIR: /usr/lib/aarch64-linux-gnu/pkgconfig
           PKG_CONFIG_ALLOW_CROSS: '1'
-        run: cargo build --release --target aarch64-unknown-linux-gnu -p koi
+        run: cargo build --release --target aarch64-unknown-linux-gnu -p koi --features gui
 
       - name: Build (macOS)
         if: runner.os == 'macOS'
@@ -265,11 +265,12 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+          pattern: koi-*
 
       - name: Generate checksums
         run: |
           cd artifacts
-          for f in $(ls -1 artifacts/*); do
+          for f in $(ls -1 koi-*); do
             sha256sum "$f" >> checksums.txt
           done
 
