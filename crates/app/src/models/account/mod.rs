@@ -14,6 +14,7 @@ use crate::{
 
 pub mod balance_cache;
 pub mod balances;
+pub mod derive;
 pub mod group;
 pub mod identity;
 pub mod layout;

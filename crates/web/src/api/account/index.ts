@@ -96,6 +96,11 @@ export const useDeleteAccountGroup = createApiMutation("/acc/groups/{group_ident
     },
 });
 
+export const useGenerateMnemonic = createApi("/acc/generate/mnemonic", "get", () => ["generate-mnemonic"]);
+export const useDefaultDerivationPath = createApi("/acc/derive/default-path", "get", () => ["default-derivation-path"]);
+export const useDeriveFromMnemonic = createApiMutation("/acc/derive/mnemonic", "post");
+export const useDeriveFromPrivateKey = createApiMutation("/acc/derive/private-key", "post");
+
 export const useAccountAssets = createApi("/acc/{account_identity}/assets", "get", options => accountKeys.assets(options.path.account_identity));
 export const useAccountAssetBalance = createApi("/acc/{account_identity}/asset/{asset_identity}/balance", "get", options => accountKeys.assetBalance(options.path.account_identity, options.path.asset_identity, options.query.display_currency));
 export const useAddAccountAsset = createApiMutation("/acc/{account_identity}/asset/{asset_identity}", "post", {
@@ -173,7 +178,7 @@ export function moveAccountToGroup(
         const normalizedGroupId = normalizeGroupId(group_id);
         const siblings = layout.accounts.filter(
             candidate => normalizeGroupId(candidate.group_id) === normalizedGroupId
-                && candidate.account_identity !== account_identity,
+              && candidate.account_identity !== account_identity,
         );
         const display_order = siblings.length > 0
             ? Math.max(...siblings.map(sibling => sibling.display_order)) + 1

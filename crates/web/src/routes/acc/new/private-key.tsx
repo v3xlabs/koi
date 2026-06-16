@@ -1,17 +1,22 @@
 import { createForm } from "@tanstack/solid-form";
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
-import { createMemo, Show } from "solid-js";
+import { createMemo, createSignal, Show } from "solid-js";
+import { generatePrivateKey } from "viem/accounts";
 
-import { useCreateAccount, useNextAccountId } from "#/api/account";
-import { FormAddressField } from "#/components/account/form/address";
+import { useCreateAccount, useDeriveFromPrivateKey, useNextAccountId } from "#/api/account";
 import { FormNetworkField } from "#/components/account/form/networks";
 import { button } from "#/components/input/button";
 import { FormTextField } from "#/components/input/field";
 
-export const Route = createFileRoute("/acc/import/safe")({
+export const Route = createFileRoute("/acc/new/private-key")({
     component: () => {
         const navigate = useNavigate();
         const nextAccountId = useNextAccountId();
+        const [generatedKey] = createSignal(generatePrivateKey());
+        const derive = useDeriveFromPrivateKey(({ private_key }: { private_key: string; }) => ({
+            contentType: "application/json; charset=utf-8",
+            data: { private_key },
+        }));
         const createAccount = useCreateAccount(({ data }: { data: { account_identity: number; name: string; networks: number[]; address: string; display_order: number; }; }) => ({
             contentType: "application/json; charset=utf-8",
             data: {
@@ -19,7 +24,7 @@ export const Route = createFileRoute("/acc/import/safe")({
                 name: data.name,
                 networks: data.networks,
                 display_order: data.display_order,
-                metadata: { type: "safe", evm_address: data.address },
+                metadata: { type: "eoa", evm_address: data.address },
             },
         }));
 
@@ -27,7 +32,7 @@ export const Route = createFileRoute("/acc/import/safe")({
             defaultValues: {
                 name: "",
                 networks: [] as number[],
-                address: "",
+                privateKey: generatedKey(),
             },
             onSubmit: async ({ value }) => {
                 const account_identity = nextAccountId.data;
@@ -36,13 +41,15 @@ export const Route = createFileRoute("/acc/import/safe")({
 
                 if (value.networks.length === 0) return;
 
+                const derived = await derive.mutateAsync({ private_key: value.privateKey });
+
                 await createAccount.mutateAsync({
                     data: {
                         account_identity,
                         name: value.name,
                         networks: value.networks,
                         display_order: 0,
-                        address: value.address,
+                        address: derived.address,
                     },
                 });
 
@@ -50,20 +57,21 @@ export const Route = createFileRoute("/acc/import/safe")({
             },
         }));
 
+        const isPending = createMemo(() => derive.isPending || createAccount.isPending);
         const canSubmit = createMemo(() => {
             const state = form.state;
 
             return state.values.name.length > 0
               && state.values.networks.length > 0
-              && state.values.address.length >= 42
-              && !createAccount.isPending
+              && state.values.privateKey.trim().length >= 64
+              && !isPending()
               && (nextAccountId.data ?? 0) > 0;
         });
 
         return (
             <div class="p-4 mx-auto w-full max-w-lg">
                 <div class="text-xl mb-4">
-                    Import Safe
+                    New Private Key
                 </div>
                 <form
                   class="bg-surface p-4 rounded-md w-full space-y-4"
@@ -73,23 +81,32 @@ export const Route = createFileRoute("/acc/import/safe")({
                         form.handleSubmit();
                     }}
                 >
+                    <div class="text-sm text-yellow-500 bg-yellow-500/10 p-3 rounded">
+                        Back up this private key now. It will not be shown again and is not stored on the server.
+                    </div>
                     <form.Field name="name">
-                        {field => <FormTextField field={field} label="Name" placeholder="My Safe" />}
+                        {field => <FormTextField field={field} label="Name" placeholder="My account" />}
                     </form.Field>
                     <form.Field name="networks">
                         {field => <FormNetworkField field={field} label="Networks" />}
                     </form.Field>
-                    <form.Field name="address">
-                        {field => <FormAddressField field={field} label="Safe Address" placeholder="0x..." />}
+                    <form.Field name="privateKey">
+                        {field => (
+                            <FormTextField
+                              field={field}
+                              label="Private Key"
+                              placeholder="0x..."
+                            />
+                        )}
                     </form.Field>
-                    <Show when={createAccount.error}>
+                    <Show when={derive.error || createAccount.error}>
                         <div class="text-sm text-red-500">
-                            {createAccount.error?.message}
+                            {derive.error?.message || createAccount.error?.message}
                         </div>
                     </Show>
                     <div class="flex justify-end">
                         <button type="submit" class={button({ variant: "primary" })} disabled={!canSubmit()}>
-                            Import
+                            Create
                         </button>
                     </div>
                 </form>

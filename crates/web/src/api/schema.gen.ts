@@ -160,160 +160,6 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/acc/layout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json; charset=utf-8": components["schemas"]["AccountLayout"];
-                    };
-                };
-            };
-        };
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json; charset=utf-8": components["schemas"]["AccountLayoutUpdate"];
-                };
-            };
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json; charset=utf-8": components["schemas"]["AccountLayout"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/acc/groups": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json; charset=utf-8": components["schemas"]["AccountGroupCreate"];
-                };
-            };
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json; charset=utf-8": components["schemas"]["AccountGroup"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/acc/groups/{group_identity}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    group_identity: number;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json; charset=utf-8": components["schemas"]["AccountGroupUpdate"];
-                };
-            };
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json; charset=utf-8": components["schemas"]["AccountGroup"];
-                    };
-                };
-            };
-        };
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    group_identity: number;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json; charset=utf-8": Record<string, never>;
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/acc/next-id": {
         parameters: {
             query?: never;
@@ -544,6 +390,180 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/acc/layout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get account layout (groups + ordered accounts)
+         * @description GET /api/acc/layout
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountLayout"];
+                    };
+                };
+            };
+        };
+        /**
+         * Update account layout (bulk reorder + group membership)
+         * @description PUT /api/acc/layout
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["AccountLayoutUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountLayout"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create an account group
+         * @description POST /api/acc/groups
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["AccountGroupCreate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountGroup"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/groups/{group_identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update an account group
+         * @description PUT /api/acc/groups/:group_identity
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group_identity: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["AccountGroupUpdate"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["AccountGroup"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /**
+         * Delete an account group
+         * @description DELETE /api/acc/groups/:group_identity
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group_identity: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/acc/{account_identity}/tx": {
         parameters: {
             query?: never;
@@ -618,6 +638,166 @@ export type paths = {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/generate/mnemonic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Generate a new BIP-39 mnemonic
+         * @description GET /api/acc/generate/mnemonic
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["GenerateMnemonicResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/derive/default-path": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Return the default BIP-44 Ethereum derivation path
+         * @description GET /api/acc/derive/default-path
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["DefaultDerivationPathResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/derive/mnemonic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Derive addresses from a mnemonic and derivation paths
+         * @description POST /api/acc/derive/mnemonic
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["DeriveMnemonicRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["DeriveMnemonicResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/acc/derive/private-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Derive an address from a private key
+         * @description POST /api/acc/derive/private-key
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["DerivePrivateKeyRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["DeriveAddressResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1831,9 +2011,33 @@ export type components = {
             name: string;
             networks: number[];
             metadata: components["schemas"]["WalletType"];
+            /** Format: uint64 */
             group_id?: number;
             /** Format: uint32 */
             display_order: number;
+        };
+        /** AccountBalance */
+        AccountBalance: {
+            asset_identity: string;
+            balance?: string;
+            balance_error?: string;
+            asset_quote?: string;
+            asset_quote_error?: string;
+            asset_24h_quote?: string;
+            asset_24h_quote_error?: string;
+            balance_quote?: string;
+            balance_quote_error?: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /** AccountBalances */
+        AccountBalances: {
+            balances: components["schemas"]["AccountBalance"][];
+            total_quote?: string;
+            /** Format: date-time */
+            updated_at: string;
+            asset: string;
+            errors: string[];
         };
         /** AccountGroup */
         AccountGroup: {
@@ -1860,6 +2064,7 @@ export type components = {
         AccountLayoutAccountEntry: {
             /** Format: uint64 */
             account_identity: number;
+            /** Format: uint64 */
             group_id?: number;
             /** Format: uint32 */
             display_order: number;
@@ -1876,29 +2081,6 @@ export type components = {
         AccountLayoutUpdate: {
             groups: components["schemas"]["AccountLayoutGroupEntry"][];
             accounts: components["schemas"]["AccountLayoutAccountEntry"][];
-        };
-        /** AccountBalance */
-        AccountBalance: {
-            asset_identity: string;
-            balance?: string;
-            balance_error?: string;
-            asset_quote?: string;
-            asset_quote_error?: string;
-            asset_24h_quote?: string;
-            asset_24h_quote_error?: string;
-            balance_quote?: string;
-            balance_quote_error?: string;
-            /** Format: date-time */
-            updated_at: string;
-        };
-        /** AccountBalances */
-        AccountBalances: {
-            balances: components["schemas"]["AccountBalance"][];
-            total_quote?: string;
-            /** Format: date-time */
-            updated_at: string;
-            asset: string;
-            errors: string[];
         };
         /** AccountTxResponse */
         AccountTxResponse: {
@@ -2051,6 +2233,32 @@ export type components = {
              */
             kind: "verified";
         } & components["schemas"]["DecodedFunction"];
+        /** DefaultDerivationPathResponse */
+        DefaultDerivationPathResponse: {
+            path: string;
+        };
+        /** DeriveAddressResponse */
+        DeriveAddressResponse: {
+            address: string;
+        };
+        /** DeriveMnemonicRequest */
+        DeriveMnemonicRequest: {
+            mnemonic: string;
+            paths: string[];
+        };
+        /** DeriveMnemonicResponse */
+        DeriveMnemonicResponse: {
+            results: components["schemas"]["DeriveMnemonicResult"][];
+        };
+        /** DeriveMnemonicResult */
+        DeriveMnemonicResult: {
+            path: string;
+            address: string;
+        };
+        /** DerivePrivateKeyRequest */
+        DerivePrivateKeyRequest: {
+            private_key: string;
+        };
         /** EOAWallet */
         EOAWallet: {
             /** Format: address */
@@ -2067,6 +2275,10 @@ export type components = {
             token_in_decimals: number;
             /** Format: uint8 */
             token_out_decimals: number;
+        };
+        /** GenerateMnemonicResponse */
+        GenerateMnemonicResponse: {
+            mnemonic: string;
         };
         /** Network */
         Network: {

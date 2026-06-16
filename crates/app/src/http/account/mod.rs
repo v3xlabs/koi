@@ -22,12 +22,13 @@ use poem_openapi::{
 };
 use serde::{Deserialize, Serialize};
 
+mod derive;
 mod tx;
 
 pub struct AccountApi;
 
 pub fn api() -> impl OpenApi {
-    (AccountApi, tx::AccountTxApi)
+    (AccountApi, tx::AccountTxApi, derive::AccountDeriveApi)
 }
 
 #[derive(Serialize, Deserialize, Object)]

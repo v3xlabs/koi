@@ -11,17 +11,17 @@ const ACC_OPTIONS = [
       {
         label: "Mnemonic",
         icon: FaSolidEye,
-        href: "/acc/new/key",
+        href: "/acc/new/mnemonic",
       },
       {
         label: "Private Key",
         icon: FaSolidShield,
-        href: "/acc/new/key",
+        href: "/acc/new/private-key",
       },
       {
         label: "Multisig",
         icon: () => <img src={SafeIcon} alt="Safe Multisig" class="size-3.5" />,
-        disabled: true,
+        href: "/acc/new/safe",
       },
       {
         label: "Frost",
@@ -41,12 +41,12 @@ const ACC_OPTIONS = [
       {
         label: "Private Key",
         icon: FaSolidKey,
-        href: "/acc/import/key",
+        href: "/acc/import/private-key",
       },
       {
         label: "Mnemonic",
         icon: FaSolidEye,
-        href: "/acc/import/key",
+        href: "/acc/import/mnemonic",
       },
       {
         label: "Multisig",

@@ -12,9 +12,9 @@ export const Route = createFileRoute("/acc/import/view")({
     const [address, setAddress] = createSignal("");
     const [name, setName] = createSignal("");
     const [networks, setNetworks] = createSignal<number[]>([]);
-    const createAccount = useCreateAccount(({ data: { account_identity, name, networks, address } }: { data: { account_identity: number; name: string; networks: number[]; address: string; }; }) => ({
+    const createAccount = useCreateAccount(({ data: { account_identity, name, networks, address, display_order } }: { data: { account_identity: number; name: string; networks: number[]; address: string; display_order: number; }; }) => ({
       contentType: "application/json; charset=utf-8",
-      data: { account_identity, name, networks, metadata: { type: "view", evm_address: address } },
+      data: { account_identity, name, networks, display_order, metadata: { type: "view", evm_address: address } },
     }));
 
     const handleClick = () => {
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/acc/import/view")({
 
       if (networks().length === 0) return;
 
-      createAccount.mutate({ data: { account_identity, name: name(), networks: networks(), address: address() } });
+      createAccount.mutate({ data: { account_identity, name: name(), networks: networks(), display_order: 0, address: address() } });
     };
 
     const disabled = createMemo(() => createAccount.isPending || !address() || !name() || networks().length === 0);
