@@ -1,4 +1,3 @@
-import { FiChevronDown } from "solid-icons/fi";
 import { Component, createEffect, createMemo, For, on, Show } from "solid-js";
 
 import { Account, AccountLayout } from "#/api/account";
@@ -18,30 +17,22 @@ const SelectorRow: Component<{
     active: boolean;
     onSelect: () => void;
     setActiveRef?: (el: HTMLButtonElement) => void;
-}> = (props) => (
+}> = props => (
     <button
       type="button"
-      ref={el => {
+      ref={(el) => {
             if (props.active && el && props.setActiveRef) {
                 props.setActiveRef(el);
             }
         }}
       class="w-full cursor-pointer text-left transition-colors"
       classList={{
-            "rounded-md bg-surface px-3 py-2 hover:bg-surface-alt": props.active,
+            "rounded-md bg-surface px-2 py-2 hover:bg-surface-alt": props.active,
             "rounded-md px-2 py-2 hover:bg-surface-alt": !props.active,
         }}
       onClick={props.onSelect}
     >
-        <div class="flex items-center gap-2">
-            <div class="min-w-0 flex-1">
-                <AccountSwitcherItem account_identity={props.account.account_identity} />
-            </div>
-            <FiChevronDown
-              class="size-4 shrink-0 text-muted"
-              classList={{ invisible: !props.active }}
-            />
-        </div>
+        <AccountSwitcherItem account_identity={props.account.account_identity} />
     </button>
 );
 
@@ -98,7 +89,7 @@ export const AccountSelectorList: Component<AccountSelectorListProps> = (props) 
                                     <SelectorRow
                                       account={account}
                                       active={account.account_identity === props.activeAccountId}
-                                      setActiveRef={el => { activeRow = el; }}
+                                      setActiveRef={(el) => { activeRow = el; }}
                                       onSelect={() => props.onSelect(account.account_identity)}
                                     />
                                 )}
@@ -119,7 +110,7 @@ export const AccountSelectorList: Component<AccountSelectorListProps> = (props) 
                                 <SelectorRow
                                   account={account}
                                   active={account.account_identity === props.activeAccountId}
-                                  setActiveRef={el => { activeRow = el; }}
+                                  setActiveRef={(el) => { activeRow = el; }}
                                   onSelect={() => props.onSelect(account.account_identity)}
                                 />
                             )}

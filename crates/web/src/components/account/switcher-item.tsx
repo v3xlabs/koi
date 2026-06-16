@@ -14,7 +14,7 @@ export const AccountSwitcherItem: Component<{ account_identity: number; }> = (pr
     return (
         <Show when={account.data}>
             {acc => (
-                <div class="flex min-w-0 items-center gap-2">
+                <div class="flex w-full items-center gap-2">
                     <div class="size-6 shrink-0 rounded-md bg-surface-alt">
                         <Show when={narrow(() => acc().metadata, x => "evm_address" in x)}>
                             {metadata => <AccountIcon address={() => metadata().evm_address} />}
@@ -25,7 +25,6 @@ export const AccountSwitcherItem: Component<{ account_identity: number; }> = (pr
                             <span class="truncate">
                                 {acc().name}
                             </span>
-                            <AccountTypeIcon type={() => acc().metadata.type} />
                         </div>
                         <Show when={narrow(() => acc().metadata, x => "evm_address" in x)}>
                             {metadata => (
@@ -36,9 +35,10 @@ export const AccountSwitcherItem: Component<{ account_identity: number; }> = (pr
                         </Show>
                     </div>
                     <div class="shrink-0 text-sm leading-none">
-                        <Suspense>
+                        <AccountTypeIcon type={() => acc().metadata.type} />
+                        {/* <Suspense>
                             <AccountBalance account_identity={props.account_identity} />
-                        </Suspense>
+                        </Suspense> */}
                     </div>
                 </div>
             )}

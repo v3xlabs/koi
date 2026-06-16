@@ -6,13 +6,14 @@ import { Component, For, JSXElement, Show } from "solid-js";
 import { useAccount } from "#/api/account";
 
 import { button } from "./input/button";
+import { AccountNavbarActions, AccountSwitcher } from "./navbar/account-switcher";
 import { Branding } from "./navbar/branding";
 
 const NavLink: Component<{ href: string; icon?: Component; children: JSXElement; }> = ({ href, icon, children }) => (
     <Link
-      to={href}
-      class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt group"
-      activeOptions={{
+        to={href}
+        class="hover:bg-surface-alt w-full rounded-md px-4 py-2 text-sm font-bold flex items-center gap-4 cursor-pointer data-[status=active]:bg-surface-alt group"
+        activeOptions={{
             exact: true,
         }}
     >
@@ -27,14 +28,18 @@ export const Sidebar = () => {
     const account = useAccount(() => ({ path: { account_identity } }));
 
     return (
-        <div class="px-1.5 py-2 min-w-56 max-w-64 bg-surface h-full space-y-2 flex flex-col">
+        <div class="px-1.5 py-2 w-screen max-w-56 bg-surface h-full space-y-2 flex flex-col">
             <Branding />
+            <div>
+                <AccountSwitcher />
+                <AccountNavbarActions />
+            </div>
             <Show when={account.data && account.data?.metadata.type !== "view"}>
                 <div>
                     <Link
-                      to="/acc/$account/new-tx"
-                      params={{ account: params().account }}
-                      class={button({ variant: "primary", class: "w-full text-sm font-bold flex items-center gap-1" })}
+                        to="/acc/$account/new-tx"
+                        params={{ account: params().account }}
+                        class={button({ variant: "primary", class: "w-full text-sm font-bold flex items-center gap-1" })}
                     >
                         <FiPlus />
                         New transaction

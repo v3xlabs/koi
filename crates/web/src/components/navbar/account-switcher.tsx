@@ -16,7 +16,7 @@ import { Modal } from "../dialog";
 
 const TRIGGER_OVERLAP = 52;
 
-const switcherTriggerClass = "flex min-w-80 md:min-w-96 cursor-pointer items-center gap-2 rounded-md bg-surface px-3 h-10 text-left transition-colors hover:bg-surface-alt data-[expanded]:opacity-0";
+const switcherTriggerClass = "flex w-full cursor-pointer items-center gap-2 rounded-md bg-surface px-2 h-10 text-left transition-colors hover:bg-surface-alt hover:border border-border data-[expanded]:opacity-0";
 
 export const AccountSwitcher = () => {
     const navigate = useNavigate();
@@ -50,10 +50,9 @@ export const AccountSwitcher = () => {
           sameWidth
         >
             <Popover.Trigger class={switcherTriggerClass}>
-                <div class="min-w-0 flex-1">
+                <div class="w-full flex-1">
                     <AccountSwitcherItem account_identity={account_identity()} />
                 </div>
-                <FiChevronDown class="size-4 shrink-0 text-muted" />
             </Popover.Trigger>
             <Popover.Portal>
                 <Popover.Content class="account-switcher-popover popover-content z-50 overflow-hidden p-0">

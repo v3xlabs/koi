@@ -22,6 +22,8 @@ import { Route as OnboardingVendorsRouteImport } from "./routes/onboarding/vendo
 import { Route as OnboardingNetworksRouteImport } from "./routes/onboarding/networks"
 import { Route as OnboardingAssetsRouteImport } from "./routes/onboarding/assets"
 import { Route as OnboardingAccountsRouteImport } from "./routes/onboarding/accounts"
+import { Route as AccNewRouteRouteImport } from "./routes/acc/new/route"
+import { Route as AccImportRouteRouteImport } from "./routes/acc/import/route"
 import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
 import { Route as AccNewIndexRouteImport } from "./routes/acc/new/index"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
@@ -102,15 +104,25 @@ const OnboardingAccountsRoute = OnboardingAccountsRouteImport.update({
   path: "/accounts",
   getParentRoute: () => OnboardingRouteRoute,
 } as any)
+const AccNewRouteRoute = AccNewRouteRouteImport.update({
+  id: "/acc/new",
+  path: "/acc/new",
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccImportRouteRoute = AccImportRouteRouteImport.update({
+  id: "/acc/import",
+  path: "/acc/import",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccAccountRouteRoute = AccAccountRouteRouteImport.update({
   id: "/acc/$account",
   path: "/acc/$account",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccNewIndexRoute = AccNewIndexRouteImport.update({
-  id: "/acc/new/",
-  path: "/acc/new/",
-  getParentRoute: () => rootRouteImport,
+  id: "/",
+  path: "/",
+  getParentRoute: () => AccNewRouteRoute,
 } as any)
 const AccAccountIndexRoute = AccAccountIndexRouteImport.update({
   id: "/",
@@ -118,24 +130,24 @@ const AccAccountIndexRoute = AccAccountIndexRouteImport.update({
   getParentRoute: () => AccAccountRouteRoute,
 } as any)
 const AccNewKeyRoute = AccNewKeyRouteImport.update({
-  id: "/acc/new/key",
-  path: "/acc/new/key",
-  getParentRoute: () => rootRouteImport,
+  id: "/key",
+  path: "/key",
+  getParentRoute: () => AccNewRouteRoute,
 } as any)
 const AccImportViewRoute = AccImportViewRouteImport.update({
-  id: "/acc/import/view",
-  path: "/acc/import/view",
-  getParentRoute: () => rootRouteImport,
+  id: "/view",
+  path: "/view",
+  getParentRoute: () => AccImportRouteRoute,
 } as any)
 const AccImportSafeRoute = AccImportSafeRouteImport.update({
-  id: "/acc/import/safe",
-  path: "/acc/import/safe",
-  getParentRoute: () => rootRouteImport,
+  id: "/safe",
+  path: "/safe",
+  getParentRoute: () => AccImportRouteRoute,
 } as any)
 const AccImportKeyRoute = AccImportKeyRouteImport.update({
-  id: "/acc/import/key",
-  path: "/acc/import/key",
-  getParentRoute: () => rootRouteImport,
+  id: "/key",
+  path: "/key",
+  getParentRoute: () => AccImportRouteRoute,
 } as any)
 const AccAccountNewTxRoute = AccAccountNewTxRouteImport.update({
   id: "/new-tx",
@@ -180,6 +192,8 @@ export interface FileRoutesByFullPath {
   "/onboarding": typeof OnboardingRouteRouteWithChildren
   "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/acc/import": typeof AccImportRouteRouteWithChildren
+  "/acc/new": typeof AccNewRouteRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
@@ -206,6 +220,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
+  "/acc/import": typeof AccImportRouteRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
@@ -235,6 +250,8 @@ export interface FileRoutesById {
   "/onboarding": typeof OnboardingRouteRouteWithChildren
   "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
+  "/acc/import": typeof AccImportRouteRouteWithChildren
+  "/acc/new": typeof AccNewRouteRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
@@ -266,6 +283,8 @@ export interface FileRouteTypes {
     | "/onboarding"
     | "/settings"
     | "/acc/$account"
+    | "/acc/import"
+    | "/acc/new"
     | "/onboarding/accounts"
     | "/onboarding/assets"
     | "/onboarding/networks"
@@ -292,6 +311,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
+    | "/acc/import"
     | "/onboarding/accounts"
     | "/onboarding/assets"
     | "/onboarding/networks"
@@ -320,6 +340,8 @@ export interface FileRouteTypes {
     | "/onboarding"
     | "/settings"
     | "/acc/$account"
+    | "/acc/import"
+    | "/acc/new"
     | "/onboarding/accounts"
     | "/onboarding/assets"
     | "/onboarding/networks"
@@ -350,11 +372,8 @@ export interface RootRouteChildren {
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
-  AccImportKeyRoute: typeof AccImportKeyRoute
-  AccImportSafeRoute: typeof AccImportSafeRoute
-  AccImportViewRoute: typeof AccImportViewRoute
-  AccNewKeyRoute: typeof AccNewKeyRoute
-  AccNewIndexRoute: typeof AccNewIndexRoute
+  AccImportRouteRoute: typeof AccImportRouteRouteWithChildren
+  AccNewRouteRoute: typeof AccNewRouteRouteWithChildren
 }
 
 declare module "@tanstack/solid-router" {
@@ -450,6 +469,20 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof OnboardingAccountsRouteImport
       parentRoute: typeof OnboardingRouteRoute
     }
+    "/acc/new": {
+      id: "/acc/new"
+      path: "/acc/new"
+      fullPath: "/acc/new"
+      preLoaderRoute: typeof AccNewRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    "/acc/import": {
+      id: "/acc/import"
+      path: "/acc/import"
+      fullPath: "/acc/import"
+      preLoaderRoute: typeof AccImportRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/acc/$account": {
       id: "/acc/$account"
       path: "/acc/$account"
@@ -459,10 +492,10 @@ declare module "@tanstack/solid-router" {
     }
     "/acc/new/": {
       id: "/acc/new/"
-      path: "/acc/new"
+      path: "/"
       fullPath: "/acc/new/"
       preLoaderRoute: typeof AccNewIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AccNewRouteRoute
     }
     "/acc/$account/": {
       id: "/acc/$account/"
@@ -473,31 +506,31 @@ declare module "@tanstack/solid-router" {
     }
     "/acc/new/key": {
       id: "/acc/new/key"
-      path: "/acc/new/key"
+      path: "/key"
       fullPath: "/acc/new/key"
       preLoaderRoute: typeof AccNewKeyRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AccNewRouteRoute
     }
     "/acc/import/view": {
       id: "/acc/import/view"
-      path: "/acc/import/view"
+      path: "/view"
       fullPath: "/acc/import/view"
       preLoaderRoute: typeof AccImportViewRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AccImportRouteRoute
     }
     "/acc/import/safe": {
       id: "/acc/import/safe"
-      path: "/acc/import/safe"
+      path: "/safe"
       fullPath: "/acc/import/safe"
       preLoaderRoute: typeof AccImportSafeRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AccImportRouteRoute
     }
     "/acc/import/key": {
       id: "/acc/import/key"
-      path: "/acc/import/key"
+      path: "/key"
       fullPath: "/acc/import/key"
       preLoaderRoute: typeof AccImportKeyRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AccImportRouteRoute
     }
     "/acc/$account/new-tx": {
       id: "/acc/$account/new-tx"
@@ -629,16 +662,43 @@ const AccAccountRouteRouteWithChildren = AccAccountRouteRoute._addFileChildren(
   AccAccountRouteRouteChildren,
 )
 
+interface AccImportRouteRouteChildren {
+  AccImportKeyRoute: typeof AccImportKeyRoute
+  AccImportSafeRoute: typeof AccImportSafeRoute
+  AccImportViewRoute: typeof AccImportViewRoute
+}
+
+const AccImportRouteRouteChildren: AccImportRouteRouteChildren = {
+  AccImportKeyRoute: AccImportKeyRoute,
+  AccImportSafeRoute: AccImportSafeRoute,
+  AccImportViewRoute: AccImportViewRoute,
+}
+
+const AccImportRouteRouteWithChildren = AccImportRouteRoute._addFileChildren(
+  AccImportRouteRouteChildren,
+)
+
+interface AccNewRouteRouteChildren {
+  AccNewKeyRoute: typeof AccNewKeyRoute
+  AccNewIndexRoute: typeof AccNewIndexRoute
+}
+
+const AccNewRouteRouteChildren: AccNewRouteRouteChildren = {
+  AccNewKeyRoute: AccNewKeyRoute,
+  AccNewIndexRoute: AccNewIndexRoute,
+}
+
+const AccNewRouteRouteWithChildren = AccNewRouteRoute._addFileChildren(
+  AccNewRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
-  AccImportKeyRoute: AccImportKeyRoute,
-  AccImportSafeRoute: AccImportSafeRoute,
-  AccImportViewRoute: AccImportViewRoute,
-  AccNewKeyRoute: AccNewKeyRoute,
-  AccNewIndexRoute: AccNewIndexRoute,
+  AccImportRouteRoute: AccImportRouteRouteWithChildren,
+  AccNewRouteRoute: AccNewRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
