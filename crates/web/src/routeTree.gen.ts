@@ -22,23 +22,22 @@ import { Route as OnboardingVendorsRouteImport } from "./routes/onboarding/vendo
 import { Route as OnboardingNetworksRouteImport } from "./routes/onboarding/networks"
 import { Route as OnboardingAssetsRouteImport } from "./routes/onboarding/assets"
 import { Route as OnboardingAccountsRouteImport } from "./routes/onboarding/accounts"
-import { Route as AccNewRouteRouteImport } from "./routes/acc/new/route"
-import { Route as AccImportRouteRouteImport } from "./routes/acc/import/route"
+import { Route as AccNRouteImport } from "./routes/acc/_n"
 import { Route as AccAccountRouteRouteImport } from "./routes/acc/$account/route"
-import { Route as AccNewIndexRouteImport } from "./routes/acc/new/index"
 import { Route as AccAccountIndexRouteImport } from "./routes/acc/$account/index"
-import { Route as AccNewSafeRouteImport } from "./routes/acc/new/safe"
-import { Route as AccNewPrivateKeyRouteImport } from "./routes/acc/new/private-key"
-import { Route as AccNewMnemonicRouteImport } from "./routes/acc/new/mnemonic"
-import { Route as AccImportViewRouteImport } from "./routes/acc/import/view"
-import { Route as AccImportSafeRouteImport } from "./routes/acc/import/safe"
-import { Route as AccImportPrivateKeyRouteImport } from "./routes/acc/import/private-key"
-import { Route as AccImportMnemonicRouteImport } from "./routes/acc/import/mnemonic"
 import { Route as AccAccountNewTxRouteImport } from "./routes/acc/$account/new-tx"
 import { Route as AccAccountHistoryRouteImport } from "./routes/acc/$account/history"
 import { Route as AccAccountAssetsRouteImport } from "./routes/acc/$account/assets"
 import { Route as AccAccountSettingsRouteRouteImport } from "./routes/acc/$account/settings/route"
+import { Route as AccNNewIndexRouteImport } from "./routes/acc/_n.new/index"
 import { Route as AccAccountSettingsIndexRouteImport } from "./routes/acc/$account/settings/index"
+import { Route as AccNNewSafeRouteImport } from "./routes/acc/_n.new/safe"
+import { Route as AccNNewPrivateKeyRouteImport } from "./routes/acc/_n.new/private-key"
+import { Route as AccNNewMnemonicRouteImport } from "./routes/acc/_n.new/mnemonic"
+import { Route as AccNImportViewRouteImport } from "./routes/acc/_n.import/view"
+import { Route as AccNImportSafeRouteImport } from "./routes/acc/_n.import/safe"
+import { Route as AccNImportPrivateKeyRouteImport } from "./routes/acc/_n.import/private-key"
+import { Route as AccNImportMnemonicRouteImport } from "./routes/acc/_n.import/mnemonic"
 import { Route as AccAccountSettingsDangerRouteImport } from "./routes/acc/$account/settings/danger"
 import { Route as AccAccountSettingsAssetsRouteImport } from "./routes/acc/$account/settings/assets"
 
@@ -107,14 +106,9 @@ const OnboardingAccountsRoute = OnboardingAccountsRouteImport.update({
   path: "/accounts",
   getParentRoute: () => OnboardingRouteRoute,
 } as any)
-const AccNewRouteRoute = AccNewRouteRouteImport.update({
-  id: "/acc/new",
-  path: "/acc/new",
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccImportRouteRoute = AccImportRouteRouteImport.update({
-  id: "/acc/import",
-  path: "/acc/import",
+const AccNRoute = AccNRouteImport.update({
+  id: "/acc/_n",
+  path: "/acc",
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccAccountRouteRoute = AccAccountRouteRouteImport.update({
@@ -122,50 +116,10 @@ const AccAccountRouteRoute = AccAccountRouteRouteImport.update({
   path: "/acc/$account",
   getParentRoute: () => rootRouteImport,
 } as any)
-const AccNewIndexRoute = AccNewIndexRouteImport.update({
-  id: "/",
-  path: "/",
-  getParentRoute: () => AccNewRouteRoute,
-} as any)
 const AccAccountIndexRoute = AccAccountIndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => AccAccountRouteRoute,
-} as any)
-const AccNewSafeRoute = AccNewSafeRouteImport.update({
-  id: "/safe",
-  path: "/safe",
-  getParentRoute: () => AccNewRouteRoute,
-} as any)
-const AccNewPrivateKeyRoute = AccNewPrivateKeyRouteImport.update({
-  id: "/private-key",
-  path: "/private-key",
-  getParentRoute: () => AccNewRouteRoute,
-} as any)
-const AccNewMnemonicRoute = AccNewMnemonicRouteImport.update({
-  id: "/mnemonic",
-  path: "/mnemonic",
-  getParentRoute: () => AccNewRouteRoute,
-} as any)
-const AccImportViewRoute = AccImportViewRouteImport.update({
-  id: "/view",
-  path: "/view",
-  getParentRoute: () => AccImportRouteRoute,
-} as any)
-const AccImportSafeRoute = AccImportSafeRouteImport.update({
-  id: "/safe",
-  path: "/safe",
-  getParentRoute: () => AccImportRouteRoute,
-} as any)
-const AccImportPrivateKeyRoute = AccImportPrivateKeyRouteImport.update({
-  id: "/private-key",
-  path: "/private-key",
-  getParentRoute: () => AccImportRouteRoute,
-} as any)
-const AccImportMnemonicRoute = AccImportMnemonicRouteImport.update({
-  id: "/mnemonic",
-  path: "/mnemonic",
-  getParentRoute: () => AccImportRouteRoute,
 } as any)
 const AccAccountNewTxRoute = AccAccountNewTxRouteImport.update({
   id: "/new-tx",
@@ -187,10 +141,50 @@ const AccAccountSettingsRouteRoute = AccAccountSettingsRouteRouteImport.update({
   path: "/settings",
   getParentRoute: () => AccAccountRouteRoute,
 } as any)
+const AccNNewIndexRoute = AccNNewIndexRouteImport.update({
+  id: "/new/",
+  path: "/new/",
+  getParentRoute: () => AccNRoute,
+} as any)
 const AccAccountSettingsIndexRoute = AccAccountSettingsIndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => AccAccountSettingsRouteRoute,
+} as any)
+const AccNNewSafeRoute = AccNNewSafeRouteImport.update({
+  id: "/new/safe",
+  path: "/new/safe",
+  getParentRoute: () => AccNRoute,
+} as any)
+const AccNNewPrivateKeyRoute = AccNNewPrivateKeyRouteImport.update({
+  id: "/new/private-key",
+  path: "/new/private-key",
+  getParentRoute: () => AccNRoute,
+} as any)
+const AccNNewMnemonicRoute = AccNNewMnemonicRouteImport.update({
+  id: "/new/mnemonic",
+  path: "/new/mnemonic",
+  getParentRoute: () => AccNRoute,
+} as any)
+const AccNImportViewRoute = AccNImportViewRouteImport.update({
+  id: "/import/view",
+  path: "/import/view",
+  getParentRoute: () => AccNRoute,
+} as any)
+const AccNImportSafeRoute = AccNImportSafeRouteImport.update({
+  id: "/import/safe",
+  path: "/import/safe",
+  getParentRoute: () => AccNRoute,
+} as any)
+const AccNImportPrivateKeyRoute = AccNImportPrivateKeyRouteImport.update({
+  id: "/import/private-key",
+  path: "/import/private-key",
+  getParentRoute: () => AccNRoute,
+} as any)
+const AccNImportMnemonicRoute = AccNImportMnemonicRouteImport.update({
+  id: "/import/mnemonic",
+  path: "/import/mnemonic",
+  getParentRoute: () => AccNRoute,
 } as any)
 const AccAccountSettingsDangerRoute =
   AccAccountSettingsDangerRouteImport.update({
@@ -210,8 +204,7 @@ export interface FileRoutesByFullPath {
   "/onboarding": typeof OnboardingRouteRouteWithChildren
   "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
-  "/acc/import": typeof AccImportRouteRouteWithChildren
-  "/acc/new": typeof AccNewRouteRouteWithChildren
+  "/acc": typeof AccNRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
@@ -226,22 +219,22 @@ export interface FileRoutesByFullPath {
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/history": typeof AccAccountHistoryRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
-  "/acc/import/mnemonic": typeof AccImportMnemonicRoute
-  "/acc/import/private-key": typeof AccImportPrivateKeyRoute
-  "/acc/import/safe": typeof AccImportSafeRoute
-  "/acc/import/view": typeof AccImportViewRoute
-  "/acc/new/mnemonic": typeof AccNewMnemonicRoute
-  "/acc/new/private-key": typeof AccNewPrivateKeyRoute
-  "/acc/new/safe": typeof AccNewSafeRoute
   "/acc/$account/": typeof AccAccountIndexRoute
-  "/acc/new/": typeof AccNewIndexRoute
   "/acc/$account/settings/assets": typeof AccAccountSettingsAssetsRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
+  "/acc/import/mnemonic": typeof AccNImportMnemonicRoute
+  "/acc/import/private-key": typeof AccNImportPrivateKeyRoute
+  "/acc/import/safe": typeof AccNImportSafeRoute
+  "/acc/import/view": typeof AccNImportViewRoute
+  "/acc/new/mnemonic": typeof AccNNewMnemonicRoute
+  "/acc/new/private-key": typeof AccNNewPrivateKeyRoute
+  "/acc/new/safe": typeof AccNNewSafeRoute
   "/acc/$account/settings/": typeof AccAccountSettingsIndexRoute
+  "/acc/new/": typeof AccNNewIndexRoute
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
-  "/acc/import": typeof AccImportRouteRouteWithChildren
+  "/acc": typeof AccNRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
@@ -255,18 +248,18 @@ export interface FileRoutesByTo {
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/history": typeof AccAccountHistoryRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
-  "/acc/import/mnemonic": typeof AccImportMnemonicRoute
-  "/acc/import/private-key": typeof AccImportPrivateKeyRoute
-  "/acc/import/safe": typeof AccImportSafeRoute
-  "/acc/import/view": typeof AccImportViewRoute
-  "/acc/new/mnemonic": typeof AccNewMnemonicRoute
-  "/acc/new/private-key": typeof AccNewPrivateKeyRoute
-  "/acc/new/safe": typeof AccNewSafeRoute
   "/acc/$account": typeof AccAccountIndexRoute
-  "/acc/new": typeof AccNewIndexRoute
   "/acc/$account/settings/assets": typeof AccAccountSettingsAssetsRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
+  "/acc/import/mnemonic": typeof AccNImportMnemonicRoute
+  "/acc/import/private-key": typeof AccNImportPrivateKeyRoute
+  "/acc/import/safe": typeof AccNImportSafeRoute
+  "/acc/import/view": typeof AccNImportViewRoute
+  "/acc/new/mnemonic": typeof AccNNewMnemonicRoute
+  "/acc/new/private-key": typeof AccNNewPrivateKeyRoute
+  "/acc/new/safe": typeof AccNNewSafeRoute
   "/acc/$account/settings": typeof AccAccountSettingsIndexRoute
+  "/acc/new": typeof AccNNewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -274,8 +267,7 @@ export interface FileRoutesById {
   "/onboarding": typeof OnboardingRouteRouteWithChildren
   "/settings": typeof SettingsRouteRouteWithChildren
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
-  "/acc/import": typeof AccImportRouteRouteWithChildren
-  "/acc/new": typeof AccNewRouteRouteWithChildren
+  "/acc/_n": typeof AccNRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/assets": typeof OnboardingAssetsRoute
   "/onboarding/networks": typeof OnboardingNetworksRoute
@@ -290,18 +282,18 @@ export interface FileRoutesById {
   "/acc/$account/assets": typeof AccAccountAssetsRoute
   "/acc/$account/history": typeof AccAccountHistoryRoute
   "/acc/$account/new-tx": typeof AccAccountNewTxRoute
-  "/acc/import/mnemonic": typeof AccImportMnemonicRoute
-  "/acc/import/private-key": typeof AccImportPrivateKeyRoute
-  "/acc/import/safe": typeof AccImportSafeRoute
-  "/acc/import/view": typeof AccImportViewRoute
-  "/acc/new/mnemonic": typeof AccNewMnemonicRoute
-  "/acc/new/private-key": typeof AccNewPrivateKeyRoute
-  "/acc/new/safe": typeof AccNewSafeRoute
   "/acc/$account/": typeof AccAccountIndexRoute
-  "/acc/new/": typeof AccNewIndexRoute
   "/acc/$account/settings/assets": typeof AccAccountSettingsAssetsRoute
   "/acc/$account/settings/danger": typeof AccAccountSettingsDangerRoute
+  "/acc/_n/import/mnemonic": typeof AccNImportMnemonicRoute
+  "/acc/_n/import/private-key": typeof AccNImportPrivateKeyRoute
+  "/acc/_n/import/safe": typeof AccNImportSafeRoute
+  "/acc/_n/import/view": typeof AccNImportViewRoute
+  "/acc/_n/new/mnemonic": typeof AccNNewMnemonicRoute
+  "/acc/_n/new/private-key": typeof AccNNewPrivateKeyRoute
+  "/acc/_n/new/safe": typeof AccNNewSafeRoute
   "/acc/$account/settings/": typeof AccAccountSettingsIndexRoute
+  "/acc/_n/new/": typeof AccNNewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -310,8 +302,7 @@ export interface FileRouteTypes {
     | "/onboarding"
     | "/settings"
     | "/acc/$account"
-    | "/acc/import"
-    | "/acc/new"
+    | "/acc"
     | "/onboarding/accounts"
     | "/onboarding/assets"
     | "/onboarding/networks"
@@ -326,6 +317,9 @@ export interface FileRouteTypes {
     | "/acc/$account/assets"
     | "/acc/$account/history"
     | "/acc/$account/new-tx"
+    | "/acc/$account/"
+    | "/acc/$account/settings/assets"
+    | "/acc/$account/settings/danger"
     | "/acc/import/mnemonic"
     | "/acc/import/private-key"
     | "/acc/import/safe"
@@ -333,15 +327,12 @@ export interface FileRouteTypes {
     | "/acc/new/mnemonic"
     | "/acc/new/private-key"
     | "/acc/new/safe"
-    | "/acc/$account/"
-    | "/acc/new/"
-    | "/acc/$account/settings/assets"
-    | "/acc/$account/settings/danger"
     | "/acc/$account/settings/"
+    | "/acc/new/"
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
-    | "/acc/import"
+    | "/acc"
     | "/onboarding/accounts"
     | "/onboarding/assets"
     | "/onboarding/networks"
@@ -355,6 +346,9 @@ export interface FileRouteTypes {
     | "/acc/$account/assets"
     | "/acc/$account/history"
     | "/acc/$account/new-tx"
+    | "/acc/$account"
+    | "/acc/$account/settings/assets"
+    | "/acc/$account/settings/danger"
     | "/acc/import/mnemonic"
     | "/acc/import/private-key"
     | "/acc/import/safe"
@@ -362,19 +356,15 @@ export interface FileRouteTypes {
     | "/acc/new/mnemonic"
     | "/acc/new/private-key"
     | "/acc/new/safe"
-    | "/acc/$account"
-    | "/acc/new"
-    | "/acc/$account/settings/assets"
-    | "/acc/$account/settings/danger"
     | "/acc/$account/settings"
+    | "/acc/new"
   id:
     | "__root__"
     | "/"
     | "/onboarding"
     | "/settings"
     | "/acc/$account"
-    | "/acc/import"
-    | "/acc/new"
+    | "/acc/_n"
     | "/onboarding/accounts"
     | "/onboarding/assets"
     | "/onboarding/networks"
@@ -389,18 +379,18 @@ export interface FileRouteTypes {
     | "/acc/$account/assets"
     | "/acc/$account/history"
     | "/acc/$account/new-tx"
-    | "/acc/import/mnemonic"
-    | "/acc/import/private-key"
-    | "/acc/import/safe"
-    | "/acc/import/view"
-    | "/acc/new/mnemonic"
-    | "/acc/new/private-key"
-    | "/acc/new/safe"
     | "/acc/$account/"
-    | "/acc/new/"
     | "/acc/$account/settings/assets"
     | "/acc/$account/settings/danger"
+    | "/acc/_n/import/mnemonic"
+    | "/acc/_n/import/private-key"
+    | "/acc/_n/import/safe"
+    | "/acc/_n/import/view"
+    | "/acc/_n/new/mnemonic"
+    | "/acc/_n/new/private-key"
+    | "/acc/_n/new/safe"
     | "/acc/$account/settings/"
+    | "/acc/_n/new/"
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -408,8 +398,7 @@ export interface RootRouteChildren {
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
-  AccImportRouteRoute: typeof AccImportRouteRouteWithChildren
-  AccNewRouteRoute: typeof AccNewRouteRouteWithChildren
+  AccNRoute: typeof AccNRouteWithChildren
 }
 
 declare module "@tanstack/solid-router" {
@@ -505,18 +494,11 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof OnboardingAccountsRouteImport
       parentRoute: typeof OnboardingRouteRoute
     }
-    "/acc/new": {
-      id: "/acc/new"
-      path: "/acc/new"
-      fullPath: "/acc/new"
-      preLoaderRoute: typeof AccNewRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    "/acc/import": {
-      id: "/acc/import"
-      path: "/acc/import"
-      fullPath: "/acc/import"
-      preLoaderRoute: typeof AccImportRouteRouteImport
+    "/acc/_n": {
+      id: "/acc/_n"
+      path: "/acc"
+      fullPath: "/acc"
+      preLoaderRoute: typeof AccNRouteImport
       parentRoute: typeof rootRouteImport
     }
     "/acc/$account": {
@@ -526,68 +508,12 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof AccAccountRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    "/acc/new/": {
-      id: "/acc/new/"
-      path: "/"
-      fullPath: "/acc/new/"
-      preLoaderRoute: typeof AccNewIndexRouteImport
-      parentRoute: typeof AccNewRouteRoute
-    }
     "/acc/$account/": {
       id: "/acc/$account/"
       path: "/"
       fullPath: "/acc/$account/"
       preLoaderRoute: typeof AccAccountIndexRouteImport
       parentRoute: typeof AccAccountRouteRoute
-    }
-    "/acc/new/safe": {
-      id: "/acc/new/safe"
-      path: "/safe"
-      fullPath: "/acc/new/safe"
-      preLoaderRoute: typeof AccNewSafeRouteImport
-      parentRoute: typeof AccNewRouteRoute
-    }
-    "/acc/new/private-key": {
-      id: "/acc/new/private-key"
-      path: "/private-key"
-      fullPath: "/acc/new/private-key"
-      preLoaderRoute: typeof AccNewPrivateKeyRouteImport
-      parentRoute: typeof AccNewRouteRoute
-    }
-    "/acc/new/mnemonic": {
-      id: "/acc/new/mnemonic"
-      path: "/mnemonic"
-      fullPath: "/acc/new/mnemonic"
-      preLoaderRoute: typeof AccNewMnemonicRouteImport
-      parentRoute: typeof AccNewRouteRoute
-    }
-    "/acc/import/view": {
-      id: "/acc/import/view"
-      path: "/view"
-      fullPath: "/acc/import/view"
-      preLoaderRoute: typeof AccImportViewRouteImport
-      parentRoute: typeof AccImportRouteRoute
-    }
-    "/acc/import/safe": {
-      id: "/acc/import/safe"
-      path: "/safe"
-      fullPath: "/acc/import/safe"
-      preLoaderRoute: typeof AccImportSafeRouteImport
-      parentRoute: typeof AccImportRouteRoute
-    }
-    "/acc/import/private-key": {
-      id: "/acc/import/private-key"
-      path: "/private-key"
-      fullPath: "/acc/import/private-key"
-      preLoaderRoute: typeof AccImportPrivateKeyRouteImport
-      parentRoute: typeof AccImportRouteRoute
-    }
-    "/acc/import/mnemonic": {
-      id: "/acc/import/mnemonic"
-      path: "/mnemonic"
-      fullPath: "/acc/import/mnemonic"
-      preLoaderRoute: typeof AccImportMnemonicRouteImport
-      parentRoute: typeof AccImportRouteRoute
     }
     "/acc/$account/new-tx": {
       id: "/acc/$account/new-tx"
@@ -617,12 +543,68 @@ declare module "@tanstack/solid-router" {
       preLoaderRoute: typeof AccAccountSettingsRouteRouteImport
       parentRoute: typeof AccAccountRouteRoute
     }
+    "/acc/_n/new/": {
+      id: "/acc/_n/new/"
+      path: "/new"
+      fullPath: "/acc/new/"
+      preLoaderRoute: typeof AccNNewIndexRouteImport
+      parentRoute: typeof AccNRoute
+    }
     "/acc/$account/settings/": {
       id: "/acc/$account/settings/"
       path: "/"
       fullPath: "/acc/$account/settings/"
       preLoaderRoute: typeof AccAccountSettingsIndexRouteImport
       parentRoute: typeof AccAccountSettingsRouteRoute
+    }
+    "/acc/_n/new/safe": {
+      id: "/acc/_n/new/safe"
+      path: "/new/safe"
+      fullPath: "/acc/new/safe"
+      preLoaderRoute: typeof AccNNewSafeRouteImport
+      parentRoute: typeof AccNRoute
+    }
+    "/acc/_n/new/private-key": {
+      id: "/acc/_n/new/private-key"
+      path: "/new/private-key"
+      fullPath: "/acc/new/private-key"
+      preLoaderRoute: typeof AccNNewPrivateKeyRouteImport
+      parentRoute: typeof AccNRoute
+    }
+    "/acc/_n/new/mnemonic": {
+      id: "/acc/_n/new/mnemonic"
+      path: "/new/mnemonic"
+      fullPath: "/acc/new/mnemonic"
+      preLoaderRoute: typeof AccNNewMnemonicRouteImport
+      parentRoute: typeof AccNRoute
+    }
+    "/acc/_n/import/view": {
+      id: "/acc/_n/import/view"
+      path: "/import/view"
+      fullPath: "/acc/import/view"
+      preLoaderRoute: typeof AccNImportViewRouteImport
+      parentRoute: typeof AccNRoute
+    }
+    "/acc/_n/import/safe": {
+      id: "/acc/_n/import/safe"
+      path: "/import/safe"
+      fullPath: "/acc/import/safe"
+      preLoaderRoute: typeof AccNImportSafeRouteImport
+      parentRoute: typeof AccNRoute
+    }
+    "/acc/_n/import/private-key": {
+      id: "/acc/_n/import/private-key"
+      path: "/import/private-key"
+      fullPath: "/acc/import/private-key"
+      preLoaderRoute: typeof AccNImportPrivateKeyRouteImport
+      parentRoute: typeof AccNRoute
+    }
+    "/acc/_n/import/mnemonic": {
+      id: "/acc/_n/import/mnemonic"
+      path: "/import/mnemonic"
+      fullPath: "/acc/import/mnemonic"
+      preLoaderRoute: typeof AccNImportMnemonicRouteImport
+      parentRoute: typeof AccNRoute
     }
     "/acc/$account/settings/danger": {
       id: "/acc/$account/settings/danger"
@@ -719,49 +701,36 @@ const AccAccountRouteRouteWithChildren = AccAccountRouteRoute._addFileChildren(
   AccAccountRouteRouteChildren,
 )
 
-interface AccImportRouteRouteChildren {
-  AccImportMnemonicRoute: typeof AccImportMnemonicRoute
-  AccImportPrivateKeyRoute: typeof AccImportPrivateKeyRoute
-  AccImportSafeRoute: typeof AccImportSafeRoute
-  AccImportViewRoute: typeof AccImportViewRoute
+interface AccNRouteChildren {
+  AccNImportMnemonicRoute: typeof AccNImportMnemonicRoute
+  AccNImportPrivateKeyRoute: typeof AccNImportPrivateKeyRoute
+  AccNImportSafeRoute: typeof AccNImportSafeRoute
+  AccNImportViewRoute: typeof AccNImportViewRoute
+  AccNNewMnemonicRoute: typeof AccNNewMnemonicRoute
+  AccNNewPrivateKeyRoute: typeof AccNNewPrivateKeyRoute
+  AccNNewSafeRoute: typeof AccNNewSafeRoute
+  AccNNewIndexRoute: typeof AccNNewIndexRoute
 }
 
-const AccImportRouteRouteChildren: AccImportRouteRouteChildren = {
-  AccImportMnemonicRoute: AccImportMnemonicRoute,
-  AccImportPrivateKeyRoute: AccImportPrivateKeyRoute,
-  AccImportSafeRoute: AccImportSafeRoute,
-  AccImportViewRoute: AccImportViewRoute,
+const AccNRouteChildren: AccNRouteChildren = {
+  AccNImportMnemonicRoute: AccNImportMnemonicRoute,
+  AccNImportPrivateKeyRoute: AccNImportPrivateKeyRoute,
+  AccNImportSafeRoute: AccNImportSafeRoute,
+  AccNImportViewRoute: AccNImportViewRoute,
+  AccNNewMnemonicRoute: AccNNewMnemonicRoute,
+  AccNNewPrivateKeyRoute: AccNNewPrivateKeyRoute,
+  AccNNewSafeRoute: AccNNewSafeRoute,
+  AccNNewIndexRoute: AccNNewIndexRoute,
 }
 
-const AccImportRouteRouteWithChildren = AccImportRouteRoute._addFileChildren(
-  AccImportRouteRouteChildren,
-)
-
-interface AccNewRouteRouteChildren {
-  AccNewMnemonicRoute: typeof AccNewMnemonicRoute
-  AccNewPrivateKeyRoute: typeof AccNewPrivateKeyRoute
-  AccNewSafeRoute: typeof AccNewSafeRoute
-  AccNewIndexRoute: typeof AccNewIndexRoute
-}
-
-const AccNewRouteRouteChildren: AccNewRouteRouteChildren = {
-  AccNewMnemonicRoute: AccNewMnemonicRoute,
-  AccNewPrivateKeyRoute: AccNewPrivateKeyRoute,
-  AccNewSafeRoute: AccNewSafeRoute,
-  AccNewIndexRoute: AccNewIndexRoute,
-}
-
-const AccNewRouteRouteWithChildren = AccNewRouteRoute._addFileChildren(
-  AccNewRouteRouteChildren,
-)
+const AccNRouteWithChildren = AccNRoute._addFileChildren(AccNRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
-  AccImportRouteRoute: AccImportRouteRouteWithChildren,
-  AccNewRouteRoute: AccNewRouteRouteWithChildren,
+  AccNRoute: AccNRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

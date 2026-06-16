@@ -34,14 +34,14 @@ const ACC_OPTIONS = [
     label: "Import",
     options: [
       {
+        label: "Multisig",
+        icon: () => <img src={SafeIcon} alt="Safe Multisig" class="size-3.5" />,
+        href: "/acc/import/safe",
+      },
+      {
         label: "View",
         icon: FaSolidEye,
         href: "/acc/import/view",
-      },
-      {
-        label: "Private Key",
-        icon: FaSolidKey,
-        href: "/acc/import/private-key",
       },
       {
         label: "Mnemonic",
@@ -49,9 +49,9 @@ const ACC_OPTIONS = [
         href: "/acc/import/mnemonic",
       },
       {
-        label: "Multisig",
-        icon: () => <img src={SafeIcon} alt="Safe Multisig" class="size-3.5" />,
-        href: "/acc/import/safe",
+        label: "Private Key",
+        icon: FaSolidKey,
+        href: "/acc/import/private-key",
       },
       {
         label: "Frost",
@@ -82,15 +82,14 @@ const ACC_OPTIONS = [
   },
 ];
 
-export const Route = createFileRoute("/acc/new/")({
+export const Route = createFileRoute("/acc/_n/new/")({
+  staticData: {
+    title: "New Account",
+    className: "max-w-3xl",
+  },
   component: () => (
-    <div class="w-full p-4">
-      <div class="mx-auto w-full max-w-3xl space-y-4 mt-4">
-        <div class="flex items-end justify-between">
-          <div class="text-xl">
-            New Account
-          </div>
-        </div>
+    <div class="w-full">
+      <div class="mx-auto w-full max-w-3xl space-y-4">
         <div class="bg-surface p-4 rounded-md w-full">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <For each={ACC_OPTIONS}>
@@ -108,7 +107,7 @@ export const Route = createFileRoute("/acc/new/")({
                             disabled={option.disabled || !option.href}
                             class={
                               [
-                                "w-full px-4 py-2 text-sm font-bold flex gap-2 items-center bg-surface-alt",
+                                "w-full px-4 py-2 text-sm font-bold flex gap-2 items-center bg-surface-alt rounded-md",
                                 option.disabled && "cursor-not-allowed opacity-50",
                                 !option.disabled && "hover:bg-surface",
                               ].filter(Boolean).join(" ")

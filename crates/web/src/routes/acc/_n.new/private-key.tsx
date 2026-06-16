@@ -8,7 +8,10 @@ import { FormNetworkField } from "#/components/account/form/networks";
 import { button } from "#/components/input/button";
 import { FormTextField } from "#/components/input/field";
 
-export const Route = createFileRoute("/acc/new/private-key")({
+export const Route = createFileRoute("/acc/_n/new/private-key")({
+    staticData: {
+        title: "New Private Key",
+    },
     component: () => {
         const navigate = useNavigate();
         const nextAccountId = useNextAccountId();
@@ -69,48 +72,43 @@ export const Route = createFileRoute("/acc/new/private-key")({
         });
 
         return (
-            <div class="p-4 mx-auto w-full max-w-lg">
-                <div class="text-xl mb-4">
-                    New Private Key
+            <form
+              class="bg-surface p-4 rounded-md w-full space-y-4"
+              onSubmit={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.handleSubmit();
+                }}
+            >
+                <div class="text-sm text-yellow-500 bg-yellow-500/10 p-3 rounded">
+                    Back up this private key now. It will not be shown again and is not stored on the server.
                 </div>
-                <form
-                  class="bg-surface p-4 rounded-md w-full space-y-4"
-                  onSubmit={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        form.handleSubmit();
-                    }}
-                >
-                    <div class="text-sm text-yellow-500 bg-yellow-500/10 p-3 rounded">
-                        Back up this private key now. It will not be shown again and is not stored on the server.
+                <form.Field name="name">
+                    {field => <FormTextField field={field} label="Name" placeholder="My account" />}
+                </form.Field>
+                <form.Field name="networks">
+                    {field => <FormNetworkField field={field} label="Networks" />}
+                </form.Field>
+                <form.Field name="privateKey">
+                    {field => (
+                        <FormTextField
+                          field={field}
+                          label="Private Key"
+                          placeholder="0x..."
+                        />
+                    )}
+                </form.Field>
+                <Show when={derive.error || createAccount.error}>
+                    <div class="text-sm text-red-500">
+                        {derive.error?.message || createAccount.error?.message}
                     </div>
-                    <form.Field name="name">
-                        {field => <FormTextField field={field} label="Name" placeholder="My account" />}
-                    </form.Field>
-                    <form.Field name="networks">
-                        {field => <FormNetworkField field={field} label="Networks" />}
-                    </form.Field>
-                    <form.Field name="privateKey">
-                        {field => (
-                            <FormTextField
-                              field={field}
-                              label="Private Key"
-                              placeholder="0x..."
-                            />
-                        )}
-                    </form.Field>
-                    <Show when={derive.error || createAccount.error}>
-                        <div class="text-sm text-red-500">
-                            {derive.error?.message || createAccount.error?.message}
-                        </div>
-                    </Show>
-                    <div class="flex justify-end">
-                        <button type="submit" class={button({ variant: "primary" })} disabled={!canSubmit()}>
-                            Create
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </Show>
+                <div class="flex justify-end">
+                    <button type="submit" class={button({ variant: "primary" })} disabled={!canSubmit()}>
+                        Create
+                    </button>
+                </div>
+            </form>
         );
     },
 });

@@ -8,7 +8,10 @@ import { FormNetworkField } from "#/components/account/form/networks";
 import { button } from "#/components/input/button";
 import { FormTextField } from "#/components/input/field";
 
-export const Route = createFileRoute("/acc/import/safe")({
+export const Route = createFileRoute("/acc/_n/import/safe")({
+    staticData: {
+        title: "Import Safe",
+    },
     component: () => {
         const navigate = useNavigate();
         const nextAccountId = useNextAccountId();
@@ -54,46 +57,41 @@ export const Route = createFileRoute("/acc/import/safe")({
             const state = form.state;
 
             return state.values.name.length > 0
-              && state.values.networks.length > 0
-              && state.values.address.length >= 42
-              && !createAccount.isPending
-              && (nextAccountId.data ?? 0) > 0;
+                && state.values.networks.length > 0
+                && state.values.address.length >= 42
+                && !createAccount.isPending
+                && (nextAccountId.data ?? 0) > 0;
         });
 
         return (
-            <div class="p-4 mx-auto w-full max-w-lg">
-                <div class="text-xl mb-4">
-                    Import Safe
-                </div>
-                <form
-                  class="bg-surface p-4 rounded-md w-full space-y-4"
-                  onSubmit={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        form.handleSubmit();
-                    }}
-                >
-                    <form.Field name="name">
-                        {field => <FormTextField field={field} label="Name" placeholder="My Safe" />}
-                    </form.Field>
-                    <form.Field name="networks">
-                        {field => <FormNetworkField field={field} label="Networks" />}
-                    </form.Field>
-                    <form.Field name="address">
-                        {field => <FormAddressField field={field} label="Safe Address" placeholder="0x..." />}
-                    </form.Field>
-                    <Show when={createAccount.error}>
-                        <div class="text-sm text-red-500">
-                            {createAccount.error?.message}
-                        </div>
-                    </Show>
-                    <div class="flex justify-end">
-                        <button type="submit" class={button({ variant: "primary" })} disabled={!canSubmit()}>
-                            Import
-                        </button>
+            <form
+                class="bg-surface p-4 rounded-md w-full space-y-4"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.handleSubmit();
+                }}
+            >
+                <form.Field name="name">
+                    {field => <FormTextField field={field} label="Name" placeholder="My Safe" />}
+                </form.Field>
+                <form.Field name="networks">
+                    {field => <FormNetworkField field={field} label="Networks" />}
+                </form.Field>
+                <form.Field name="address">
+                    {field => <FormAddressField field={field} label="Safe Address" placeholder="0x..." />}
+                </form.Field>
+                <Show when={createAccount.error}>
+                    <div class="text-sm text-red-500">
+                        {createAccount.error?.message}
                     </div>
-                </form>
-            </div>
+                </Show>
+                <div class="flex justify-end">
+                    <button type="submit" class={button({ variant: "primary" })} disabled={!canSubmit()}>
+                        Import
+                    </button>
+                </div>
+            </form>
         );
     },
 });
