@@ -56,7 +56,7 @@ body {
 }
 
 .input {
-    @apply min-h-8 bg-surface border border-border rounded-md px-2 py-1 text-sm text-foreground outline-none transition-colors placeholder:text-muted;
+    @apply min-h-10 bg-surface border border-border rounded-md px-2 py-1 text-sm text-foreground outline-none transition-colors placeholder:text-muted;
 
     &:focus,
     &:focus-within {
@@ -95,7 +95,7 @@ textarea.input {
 }
 
 .select__trigger {
-    @apply min-h-8 bg-surface border border-border rounded-md px-2 py-1 text-sm text-foreground outline-none transition-colors inline-flex items-center justify-between gap-2 cursor-pointer;
+    @apply min-h-10 bg-surface border border-border rounded-md px-2 py-1 text-sm text-foreground outline-none transition-colors inline-flex items-center justify-between gap-2 cursor-pointer;
 
     &:focus,
     &:focus-visible,

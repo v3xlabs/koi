@@ -57,16 +57,16 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
             const state = form.state;
 
             return state.values.name.length > 0
-                && state.values.networks.length > 0
-                && state.values.address.length >= 42
-                && !createAccount.isPending
-                && (nextAccountId.data ?? 0) > 0;
+              && state.values.networks.length > 0
+              && state.values.address.length >= 42
+              && !createAccount.isPending
+              && (nextAccountId.data ?? 0) > 0;
         });
 
         return (
             <form
-                class="bg-surface p-4 rounded-md w-full space-y-4"
-                onSubmit={(event) => {
+              class="bg-surface p-4 rounded-md w-full space-y-4"
+              onSubmit={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
                     form.handleSubmit();
@@ -75,11 +75,11 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
                 <form.Field name="name">
                     {field => <FormTextField field={field} label="Name" placeholder="My Safe" />}
                 </form.Field>
-                <form.Field name="networks">
-                    {field => <FormNetworkField field={field} label="Networks" />}
-                </form.Field>
                 <form.Field name="address">
                     {field => <FormAddressField field={field} label="Safe Address" placeholder="0x..." />}
+                </form.Field>
+                <form.Field name="networks">
+                    {field => <FormNetworkField field={field} label="Networks" />}
                 </form.Field>
                 <Show when={createAccount.error}>
                     <div class="text-sm text-red-500">
