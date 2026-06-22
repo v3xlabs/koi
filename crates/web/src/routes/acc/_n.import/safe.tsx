@@ -1,12 +1,11 @@
 import { createForm } from "@tanstack/solid-form";
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
-import { createMemo, Show } from "solid-js";
+import { Show } from "solid-js";
 
 import { useCreateAccount, useNextAccountId } from "#/api/account";
-import { FormAddressField } from "#/components/account/form/address";
-import { FormNetworkField } from "#/components/account/form/networks";
+import { AddressInput } from "#/components/input/address";
 import { button } from "#/components/input/button";
-import { FormTextField } from "#/components/input/field";
+import { NetworkSelect } from "#/components/net/input";
 
 export const Route = createFileRoute("/acc/_n/import/safe")({
     staticData: {
@@ -53,16 +52,6 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
             },
         }));
 
-        const canSubmit = createMemo(() => {
-            const state = form.state;
-
-            return state.values.name.length > 0
-              && state.values.networks.length > 0
-              && state.values.address.length >= 42
-              && !createAccount.isPending
-              && (nextAccountId.data ?? 0) > 0;
-        });
-
         return (
             <form
               class="bg-surface p-4 rounded-md w-full space-y-4"
@@ -73,13 +62,59 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
                 }}
             >
                 <form.Field name="name">
-                    {field => <FormTextField field={field} label="Name" placeholder="My Safe" />}
+                    {field => (
+                        <label class="space-y-1 block">
+                            <span class="block">Name</span>
+                            <input
+                              type="text"
+                              class="input w-full"
+                              placeholder="My Safe"
+                              value={field().state.value}
+                              onInput={event => field().handleChange(event.currentTarget.value)}
+                              onBlur={field().handleBlur}
+                            />
+                            <Show when={field().state.meta.isTouched && field().state.meta.errors.length > 0}>
+                                <span class="text-sm text-red-500">
+                                    {field().state.meta.errors.join(", ")}
+                                </span>
+                            </Show>
+                        </label>
+                    )}
                 </form.Field>
                 <form.Field name="address">
-                    {field => <FormAddressField field={field} label="Safe Address" placeholder="0x..." />}
+                    {field => (
+                        <label class="space-y-1 block">
+                            <span class="block">Safe Address</span>
+                            <AddressInput
+                              class="w-full"
+                              placeholder="0x..."
+                              value={() => field().state.value}
+                              onChange={value => field().handleChange(value)}
+                              onBlur={field().handleBlur}
+                            />
+                            <Show when={field().state.meta.isTouched && field().state.meta.errors.length > 0}>
+                                <span class="text-sm text-red-500">
+                                    {field().state.meta.errors.join(", ")}
+                                </span>
+                            </Show>
+                        </label>
+                    )}
                 </form.Field>
                 <form.Field name="networks">
-                    {field => <FormNetworkField field={field} label="Networks" />}
+                    {field => (
+                        <label class="space-y-1 block">
+                            <span class="block">Networks</span>
+                            <NetworkSelect
+                              value={() => field().state.value}
+                              onChange={value => field().handleChange(value ?? [])}
+                            />
+                            <Show when={field().state.meta.isTouched && field().state.meta.errors.length > 0}>
+                                <span class="text-sm text-red-500">
+                                    {field().state.meta.errors.join(", ")}
+                                </span>
+                            </Show>
+                        </label>
+                    )}
                 </form.Field>
                 <Show when={createAccount.error}>
                     <div class="text-sm text-red-500">
@@ -87,9 +122,27 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
                     </div>
                 </Show>
                 <div class="flex justify-end">
-                    <button type="submit" class={button({ variant: "primary" })} disabled={!canSubmit()}>
-                        Import
-                    </button>
+                    <form.Subscribe
+                      selector={state => ({
+                            address: state.values.address,
+                            name: state.values.name,
+                            networks: state.values.networks,
+                        })}
+                    >
+                        {state => (
+                            <button
+                              type="submit"
+                              class={button({ variant: "primary" })}
+                              disabled={state().name.length === 0
+                                || state().networks.length === 0
+                                || state().address.length < 42
+                                || createAccount.isPending
+                                || (nextAccountId.data ?? 0) <= 0}
+                            >
+                                Import
+                            </button>
+                        )}
+                    </form.Subscribe>
                 </div>
             </form>
         );
