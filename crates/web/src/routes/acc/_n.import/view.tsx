@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/solid-router";
+import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { createMemo, createSignal } from "solid-js";
 
 import { useCreateAccount, useNextAccountId } from "#/api/account";
@@ -11,6 +11,7 @@ export const Route = createFileRoute("/acc/_n/import/view")({
     title: "Import View",
   },
   component: () => {
+    const navigate = useNavigate();
     const nextAccountId = useNextAccountId();
     const [address, setAddress] = createSignal("");
     const [name, setName] = createSignal("");
@@ -20,14 +21,15 @@ export const Route = createFileRoute("/acc/_n/import/view")({
       data: { account_identity, name, networks, display_order, metadata: { type: "view", evm_address: address } },
     }));
 
-    const handleClick = () => {
+    const handleClick = async () => {
       const account_identity = nextAccountId.data;
 
       if (!account_identity || account_identity <= 0) return;
 
       if (networks().length === 0) return;
 
-      createAccount.mutate({ data: { account_identity, name: name(), networks: networks(), display_order: 0, address: address() } });
+      await createAccount.mutateAsync({ data: { account_identity, name: name(), networks: networks(), display_order: 0, address: address() } });
+      navigate({ to: "/acc/$account", params: { account: account_identity.toString() } });
     };
 
     const disabled = createMemo(() => createAccount.isPending || !address() || !name() || networks().length === 0);

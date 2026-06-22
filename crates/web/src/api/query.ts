@@ -95,6 +95,10 @@ export const createApiMutation = <
 
                 const response = await api(path, method, options as any);
 
+                if (response.status !== 200) {
+                    throw new Error(response.status.toString());
+                }
+
                 return response.data as TData;
             },
             ...extraOptions,
