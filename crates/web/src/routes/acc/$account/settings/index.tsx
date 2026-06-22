@@ -13,15 +13,13 @@ export const Route = createFileRoute("/acc/$account/settings/")({
     const account = createMemo(() => accountQuery.data);
 
     return (
-      <div class="px-4">
-        <Suspense>
-          <Show when={account()}>
-            {data => (
-              <AccountEdit account={data} />
-            )}
-          </Show>
-        </Suspense>
-      </div>
+      <Suspense>
+        <Show when={account()}>
+          {data => (
+            <AccountEdit account={data} />
+          )}
+        </Show>
+      </Suspense>
     );
   },
 });

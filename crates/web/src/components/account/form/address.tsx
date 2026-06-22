@@ -19,10 +19,12 @@ export const FormAddressField: Component<FormAddressFieldProps> = (props) => {
               class="w-full"
               placeholder={props.placeholder}
               value={() => state().value as string}
+              invalid={() => state().meta.isTouched && !state().meta.isValid}
               onChange={value => props.field().handleChange(value)}
+              onBlur={props.field().handleBlur}
             />
             <Show when={state().meta.isTouched && state().meta.errors.length > 0}>
-                <span class="text-sm text-red-500">
+                <span class="text-sm text-red-500" role="alert">
                     {state().meta.errors.join(", ")}
                 </span>
             </Show>

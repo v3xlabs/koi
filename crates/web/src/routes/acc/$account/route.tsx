@@ -12,8 +12,10 @@ export const Route = createFileRoute("/acc/$account")({
       </div>
       <div class="w-full h-full overflow-y-auto">
         <Navbar />
-        <Suspense>
-          <Outlet />
+        <Suspense fallback={<div>Loading...</div>}>
+          <div class="pr-4">
+            <Outlet />
+          </div>
         </Suspense>
       </div>
     </div>

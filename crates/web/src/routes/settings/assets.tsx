@@ -18,23 +18,30 @@ export const Route = createFileRoute("/settings/assets")({
     return (
       <div class="w-full space-y-4">
         <div class="flex justify-between items-center">
-          <div class="text-xl font-bold">
-            Assets
+          <div class="">
+            <div class="text-xl font-bold">
+              Assets
+            </div>
+            <div class="text-sm text-muted">
+              These are the tokens and currencies you have added system-wide.
+            </div>
           </div>
           <AssetAdd />
         </div>
-        <Show when={assets().length > 0} fallback={<div class="py-8 text-center text-muted">No assets found</div>}>
-          <ul class="space-y-1">
-            <For each={assets()}>
-              {asset => (
-                <li class="py-2 px-2 hover:bg-surface-alt rounded-lg flex items-center justify-between gap-2">
-                  <AssetPreview asset_identity={asset.asset_identity} />
-                  <AssetQuote asset_identity={asset.asset_identity} />
-                </li>
-              )}
-            </For>
-          </ul>
-        </Show>
+        <div class="bg-surface rounded-md p-4">
+          <Show when={assets().length > 0} fallback={<div class="py-8 text-center text-muted">No assets found</div>}>
+            <ul class="space-y-1">
+              <For each={assets()}>
+                {asset => (
+                  <li class="py-2 px-2 hover:bg-surface-alt rounded-lg flex items-center justify-between gap-2">
+                    <AssetPreview asset_identity={asset.asset_identity} />
+                    <AssetQuote asset_identity={asset.asset_identity} />
+                  </li>
+                )}
+              </For>
+            </ul>
+          </Show>
+        </div>
       </div>
     );
   },

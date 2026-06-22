@@ -51,10 +51,10 @@ const columns = [
                         <Show
                           when={row.original.price !== undefined}
                           fallback={(
-                            <span class="text-muted">
-                                ---
-                            </span>
-                          )}
+                                <span class="text-muted">
+                                    ---
+                                </span>
+                            )}
                         >
                             <span class="tabular-nums" title={privateAmountTitle(privacyMode(), row.original.price === undefined ? undefined : formatAmount(row.original.price, { decimals: 6, precision: 2, currency: displayCurrency() }))}>
                                 {row.original.price === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.price, { decimals: 6, precision: 2, notation: "compact", currency: displayCurrency() }))}
@@ -114,7 +114,7 @@ const columns = [
                             <span>
                                 -
                             </span>
-                          )}
+                        )}
                     >
                         <span class="tabular-nums">
                             {row.original.value === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() }))}
@@ -213,7 +213,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                 query: { display_currency: displayCurrency() },
             });
         }
- finally {
+        finally {
             setRefreshingBalances(false);
         }
     };
@@ -270,27 +270,27 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                         />
                     </div>
                 </div>
-                <div class="flex flex-col items-end justify-center gap-2">
-                    <div class="text-muted text-sm flex items-center gap-2">
-                        <Suspense>
-                            <span class="">
-                                <FormattedTime value={accountBalancesQuery.data?.updated_at} prefix="Updated " />
-                            </span>
-                        </Suspense>
-                        <Show when={!accountBalancesQuery.isLoading || accountBalancesQuery.data}>
-                            <button
-                              class={button({ variant: "ghost", size: "small", square: true })}
-                              onClick={() => { void refreshBalances(); }}
-                            >
-                                <FaSolidRefresh classList={{
-                                    "size-3.5": true,
-                                    "animate-spin": refreshingBalances(),
-                                }}
-                                />
-                            </button>
-                        </Show>
-                    </div>
+                <div class="">
                     <div class="flex items-center gap-2 justify-end">
+                        <div class="text-muted text-sm flex items-center gap-2">
+                            <Suspense>
+                                <span class="">
+                                    <FormattedTime value={accountBalancesQuery.data?.updated_at} prefix="Updated " />
+                                </span>
+                            </Suspense>
+                            <Show when={!accountBalancesQuery.isLoading || accountBalancesQuery.data}>
+                                <button
+                                  class={button({ variant: "ghost", size: "small", square: true })}
+                                  onClick={() => { void refreshBalances(); }}
+                                >
+                                    <FaSolidRefresh classList={{
+                                        "size-3.5": true,
+                                        "animate-spin": refreshingBalances(),
+                                    }}
+                                    />
+                                </button>
+                            </Show>
+                        </div>
                         <AccountAssetManage
                           account_identity={account_identity}
                           open={manageOpen()}

@@ -14,7 +14,7 @@ export const NetworkEndpointStatus: Component<{ status: Accessor<string>; }> = (
 
 const StatPill: Component<{ label: string; value: string | number; tone?: "default" | "warning"; }> = props => (
     <div classList={{
-        "rounded-lg border px-3 py-2 bg-base-100/60": true,
+        "rounded-lg border border-border px-3 py-2": true,
         "border-primary/50": props.tone === "warning",
     }}
     >
@@ -65,7 +65,7 @@ export const NetworkEndpointRpcStats: Component<{ stats: Accessor<RpcEndpointSta
                 <div class="flex flex-wrap gap-1.5">
                     <For each={props.stats().methods.slice(0, props.compact ? 3 : 6)}>
                         {method => (
-                            <span class="rounded-full border px-2 py-1 text-xs tabular-nums bg-base-100/60">
+                            <span class="rounded-full border border-border px-2 py-1 text-xs tabular-nums">
                                 {method.errors > 0
                                     ? `${method.method} ${method.total} / ${method.errors} errors`
                                     : `${method.method} ${method.total}`}

@@ -10,7 +10,6 @@ export const Route = createFileRoute("/acc/$account/settings/danger")({
     const accountQuery = useAccount(() => ({ path: { account_identity: Number.parseInt(params().account) } }));
 
     return (
-      <div class="px-4">
         <div class="bg-surface p-4 rounded-md w-full space-y-4">
           <div>
             Danger
@@ -23,7 +22,6 @@ export const Route = createFileRoute("/acc/$account/settings/danger")({
             />
           </div>
         </div>
-      </div>
     );
   },
 });

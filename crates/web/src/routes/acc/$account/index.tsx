@@ -24,20 +24,22 @@ export const Route = createFileRoute("/acc/$account/")({
     const account = useAccount(() => ({ path: { account_identity } }));
 
     const refreshBalances = async () => {
-        setRefreshingBalances(true);
-        try {
-            await refreshAccountBalances({
-                path: { account_identity },
-                query: { display_currency: displayCurrency() },
-            });
-        } finally {
-            setRefreshingBalances(false);
-        }
+      setRefreshingBalances(true);
+
+      try {
+        await refreshAccountBalances({
+          path: { account_identity },
+          query: { display_currency: displayCurrency() },
+        });
+      }
+      finally {
+        setRefreshingBalances(false);
+      }
     };
 
     return (
-      <div class="p-4 space-y-4">
-        <div class="grid grid-cols-1 xl:grid-cols-5 w-full gap-4">
+      <div class="space-y-4 pb-42">
+        <div class="grid grid-cols-1 xl:grid-cols-5 w-full gap-3.5">
           <div class="space-y-4 w-full xl:col-span-3">
             <div class="bg-surface p-4 rounded-md space-y-4">
               <div class="flex justify-between items-center">

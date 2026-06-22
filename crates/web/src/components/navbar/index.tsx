@@ -5,7 +5,7 @@ import { Show } from "solid-js";
 import { usePrivacyMode } from "#/api/context";
 
 import { ConnectionButton } from "../connection";
-import { AccountNavbarActions, AccountSwitcher } from "./account-switcher";
+import { AccountNavbarActions } from "./account-switcher";
 import { Branding } from "./branding";
 import { NetworkWidget } from "./networks";
 
@@ -14,14 +14,17 @@ export const Navbar = () => {
     const y = useMatch({ from: "/acc/$account", shouldThrow: false });
 
     return (
-        <div class="mt-1 flex w-full min-w-0 shrink-0 items-stretch justify-between px-4 py-2">
+        <div class="mt-1 flex w-full min-w-0 shrink-0 items-stretch justify-between pr-4 py-2">
             <Show
               when={y()}
               fallback={(
-                    <Branding />
+                    <div class="pl-4">
+                        <Branding />
+                    </div>
                 )}
             >
                 <div class="flex min-w-0 items-center gap-2">
+                    <input type="text" class="input" placeholder="Search" />
                     <AccountNavbarActions />
                 </div>
             </Show>

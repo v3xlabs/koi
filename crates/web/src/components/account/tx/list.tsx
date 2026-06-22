@@ -1,9 +1,11 @@
 import { Collapsible } from "@kobalte/core/collapsible";
 import { Tooltip } from "@kobalte/core/tooltip";
+import { FaSolidRefresh } from "solid-icons/fa";
 import { FiCheckSquare, FiChevronDown, FiDollarSign, FiHash, FiLayers, FiZap } from "solid-icons/fi";
 import { Component, createMemo, For, JSX, Show, Suspense } from "solid-js";
 
 import { AccountTx, useAccountTxAll } from "#/api/account/tx";
+import { button } from "#/components/input/button";
 import { AddressPreview } from "#/components/link/address";
 import { TxHashPreview } from "#/components/link/txhash";
 import { NetworkIcon } from "#/components/net/icon";
@@ -103,7 +105,7 @@ const statusLabel = (tx: AccountTx) => {
   const successful = effectiveSafeSuccessful(tx);
   const executed = effectiveSafeExecuted(tx);
 
-  if (successful === true) return "Success";
+  if (successful === true) return "";
 
   if (successful === false) return "Failed";
 
@@ -321,10 +323,10 @@ const TransactionDetails: Component<{ tx: AccountTx; }> = props => (
 );
 
 const TransactionCard: Component<{ tx: AccountTx; }> = props => (
-  <div class="overflow-hidden rounded-md bg-surface">
+  <div class="overflow-hidden">
     <Collapsible>
-      <Collapsible.Trigger class="w-full cursor-pointer rounded-md p-3 text-left hover:outline-2 hover:-outline-offset-2 hover:outline-border">
-        <div class="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[14rem_minmax(0,1fr)_auto_auto]">
+      <Collapsible.Trigger class="w-full cursor-pointer p-3 text-left hover:outline-2 hover:-outline-offset-2 hover:outline-border">
+        <div class="grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-3 md:grid-cols-[14rem_minmax(0,1fr)_auto_auto_auto]">
           <div class="flex items-center gap-3">
             <div class="min-w-8 text-sm font-medium text-muted">
               #
@@ -346,6 +348,8 @@ const TransactionCard: Component<{ tx: AccountTx; }> = props => (
           </div>
           <div class="min-w-0">
             <div class="truncate font-medium">{summaryTitle(props.tx)}</div>
+          </div>
+          <div>
             <Show
               when={props.tx.tx_hash}
               fallback={<div class="truncate text-xs text-muted">{summarySubtitle(props.tx)}</div>}
@@ -377,12 +381,25 @@ export const AccountTxHistory: Component<{ account_identity: number; }> = (props
   const allQuery = useAccountTxAll(() => ({ path: { account_identity: props.account_identity } }));
 
   return (
-    <div class="flex h-full w-full flex-col">
+    <div class="flex h-full w-full flex-col bg-surface rounded-lg">
+      <div class="flex justify-between p-3 border-b border-border items-center text-sm">
+        <div>
+          Transactions
+        </div>
+        <div>
+          <button
+            class={button({ variant: "ghost", size: "small", square: true })}
+            onClick={() => { void allQuery.refetch(); }}
+          >
+            <FaSolidRefresh />
+          </button>
+        </div>
+      </div>
       <Suspense fallback={<div>Loading...</div>}>
         <Show when={allQuery.data}>
           {data => (
-            <Show when={data().transactions.length > 0} fallback={<div class="text-sm text-muted">No transactions found.</div>}>
-              <div class="h-full w-full space-y-2 overflow-y-auto wrap-anywhere">
+            <Show when={data().transactions.length > 0} fallback={<div class="text-sm text-muted p-4">No transactions found.</div>}>
+              <div class="h-full w-full divide-y divide-border overflow-y-auto wrap-anywhere">
                 <For each={data().transactions}>
                   {transaction => <TransactionCard tx={transaction} />}
                 </For>
