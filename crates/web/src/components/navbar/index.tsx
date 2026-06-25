@@ -5,6 +5,7 @@ import { Show } from "solid-js";
 import { usePrivacyMode } from "#/api/context";
 
 import { ConnectionButton } from "../connection";
+import { AccountNavbarActions } from "./account-switcher";
 import { Branding } from "./branding";
 import { NetworkWidget } from "./networks";
 
@@ -23,8 +24,8 @@ export const Navbar = () => {
                 )}
             >
                 <div class="flex min-w-0 items-center gap-2">
-                    {/* <AccountNavbarActions /> */}
                     <input type="text" class="input" placeholder="Search" />
+                    <AccountNavbarActions />
                 </div>
             </Show>
             <div class="min-w-0" />
