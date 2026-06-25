@@ -13,7 +13,9 @@ export const Route = createFileRoute("/acc/$account")({
       <div class="w-full h-full overflow-y-auto">
         <Navbar />
         <Suspense>
-          <Outlet />
+          <div class="pr-4">
+            <Outlet />
+          </div>
         </Suspense>
       </div>
     </div>

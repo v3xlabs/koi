@@ -8,7 +8,7 @@ export const Route = createFileRoute("/acc/$account/assets")({
     const account_id = Number.parseInt(params().account);
 
     return (
-      <div class="w-full p-4">
+      <div class="w-full">
         <div class="w-full space-y-4">
           <div class="flex items-end justify-between">
             <div class="text-xl">

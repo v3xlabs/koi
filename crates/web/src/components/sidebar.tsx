@@ -1,6 +1,6 @@
 import { Link, useParams } from "@tanstack/solid-router";
 import { FaSolidAddressCard, FaSolidClock, FaSolidGear, FaSolidGridHorizontal, FaSolidWallet } from "solid-icons/fa";
-import { FiHome, FiPlus } from "solid-icons/fi";
+import { FiHome, FiMenu, FiPlus } from "solid-icons/fi";
 import { Component, For, JSXElement, Show } from "solid-js";
 
 import { useAccount } from "#/api/account";
@@ -28,70 +28,15 @@ export const Sidebar = () => {
     const account = useAccount(() => ({ path: { account_identity } }));
 
     return (
-        <div class="px-1.5 py-2 w-screen max-w-56 h-full space-y-2 flex flex-col">
-            <Branding />
-            <div class="space-y-2">
-                <AccountSwitcher />
-                <AccountNavbarActions />
-            </div>
-            <Show when={account.data && account.data?.metadata.type !== "view"}>
-                <div>
-                    <Link
-                      to="/acc/$account/new-tx"
-                      params={{ account: params().account }}
-                      class={button({ variant: "primary", class: "w-full text-sm font-bold flex items-center gap-1" })}
-                    >
-                        <FiPlus />
-                        New transaction
-                    </Link>
+        <div class="flex h-full">
+            <div class="w-screen max-w-14 h-full bg-surface flex flex-col justify-between">
+                <div class="p-2 flex flex-col justify-center items-center">
+                    <button class={button({ square: true, size: "large", variant: "ghost" })}>
+                        <FiMenu />
+                    </button>
                 </div>
-            </Show>
-            <div class="divide-y divide-border flex flex-col grow">
-                <For each={[
-                    [
-                        {
-                            icon: FiHome,
-                            label: "Home",
-                            href: "/acc/$account/",
-                        },
-                        {
-                            icon: FaSolidWallet,
-                            label: "Assets",
-                            href: "/acc/$account/assets",
-                        },
-                        {
-                            icon: FaSolidClock,
-                            label: "History",
-                            href: "/acc/$account/history",
-                        },
-                        {
-                            icon: FaSolidGridHorizontal,
-                            label: "Apps",
-                            href: "/acc/$account/apps",
-                        },
-                        {
-                            icon: FaSolidGear,
-                            label: "Settings",
-                            href: "/acc/$account/settings",
-                        }],
-                ]}
-                >
-                    {group => (
-                        <div class="py-2 first:pt-0 space-y-[1px]">
-                            <For each={group}>
-                                {item => (
-                                    <NavLink href={item.href} icon={item.icon}>
-                                        {item.label}
-                                    </NavLink>
-                                )}
-                            </For>
-                        </div>
-                    )}
-                </For>
-            </div>
-            <div>
-                <For each={[
-                    [
+                <div class="flex flex-col justify-center items-center p-2">
+                    <For each={[
                         {
                             icon: FaSolidAddressCard,
                             label: "Addressbook",
@@ -102,21 +47,80 @@ export const Sidebar = () => {
                             label: "Settings",
                             href: "/settings",
                         },
-                    ],
-                ]}
-                >
-                    {group => (
-                        <div class="py-2 first:pt-0">
-                            <For each={group}>
-                                {item => (
-                                    <NavLink href={item.href} icon={item.icon}>
-                                        {item.label}
-                                    </NavLink>
-                                )}
-                            </For>
-                        </div>
-                    )}
-                </For>
+                    ]}
+                    >
+                        {item => (
+                            <Link to={item.href} class={button({ variant: "ghost", size: "large", square: true })} title={item.label}>
+                                {item.icon({})}
+                            </Link>
+                        )}
+                    </For>
+                </div>
+            </div>
+            <div class="px-4 py-2 w-screen max-w-64 h-full space-y-2 flex flex-col">
+                <Branding />
+                <div class="space-y-2">
+                    <AccountSwitcher />
+                    <AccountNavbarActions />
+                </div>
+                <Show when={account.data && account.data?.metadata.type !== "view"}>
+                    <div>
+                        <Link
+                          to="/acc/$account/new-tx"
+                          params={{ account: params().account }}
+                          class={button({ variant: "primary", class: "w-full text-sm font-bold flex items-center gap-1" })}
+                        >
+                            <FiPlus />
+                            New transaction
+                        </Link>
+                    </div>
+                </Show>
+                <div class="divide-y divide-border flex flex-col grow">
+                    <For each={[
+                        [
+                            {
+                                icon: FiHome,
+                                label: "Home",
+                                href: "/acc/$account/",
+                            },
+                            {
+                                icon: FaSolidWallet,
+                                label: "Assets",
+                                href: "/acc/$account/assets",
+                            },
+                            {
+                                icon: FaSolidClock,
+                                label: "History",
+                                href: "/acc/$account/history",
+                            },
+                            {
+                                icon: FaSolidGridHorizontal,
+                                label: "Apps",
+                                href: "/acc/$account/apps",
+                            },
+                            {
+                                icon: FaSolidGear,
+                                label: "Settings",
+                                href: "/acc/$account/settings",
+                            }],
+                    ]}
+                    >
+                        {group => (
+                            <div class="py-2 first:pt-0 space-y-[1px]">
+                                <For each={group}>
+                                    {item => (
+                                        <NavLink href={item.href} icon={item.icon}>
+                                            {item.label}
+                                        </NavLink>
+                                    )}
+                                </For>
+                            </div>
+                        )}
+                    </For>
+                </div>
+                <div>
+                    ... last synced
+                </div>
             </div>
         </div>
     );
