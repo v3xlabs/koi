@@ -68,11 +68,12 @@ export const AccountSidebar = () => {
                             label: "Apps",
                             href: "/acc/$account/apps",
                         },
-                        {
-                            icon: FaSolidGear,
-                            label: "Settings",
-                            href: "/acc/$account/settings",
-                        }],
+                        // {
+                        //     icon: FaSolidGear,
+                        //     label: "Settings",
+                        //     href: "/acc/$account/settings",
+                        // }
+                    ],
                 ]}
                 >
                     {group => (
