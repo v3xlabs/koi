@@ -9,13 +9,6 @@ export const Route = createFileRoute("/acc/$account/history")({
 
     return (
       <div class="w-full">
-        <div class="w-full max-w-4xl space-y-4">
-          <div class="flex items-end justify-between">
-            <div class="text-xl">
-              History
-            </div>
-          </div>
-        </div>
         <AccountTxHistory account_identity={account_identity} />
       </div>
     );

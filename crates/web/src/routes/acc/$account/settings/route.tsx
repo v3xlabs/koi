@@ -5,7 +5,7 @@ import { button } from "#/components/input/button";
 
 export const Route = createFileRoute("/acc/$account/settings")({
   component: () => (
-    <div class="space-y-4">
+    <div class="space-y-2">
       <nav class="bg-surface rounded-md p-2">
         <ul class="flex gap-2">
           <For each={[
