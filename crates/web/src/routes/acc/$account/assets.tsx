@@ -9,14 +9,7 @@ export const Route = createFileRoute("/acc/$account/assets")({
 
     return (
       <div class="w-full">
-        <div class="w-full space-y-4">
-          <div class="flex items-end justify-between">
-            <div class="text-xl">
-              Assets
-            </div>
-          </div>
-          <AccountAssetTable account_identity={account_id} />
-        </div>
+        <AccountAssetTable account_identity={account_id} />
       </div>
     );
   },

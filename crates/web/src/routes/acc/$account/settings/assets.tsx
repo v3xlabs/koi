@@ -13,24 +13,22 @@ export const Route = createFileRoute("/acc/$account/settings/assets")({
     const assetsQuery = useAccountAssets(() => ({ path: { account_identity } }));
 
     return (
-      <div class="px-4">
-        <div class="bg-surface p-4 rounded-md w-full space-y-4">
-          <div>
-            <Suspense fallback={<div>Loading...</div>}>
-              <Show when={assetsQuery.data && assetsQuery.data.length > 0} fallback={<div>No assets enabled to this account</div>}>
-                <For each={assetsQuery.data}>
-                  {asset => (
-                    <div class="flex items-center gap-2">
-                      <AssetPreview asset_identity={asset} />
-                      <AssetUnlink account_identity={account_identity} asset_identity={asset} />
-                    </div>
-                  )}
-                </For>
-              </Show>
-            </Suspense>
-          </div>
-          <AccountAssetLink account_identity={account_identity} />
+      <div class="bg-surface p-4 rounded-md w-full space-y-4">
+        <div>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Show when={assetsQuery.data && assetsQuery.data.length > 0} fallback={<div>No assets enabled to this account</div>}>
+              <For each={assetsQuery.data}>
+                {asset => (
+                  <div class="flex items-center gap-2">
+                    <AssetPreview asset_identity={asset} />
+                    <AssetUnlink account_identity={account_identity} asset_identity={asset} />
+                  </div>
+                )}
+              </For>
+            </Show>
+          </Suspense>
         </div>
+        <AccountAssetLink account_identity={account_identity} />
       </div>
     );
   },
