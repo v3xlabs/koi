@@ -22,7 +22,8 @@ export const Navbar = () => {
                 )}
             >
                 <div class="flex min-w-0 items-center gap-2">
-                    <AccountNavbarActions />
+                    {/* <AccountNavbarActions /> */}
+                    <input type="text" class="input" placeholder="Search" />
                 </div>
             </Show>
             <div class="min-w-0" />
