@@ -17,7 +17,7 @@ export const Route = createFileRoute("/settings")({
   component: () => (
     <div class="w-full flex h-full">
       <SidebarLeft />
-      <div class="grow overflow-y-auto">
+      <div class="grow">
         <Navbar />
         <div class="w-full pb-64">
           <div class="w-full">
