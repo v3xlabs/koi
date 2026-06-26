@@ -38,7 +38,7 @@ export const Route = createFileRoute("/acc/$account/")({
     };
 
     return (
-      <div class="space-y-4">
+      <div class="space-y-4 pb-42">
         <div class="grid grid-cols-1 xl:grid-cols-5 w-full gap-3.5">
           <div class="space-y-4 w-full xl:col-span-3">
             <div class="bg-surface p-4 rounded-md space-y-4">
