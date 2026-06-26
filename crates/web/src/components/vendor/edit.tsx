@@ -49,9 +49,6 @@ export const VendorEdit: Component = () => {
 
     return (
         <div class="w-full space-y-4">
-            <div class="text-xl font-bold">
-                Vendors
-            </div>
             <Suspense fallback={<div class="py-8 text-center text-muted">Loading...</div>}>
                 <Show when={allVendorsGrouped()}>
                     {data => (

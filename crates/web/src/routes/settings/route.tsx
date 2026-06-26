@@ -41,7 +41,7 @@ export const Route = createFileRoute("/settings")({
                     </For>
                   </ul>
                 </nav>
-                <div class="flex-1 min-w-0 bg-surface rounded-md p-4">
+                <div class="flex-1 min-w-0">
                   <Outlet />
                 </div>
               </div>

@@ -11,25 +11,34 @@ export const Route = createFileRoute("/settings/networks")({
 
     return (
       <div class="w-full space-y-4">
-        <div class="flex justify-between items-center">
-          <div class="text-xl font-bold">
-            Networks
+        <div class="flex justify-between items-center w-full">
+          <div class="">
+            <div class="text-xl font-bold">
+              Networks
+            </div>
+            <div class="text-sm text-muted">
+              These are the networks you have added system-wide.
+            </div>
           </div>
-          <NetworkAdd />
+          <div>
+            <NetworkAdd />
+          </div>
         </div>
-        <Suspense fallback={<div class="py-8 text-center text-muted">Loading...</div>}>
-          <Show when={networksQuery.data}>
-            {data => (
-              <div class="space-y-6">
-                <For each={data().networks}>
-                  {network => (
-                    <NetworkEdit network_identity={network.network_identity} embedded />
-                  )}
-                </For>
-              </div>
-            )}
-          </Show>
-        </Suspense>
+        <div class="bg-surface rounded-md p-4">
+          <Suspense fallback={<div class="py-8 text-center text-muted">Loading...</div>}>
+            <Show when={networksQuery.data}>
+              {data => (
+                <div class="space-y-6">
+                  <For each={data().networks}>
+                    {network => (
+                      <NetworkEdit network_identity={network.network_identity} embedded />
+                    )}
+                  </For>
+                </div>
+              )}
+            </Show>
+          </Suspense>
+        </div>
       </div>
     );
   },
