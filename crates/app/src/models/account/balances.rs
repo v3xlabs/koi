@@ -53,11 +53,12 @@ async fn quote_nom(
     state: &AppState,
     rpc: &DynProvider,
     block: u64,
+    asset_out: &AssetIdentity,
 ) -> AccountBalance {
     let nominal_amount = U256::from(10).pow(U256::from(asset.asset_decimals as u32));
     let (asset_quote, asset_quote_error): (Option<String>, Option<String>) = match state
         .quoters
-        .quote_b(rpc, block, &asset.asset_identity, nominal_amount)
+        .quote_b(rpc, block, &asset.asset_identity, nominal_amount, asset_out)
         .await
     {
         Ok(asset_quote) => (Some(asset_quote.to_string()), None),
@@ -66,7 +67,7 @@ async fn quote_nom(
     let block_24h = block - (24 * 60 * 60 / 12);
     let (asset_24h_quote, asset_24h_quote_error): (Option<String>, Option<String>) = match state
         .quoters
-        .quote_b(rpc, block_24h, &asset.asset_identity, nominal_amount)
+        .quote_b(rpc, block_24h, &asset.asset_identity, nominal_amount, asset_out)
         .await
     {
         Ok(asset_24h_quote) => (Some(asset_24h_quote.to_string()), None),
@@ -81,7 +82,7 @@ async fn quote_nom(
         Some(balance) => {
             match state
                 .quoters
-                .quote_b(rpc, block, &asset.asset_identity, *balance)
+                .quote_b(rpc, block, &asset.asset_identity, *balance, asset_out)
                 .await
             {
                 Ok(balance_quote) => (Some(balance_quote.to_string()), None),
@@ -186,7 +187,7 @@ impl Account {
             .await;
 
         let balances = stream::iter(balances)
-            .map(async |(asset, balance)| quote_nom(&asset, balance, state, &rpc, block).await)
+            .map(async |(asset, balance)| quote_nom(&asset, balance, state, &rpc, block, &asset_out).await)
             .buffer_unordered(8)
             .collect::<Vec<_>>()
             .await;
@@ -217,6 +218,7 @@ impl Account {
         &self,
         state: &AppState,
         asset_identity: &AssetIdentity,
+        asset_out: &AssetIdentity,
     ) -> Result<AccountBalance, KoiError> {
         let asset = Asset::get_by_id(&state.database, asset_identity).await?;
         let network_identity = asset_identity
@@ -244,6 +246,6 @@ impl Account {
 
         let balance = Asset::fetch_balance(state, asset_identity, self).await;
 
-        Ok(quote_nom(&asset, balance, state, &rpc, block).await)
+        Ok(quote_nom(&asset, balance, state, &rpc, block, asset_out).await)
     }
 }

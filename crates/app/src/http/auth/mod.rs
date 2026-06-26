@@ -1,5 +1,4 @@
 use poem_openapi::{SecurityScheme, auth::Bearer};
-use tracing::info;
 
 #[derive(SecurityScheme)]
 #[oai(ty = "bearer", bearer_format = "JWT")]
@@ -11,8 +10,7 @@ pub struct AuthData {
 
 impl Auth {
     pub fn validate(&self) -> Result<(), poem::Error> {
-        info!("Validating auth {:?}", self.0);
-
+        
         Ok(())
     }
 

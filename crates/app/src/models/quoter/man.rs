@@ -107,7 +107,7 @@ impl QuoterManager {
 
         let quoters: Vec<AnyQuoter> = quoters.iter().map(|x| x.try_into()).collect::<Result<Vec<_>, _>>()?;
 
-        let graph = Router::from_iter(quoters);
+        let graph = Router::from_iter(quoters).with_ecb();
 
         info!("Graph {}", graph.to_graphviz());
 
@@ -225,7 +225,7 @@ impl QuoterManager {
             .await
             .map_err(|_| KoiError::Internal("Failed to get block number".to_string()))?;
 
-        let network = NetworkTime::EVM(NetworkId::from(network_identity.0), block, rpc).instant();
+        let network = NetworkTime::EVM(NetworkId::from(network_identity.0), block, rpc).instant().with_now().unwrap();
 
         route
             .quote(&network, amount_in)
@@ -239,13 +239,12 @@ impl QuoterManager {
         block: u64,
         input: &AssetIdentity,
         amount: U256,
+        asset_out: &AssetIdentity,
     ) -> Result<U256, KoiError> {
         if amount == U256::ZERO {
             warn!("Quote amount is zero");
             return Ok(U256::ZERO);
         }
-
-        let base = AssetIdentity::Fiat("usd".to_string());
 
         let network_identity = input
             .unwrap_network()
@@ -261,15 +260,15 @@ impl QuoterManager {
         let x = self
             .cache
             .try_get_with(key, async move {
-                let route = self.route(&network_identity, input, &base);
+                let route = self.route(&network_identity, input, &asset_out);
                 match route {
                     Ok(route) => {
-                        let network = NetworkTime::EVM(NetworkId::from(network_identity.0), block, rpc.clone()).instant();
+                        let network = NetworkTime::EVM(NetworkId::from(network_identity.0), block, rpc.clone()).instant().with_now().unwrap();
                         route.quote(&network, amount).await.map_err(KoiError::from)
                     }
                     Err(e) => Err(KoiError::Internal(format!(
                         "Error computing route from asset {} to {}: {}",
-                        input, base, e
+                        input, asset_out, e
                     ))),
                 }
             })
