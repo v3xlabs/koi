@@ -22,6 +22,7 @@
           cargo
           rustc
           rustfmt
+          bacon
           clippy
           nodejs_24
           pnpm_11
