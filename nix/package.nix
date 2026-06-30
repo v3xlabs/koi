@@ -43,7 +43,8 @@ pkgs.stdenv.mkDerivation {
     install -Dm755 koi $out/bin/koi
   '' + pkgs.lib.optionalString pkgs.stdenv.isLinux ''
     wrapProgram $out/bin/koi \
-      --set WEBKIT_DISABLE_DMABUF_RENDERER 1
+      --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
+      --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [pkgs.libappindicator-gtk3]}
   '' + ''
     runHook postInstall
   '';
