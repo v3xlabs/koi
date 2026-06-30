@@ -10,7 +10,7 @@ use alloy::{
     primitives::{Address, address, aliases::U24},
     providers::DynProvider,
 };
-use eth_prices::quoter::uniswap_v3::factory::UniswapV3Factory::{self, UniswapV3FactoryInstance};
+use eth_prices::quoter::uniswap_v3::discovery::UniswapV3Factory::{self, UniswapV3FactoryInstance};
 use futures::{StreamExt, stream};
 use poem_openapi::Object;
 use serde::{Deserialize, Serialize};

@@ -2,9 +2,12 @@ use std::str::FromStr;
 
 use alloy::primitives::Address;
 use chrono::Utc;
-use eth_prices::quoter::{
-    AnyQuoter, erc4626::ERC4626Quoter, fixed::FixedQuoter, uniswap_v2::UniswapV2Quoter,
-    uniswap_v3::UniswapV3Quoter,
+use eth_prices::{
+    network::NetworkId,
+    quoter::{
+        AnyQuoter, erc4626::ERC4626Quoter, fixed::FixedQuoter, uniswap_v2::UniswapV2Quoter,
+        uniswap_v3::UniswapV3Quoter,
+    },
 };
 use poem_openapi::{Object, Union};
 use serde::{Deserialize, Serialize};
@@ -177,43 +180,66 @@ impl Quoter {
     }
 }
 
-impl From<&Quoter> for AnyQuoter {
-    fn from(val: &Quoter) -> Self {
+impl TryFrom<&Quoter> for AnyQuoter {
+    type Error = KoiError;
+
+    fn try_from(val: &Quoter) -> Result<Self, Self::Error> {
         match &val.config {
-            QuoterConfig::Fixed(config) => FixedQuoter {
-                fixed_rate: config.price.parse().unwrap(),
+            QuoterConfig::Fixed(config) => Ok(FixedQuoter {
+                fixed_rate: config.price.parse().map_err(|e| {
+                    KoiError::Internal(format!("Invalid fixed rate: {}", e))
+                })?,
                 token_in: val.token_a.clone().into(),
                 token_out: val.token_b.clone().into(),
                 token_in_decimals: config.token_in_decimals,
                 token_out_decimals: config.token_out_decimals,
                 fixed_rate_decimals: config.decimals,
             }
-            .into(),
-            QuoterConfig::Erc4626(_) => ERC4626Quoter {
-                vault_address: val.token_a.clone().into(),
-                token_address: val.token_b.clone().into(),
+            .into()),
+            QuoterConfig::Erc4626(_) => {
+                let network_id = val.token_a.unwrap_network().ok_or(KoiError::Internal(
+                    "Missing network for ERC4626 quoter".to_string(),
+                ))?;
+                Ok(ERC4626Quoter {
+                    network_id: NetworkId::from(network_id.0),
+                    vault_address: val.token_a.clone().into(),
+                    token_address: val.token_b.clone().into(),
+                }
+                .into())
             }
-            .into(),
             QuoterConfig::UniswapV2(config) => {
-                let (_, address) = val.token_a.unwrap_address().unwrap();
-                let (_, address2) = val.token_b.unwrap_address().unwrap();
-                UniswapV2Quoter {
-                    pair_address: Address::from_str(&config.pair_address).unwrap(),
+                let (network_id, address) = val.token_a.unwrap_address().ok_or(
+                    KoiError::Internal("Missing address for UniswapV2 quoter".to_string()),
+                )?;
+                let (_, address2) = val.token_b.unwrap_address().ok_or(
+                    KoiError::Internal("Missing address for UniswapV2 quoter".to_string()),
+                )?;
+                Ok(UniswapV2Quoter {
+                    network_id: NetworkId::from(network_id.0),
+                    pair_address: Address::from_str(&config.pair_address).map_err(|e| {
+                        KoiError::Internal(format!("Invalid pair address: {}", e))
+                    })?,
                     token0: address,
                     token1: address2,
                 }
-                .into()
+                .into())
             }
             QuoterConfig::UniswapV3(config) => {
-                let (_, address) = val.token_a.unwrap_address().unwrap();
-                let (_, address2) = val.token_b.unwrap_address().unwrap();
-
-                UniswapV3Quoter {
-                    pool_address: Address::from_str(&config.pool_address).unwrap(),
+                let (network_id, address) = val.token_a.unwrap_address().ok_or(
+                    KoiError::Internal("Missing address for UniswapV3 quoter".to_string()),
+                )?;
+                let (_, address2) = val.token_b.unwrap_address().ok_or(
+                    KoiError::Internal("Missing address for UniswapV3 quoter".to_string()),
+                )?;
+                Ok(UniswapV3Quoter {
+                    network_id: NetworkId::from(network_id.0),
+                    pool_address: Address::from_str(&config.pool_address).map_err(|e| {
+                        KoiError::Internal(format!("Invalid pool address: {}", e))
+                    })?,
                     token0: address,
                     token1: address2,
                 }
-                .into()
+                .into())
             }
         }
     }
