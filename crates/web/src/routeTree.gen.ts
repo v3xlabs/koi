@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from "./routes/__root"
+import { Route as AddressbookRouteImport } from "./routes/addressbook"
 import { Route as SettingsRouteRouteImport } from "./routes/settings/route"
 import { Route as OnboardingRouteRouteImport } from "./routes/onboarding/route"
 import { Route as IndexRouteImport } from "./routes/index"
@@ -41,6 +42,11 @@ import { Route as AccNImportMnemonicRouteImport } from "./routes/acc/_n.import/m
 import { Route as AccAccountSettingsDangerRouteImport } from "./routes/acc/$account/settings/danger"
 import { Route as AccAccountSettingsAssetsRouteImport } from "./routes/acc/$account/settings/assets"
 
+const AddressbookRoute = AddressbookRouteImport.update({
+  id: "/addressbook",
+  path: "/addressbook",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
   id: "/settings",
   path: "/settings",
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   "/": typeof IndexRoute
   "/onboarding": typeof OnboardingRouteRouteWithChildren
   "/settings": typeof SettingsRouteRouteWithChildren
+  "/addressbook": typeof AddressbookRoute
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
   "/acc": typeof AccNRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute
+  "/addressbook": typeof AddressbookRoute
   "/acc": typeof AccNRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
   "/onboarding/assets": typeof OnboardingAssetsRoute
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   "/": typeof IndexRoute
   "/onboarding": typeof OnboardingRouteRouteWithChildren
   "/settings": typeof SettingsRouteRouteWithChildren
+  "/addressbook": typeof AddressbookRoute
   "/acc/$account": typeof AccAccountRouteRouteWithChildren
   "/acc/_n": typeof AccNRouteWithChildren
   "/onboarding/accounts": typeof OnboardingAccountsRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | "/"
     | "/onboarding"
     | "/settings"
+    | "/addressbook"
     | "/acc/$account"
     | "/acc"
     | "/onboarding/accounts"
@@ -332,6 +342,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | "/"
+    | "/addressbook"
     | "/acc"
     | "/onboarding/accounts"
     | "/onboarding/assets"
@@ -363,6 +374,7 @@ export interface FileRouteTypes {
     | "/"
     | "/onboarding"
     | "/settings"
+    | "/addressbook"
     | "/acc/$account"
     | "/acc/_n"
     | "/onboarding/accounts"
@@ -397,12 +409,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardingRouteRoute: typeof OnboardingRouteRouteWithChildren
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  AddressbookRoute: typeof AddressbookRoute
   AccAccountRouteRoute: typeof AccAccountRouteRouteWithChildren
   AccNRoute: typeof AccNRouteWithChildren
 }
 
 declare module "@tanstack/solid-router" {
   interface FileRoutesByPath {
+    "/addressbook": {
+      id: "/addressbook"
+      path: "/addressbook"
+      fullPath: "/addressbook"
+      preLoaderRoute: typeof AddressbookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/settings": {
       id: "/settings"
       path: "/settings"
@@ -729,6 +749,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRouteRoute: OnboardingRouteRouteWithChildren,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  AddressbookRoute: AddressbookRoute,
   AccAccountRouteRoute: AccAccountRouteRouteWithChildren,
   AccNRoute: AccNRouteWithChildren,
 }
