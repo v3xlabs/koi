@@ -19,7 +19,7 @@ openapi:
 
 [private]
 run +args:
-    cd crates/bin && cargo run --release -- {{args}}
+    cd crates/bin && cargo run -- {{args}}
 
 [private]
 build-web:
