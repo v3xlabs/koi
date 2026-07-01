@@ -8,7 +8,7 @@ import { useNetworks } from "#/api/network";
 import { button } from "#/components/input/button";
 import { NetworkIcon } from "#/components/net/icon";
 
-import { BuilderTx, TX_PRESETS } from ".";
+import { BuilderTx, TX_PRESETS, TX_TYPE_META } from ".";
 import { TxApproveBuilder } from "./approve";
 import { TxDepositBuilder } from "./deposit";
 import { TxRawBuilder } from "./raw";
@@ -17,7 +17,7 @@ import { TxSwapBuilder } from "./swap";
 import { TxWrapBuilder } from "./wrap";
 
 type Props = {
-    initialPrefill?: { type: BuilderTx["type"]; data: Record<string, string> };
+    initialPrefill?: { type: BuilderTx["type"]; data: Record<string, string>; };
 };
 
 export const TxBuilder = (props: Props) => {
@@ -191,7 +191,7 @@ export const TxBuilder = (props: Props) => {
                                             }}
                                           onClick={() => setSelectedIndex(index())}
                                         >
-                                            {TX_PRESETS.find(p => p.type === tx.type)?.name ?? tx.type}
+                                            {TX_TYPE_META[tx.type].name}
                                         </button>
                                         <button
                                           class="p-1.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer"
