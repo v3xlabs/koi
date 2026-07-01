@@ -1,10 +1,9 @@
-import { Component, Show, Suspense } from "solid-js";
+import { Component, Show } from "solid-js";
 
 import { useAccount } from "#/api/account";
 import { truncateAddress } from "#/utils/address";
 import { narrow } from "#/utils/narrow";
 
-import { AccountBalance } from "./balance";
 import { AccountIcon } from "./icon";
 import { AccountTypeIcon } from "./type";
 

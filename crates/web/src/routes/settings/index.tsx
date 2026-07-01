@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { FiMonitor, FiMoon, FiSun } from "solid-icons/fi";
+import { Component } from "solid-js";
 
 import { useTheme } from "#/api/context";
 import { SegmentedControl } from "#/components/input/segmented";
@@ -16,17 +17,15 @@ export const Route = createFileRoute("/settings/")({
           These are system-wide general settings.
         </div>
       </div>
-      <div class="bg-surface rounded-md p-4">
+      <div class="bg-surface rounded-md p-4 space-y-4">
         <DisplayCurrencySelector showLabel />
-      </div>
-      <div class="bg-surface rounded-md p-4">
         <ThemeSelector />
       </div>
     </div>
   ),
 });
 
-function ThemeSelector() {
+const ThemeSelector: Component = () => {
   const { theme, setTheme } = useTheme();
 
   const options = [
@@ -60,4 +59,4 @@ function ThemeSelector() {
       </SegmentedControl>
     </div>
   );
-}
+};

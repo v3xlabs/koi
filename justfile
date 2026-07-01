@@ -37,7 +37,7 @@ lint:
     cd crates/gui && cargo fmt && cargo clippy
     cd crates/tui && cargo fmt && cargo clippy
     cd crates/client && cargo fmt && cargo clippy
-    cd ui && pnpm lint --fix
+    cd crates/web && pnpm lint --fix
 bacon:
     cd crates/bin && bacon
 

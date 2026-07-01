@@ -63,7 +63,7 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
             if (!parsed.network_identity) return;
 
             const available = networksQuery.data == null
-                || networksQuery.data.networks.some(network => network.network_identity === parsed.network_identity);
+              || networksQuery.data.networks.some(network => network.network_identity === parsed.network_identity);
 
             if (!available) return;
 
@@ -163,11 +163,11 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
                               type="submit"
                               class={button({ variant: "primary" })}
                               disabled={state().name.length === 0
-                                || state().networks.length === 0
-                                || state().address.length === 0
-                                || !state().canSubmit
-                                || createAccount.isPending
-                                || (nextAccountId.data ?? 0) <= 0}
+                              || state().networks.length === 0
+                              || state().address.length === 0
+                              || !state().canSubmit
+                              || createAccount.isPending
+                              || (nextAccountId.data ?? 0) <= 0}
                             >
                                 Import
                             </button>

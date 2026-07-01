@@ -105,7 +105,10 @@ impl QuoterManager {
         // TODO: respect "enabled" flag
         let quoters = Quoter::get_by_network_id(database, network_identity).await?;
 
-        let quoters: Vec<AnyQuoter> = quoters.iter().map(|x| x.try_into()).collect::<Result<Vec<_>, _>>()?;
+        let quoters: Vec<AnyQuoter> = quoters
+            .iter()
+            .map(|x| x.try_into())
+            .collect::<Result<Vec<_>, _>>()?;
 
         let graph = Router::from_iter(quoters).with_ecb();
 
@@ -225,7 +228,10 @@ impl QuoterManager {
             .await
             .map_err(|_| KoiError::Internal("Failed to get block number".to_string()))?;
 
-        let network = NetworkTime::EVM(NetworkId::from(network_identity.0), block, rpc).instant().with_now().unwrap();
+        let network = NetworkTime::EVM(NetworkId::from(network_identity.0), block, rpc)
+            .instant()
+            .with_now()
+            .unwrap();
 
         route
             .quote(&network, amount_in)
@@ -263,7 +269,14 @@ impl QuoterManager {
                 let route = self.route(&network_identity, input, &asset_out);
                 match route {
                     Ok(route) => {
-                        let network = NetworkTime::EVM(NetworkId::from(network_identity.0), block, rpc.clone()).instant().with_now().unwrap();
+                        let network = NetworkTime::EVM(
+                            NetworkId::from(network_identity.0),
+                            block,
+                            rpc.clone(),
+                        )
+                        .instant()
+                        .with_now()
+                        .unwrap();
                         route.quote(&network, amount).await.map_err(KoiError::from)
                     }
                     Err(e) => Err(KoiError::Internal(format!(

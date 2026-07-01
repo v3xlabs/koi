@@ -1,8 +1,6 @@
-import { Toast, toaster } from "@kobalte/core/toast";
 import { makePersisted } from "@solid-primitives/storage";
 import { QueryClientProvider } from "@tanstack/solid-query";
 import { createFetch } from "openapi-hooks";
-import { FaSolidClose } from "solid-icons/fa";
 import { Accessor, createContext, createEffect, createSignal, onCleanup, onMount, ParentComponent } from "solid-js";
 
 import { queryClient } from "./client";
@@ -16,7 +14,7 @@ export const api = createFetch<paths>({
         "Content-Type": "application/json",
         "Authorization": "Bearer hello",
     },
-    onError: async (error) => {
+    onError: async (_error) => {
         // const errorData = (await error.response?.json()) as { error: string; };
 
         // console.error(error, errorData);
@@ -85,12 +83,14 @@ export const AppProvider: ParentComponent = (props) => {
 
     createEffect(() => {
         const t = themeState[0]();
-        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const mq = globalThis.matchMedia("(prefers-color-scheme: dark)");
 
         const apply = () => {
             const resolved = t === "system" ? (mq.matches ? "dark" : "light") : t;
+
             document.documentElement.dataset.theme = resolved;
-            const meta = document.querySelector('meta[name="theme-color"]');
+            const meta = document.querySelector("meta[name='theme-color']");
+
             if (meta) meta.setAttribute("content", resolved === "dark" ? "#2e2e2e" : "#f6f6f6");
         };
 
@@ -98,6 +98,7 @@ export const AppProvider: ParentComponent = (props) => {
 
         if (t === "system") {
             const handler = () => apply();
+
             mq.addEventListener("change", handler);
             onCleanup(() => mq.removeEventListener("change", handler));
         }

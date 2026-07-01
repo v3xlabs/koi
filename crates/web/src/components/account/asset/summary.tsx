@@ -3,9 +3,9 @@ import { createQueries } from "@tanstack/solid-query";
 import { Link } from "@tanstack/solid-router";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
 import { FiChevronRight, FiChevronUp } from "solid-icons/fi";
-import { Component, createMemo, createSignal, For, Show, Suspense } from "solid-js";
+import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
 
-import { useAccountAssets, accountBalanceQuery, useAccountBalances } from "#/api/account";
+import { accountBalanceQuery, useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
 import { useDisplayCurrency, usePrivacyMode } from "#/api/context";
 import { button } from "#/components/input/button";

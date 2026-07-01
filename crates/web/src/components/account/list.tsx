@@ -132,15 +132,15 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
 
         const onEnd = (endEvent: PointerEvent) => {
             handle.releasePointerCapture(endEvent.pointerId);
-            window.removeEventListener("pointermove", onMove);
-            window.removeEventListener("pointerup", onEnd);
-            window.removeEventListener("pointercancel", onEnd);
+            globalThis.removeEventListener("pointermove", onMove);
+            globalThis.removeEventListener("pointerup", onEnd);
+            globalThis.removeEventListener("pointercancel", onEnd);
 
             const drag = dragItem();
             const layout = activeLayout();
             const point = pointer();
             const target = insertion()
-                ?? (drag && point ? findInsertion(point.x, point.y, drag) : null);
+              ?? (drag && point ? findInsertion(point.x, point.y, drag) : null);
 
             if (drag && target && layout) {
                 const next = applyInsertion(layout, drag, target);
@@ -157,9 +157,9 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
             endDrag();
         };
 
-        window.addEventListener("pointermove", onMove);
-        window.addEventListener("pointerup", onEnd);
-        window.addEventListener("pointercancel", onEnd);
+        globalThis.addEventListener("pointermove", onMove);
+        globalThis.addEventListener("pointerup", onEnd);
+        globalThis.addEventListener("pointercancel", onEnd);
     };
 
     const toggleGroup = (groupId: number | typeof UNGROUPED_KEY) => {
@@ -251,7 +251,7 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
         <div class="absolute inset-x-2 h-0.5 rounded-full bg-primary pointer-events-none z-20" />
     );
 
-    const AccountRow: Component<{ account: Account; group_id?: number; }> = rowProps => {
+    const AccountRow: Component<{ account: Account; group_id?: number; }> = (rowProps) => {
         const dragging = () => isDraggingItem(
             dragItem(),
             { type: "account", account_identity: rowProps.account.account_identity, group_id: rowProps.group_id },
@@ -319,13 +319,13 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
         );
     };
 
-    const GroupHeader: Component<{ group: AccountGroup; }> = headerProps => {
+    const GroupHeader: Component<{ group: AccountGroup; }> = (headerProps) => {
         const dragging = () => isDraggingItem(
             dragItem(),
             { type: "group", group_identity: headerProps.group.group_identity },
         );
         const targeted = () => matchesInsertionGroupBefore(insertion(), headerProps.group.group_identity)
-            || (dragItem()?.type === "account" && matchesInsertionGroupEnd(insertion(), headerProps.group.group_identity));
+          || (dragItem()?.type === "account" && matchesInsertionGroupEnd(insertion(), headerProps.group.group_identity));
 
         return (
             <div
@@ -400,7 +400,7 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
                           classList={{
                                 "min-h-8": props.editing(),
                                 "border border-dashed border-primary/40 bg-primary/5": props.editing()
-                                    && matchesInsertionGroupEnd(insertion(), group.group_identity),
+                                  && matchesInsertionGroupEnd(insertion(), group.group_identity),
                             }}
                         >
                             <Show when={!isCollapsed(group.group_identity)}>
@@ -421,8 +421,8 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
                           class="relative flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-muted"
                           classList={{
                                 "bg-primary/10 ring-1 ring-primary/50 text-foreground": props.editing()
-                                    && dragItem()?.type === "account"
-                                    && matchesInsertionGroupEnd(insertion(), undefined),
+                                  && dragItem()?.type === "account"
+                                  && matchesInsertionGroupEnd(insertion(), undefined),
                             }}
                         >
                             <Show when={props.editing()}>
@@ -446,7 +446,7 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
                       classList={{
                             "min-h-8": props.editing(),
                             "border border-dashed border-primary/40 bg-primary/5": props.editing()
-                                && matchesInsertionGroupEnd(insertion(), undefined),
+                              && matchesInsertionGroupEnd(insertion(), undefined),
                         }}
                     >
                         <Show when={!isCollapsed(UNGROUPED_KEY) || !showUngroupedHeader()}>

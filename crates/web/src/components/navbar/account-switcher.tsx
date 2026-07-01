@@ -2,7 +2,6 @@ import { Popover } from "@kobalte/core/popover";
 import { Toast, toaster } from "@kobalte/core/toast";
 import { Link, useNavigate, useParams, useRouterState } from "@tanstack/solid-router";
 import { FaSolidCopy, FaSolidExternalLink, FaSolidGear, FaSolidQrcode } from "solid-icons/fa";
-import { FiChevronDown } from "solid-icons/fi";
 import { createSignal, For, Show } from "solid-js";
 
 import { useAccount, useAccountLayout } from "#/api/account";

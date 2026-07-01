@@ -2,14 +2,14 @@ import type { Account, AccountLayout } from "#/api/account";
 import { normalizeGroupId } from "#/api/account";
 
 export type DragItem =
-    | { type: "group"; group_identity: number; }
-    | { type: "account"; account_identity: number; group_id?: number; };
+  | { type: "group"; group_identity: number; }
+  | { type: "account"; account_identity: number; group_id?: number; };
 
 export type Insertion =
-    | { kind: "before-account"; account_identity: number; group_id?: number; }
-    | { kind: "after-account"; account_identity: number; group_id?: number; }
-    | { kind: "group-end"; group_id?: number; }
-    | { kind: "before-group"; group_identity: number; };
+  | { kind: "before-account"; account_identity: number; group_id?: number; }
+  | { kind: "after-account"; account_identity: number; group_id?: number; }
+  | { kind: "group-end"; group_id?: number; }
+  | { kind: "before-group"; group_identity: number; };
 
 const sortByOrder = <T extends { display_order: number; }>(items: T[]) =>
     items.toSorted((a, b) => a.display_order - b.display_order);
@@ -32,14 +32,18 @@ export const insertionKey = (insertion: Insertion | null) => {
     if (!insertion) return "";
 
     switch (insertion.kind) {
-        case "before-account":
+        case "before-account": {
             return `before:${insertion.account_identity}:${insertion.group_id ?? "ungrouped"}`;
-        case "after-account":
+        }
+        case "after-account": {
             return `after:${insertion.account_identity}:${insertion.group_id ?? "ungrouped"}`;
-        case "group-end":
+        }
+        case "group-end": {
             return `end:${insertion.group_id ?? "ungrouped"}`;
-        case "before-group":
+        }
+        case "before-group": {
             return `group:${insertion.group_identity}`;
+        }
     }
 };
 
@@ -51,12 +55,12 @@ export const findInsertion = (x: number, y: number, drag: DragItem): Insertion |
     const accountRow = el.closest("[data-drop-account]");
 
     if (accountRow && drag.type === "account") {
-        const account_identity = Number(accountRow.getAttribute("data-drop-account"));
+        const account_identity = Number(accountRow.dataset.dropAccount);
 
         if (account_identity === drag.account_identity) return null;
 
         const rect = accountRow.getBoundingClientRect();
-        const group_id = parseGroupAttr(accountRow.getAttribute("data-drop-group"));
+        const group_id = parseGroupAttr(accountRow.dataset.dropGroup);
 
         if (y < rect.top + rect.height / 2) {
             return { kind: "before-account", account_identity, group_id };
@@ -68,7 +72,7 @@ export const findInsertion = (x: number, y: number, drag: DragItem): Insertion |
     const groupHeader = el.closest("[data-drop-group-header]");
 
     if (groupHeader) {
-        const headerAttr = groupHeader.getAttribute("data-drop-group-header");
+        const headerAttr = groupHeader.dataset.dropGroupHeader;
         const isUngroupedHeader = headerAttr === "ungrouped";
         const group_identity = isUngroupedHeader
             ? undefined
@@ -90,7 +94,7 @@ export const findInsertion = (x: number, y: number, drag: DragItem): Insertion |
     if (groupZone && drag.type === "account") {
         return {
             kind: "group-end",
-            group_id: parseGroupAttr(groupZone.getAttribute("data-drop-group-zone")),
+            group_id: parseGroupAttr(groupZone.dataset.dropGroupZone),
         };
     }
 
@@ -162,22 +166,26 @@ export const applyInsertion = (
     insertion: Insertion,
 ): AccountLayout => {
     switch (insertion.kind) {
-        case "before-group":
+        case "before-group": {
             if (drag.type !== "group") return layout;
 
             return reorderGroups(layout, drag.group_identity, insertion.group_identity);
-        case "group-end":
+        }
+        case "group-end": {
             if (drag.type !== "account") return layout;
 
             return moveAccountToGroupEnd(layout, drag.account_identity, insertion.group_id);
-        case "before-account":
+        }
+        case "before-account": {
             if (drag.type !== "account") return layout;
 
             return moveAccountBefore(layout, drag.account_identity, insertion.account_identity, insertion.group_id);
-        case "after-account":
+        }
+        case "after-account": {
             if (drag.type !== "account") return layout;
 
             return moveAccountAfter(layout, drag.account_identity, insertion.account_identity, insertion.group_id);
+        }
     }
 };
 
@@ -251,12 +259,12 @@ export const matchesInsertionAccount = (
 
     if (edge === "before" && insertion.kind === "before-account") {
         return insertion.account_identity === account_identity
-            && normalizeGroupId(insertion.group_id) === normalizedGroupId;
+          && normalizeGroupId(insertion.group_id) === normalizedGroupId;
     }
 
     if (edge === "after" && insertion.kind === "after-account") {
         return insertion.account_identity === account_identity
-            && normalizeGroupId(insertion.group_id) === normalizedGroupId;
+          && normalizeGroupId(insertion.group_id) === normalizedGroupId;
     }
 
     return false;
