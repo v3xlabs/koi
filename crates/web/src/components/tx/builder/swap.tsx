@@ -67,7 +67,7 @@ export const TxSwapBuilder = (props: Props) => {
                                 <FormCombinedAssetAmountField
                                   amountField={amountInField}
                                   assetField={assetInField}
-                                  label="You pay"
+                                  label="From Asset"
                                   networkIdentity={props.networkIdentity}
                                   accountIdentity={props.accountIdentity}
                                 />
@@ -76,7 +76,7 @@ export const TxSwapBuilder = (props: Props) => {
                     )}
                 </form.Field>
                 <form.Field name="assetOut">
-                    {field => <FormAssetSelectField field={field} label="You receive" networkIdentity={props.networkIdentity} />}
+                    {field => <FormAssetSelectField field={field} label="To Asset" networkIdentity={props.networkIdentity} />}
                 </form.Field>
 
                 <div class="space-y-1">

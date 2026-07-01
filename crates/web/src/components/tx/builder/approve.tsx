@@ -79,6 +79,17 @@ export const TxApproveBuilder = (props: Props) => {
                         </>
                     )}
                 </form.Field>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Unlimited approval</span>
+                    <Toggle
+                      value={unlimited}
+                      onChange={(v) => {
+                            setUnlimited(v);
+
+                            if (v) form.setFieldValue("amount", "");
+                        }}
+                    />
+                </div>
                 <form.Field
                   name="spender"
                   validators={{
@@ -93,17 +104,6 @@ export const TxApproveBuilder = (props: Props) => {
                         />
                     )}
                 </form.Field>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium">Unlimited approval</span>
-                    <Toggle
-                      value={unlimited}
-                      onChange={(v) => {
-                            setUnlimited(v);
-
-                            if (v) form.setFieldValue("amount", "");
-                        }}
-                    />
-                </div>
             </form>
         </div>
     );

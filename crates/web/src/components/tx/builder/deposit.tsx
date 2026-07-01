@@ -1,8 +1,6 @@
 import { createForm } from "@tanstack/solid-form";
 import { createEffect, createSignal } from "solid-js";
-import { isAddress } from "viem";
 
-import { FormAddressField } from "#/components/account/form/address";
 import { FormCombinedAssetAmountField } from "#/components/input/field";
 
 type BuilderData = {
@@ -90,20 +88,6 @@ export const TxDepositBuilder = (props: Props) => {
                                 />
                             )}
                         </form.Field>
-                    )}
-                </form.Field>
-                <form.Field
-                  name="vault"
-                  validators={{
-                        onChange: ({ value }) => (!value || isAddress(value) ? undefined : "Invalid address"),
-                    }}
-                >
-                    {field => (
-                        <FormAddressField
-                          field={field}
-                          label="Vault Address"
-                          placeholder="0x..."
-                        />
                     )}
                 </form.Field>
             </form>
