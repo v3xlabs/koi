@@ -1,6 +1,6 @@
 import { Component, createMemo, For, Show, Suspense } from "solid-js";
 
-import { useAccount, accountBalanceQuery, useAccountBalances } from "#/api/account";
+import { accountBalanceQuery, useAccount, useAccountBalances } from "#/api/account";
 import { useDisplayCurrency } from "#/api/context";
 import { truncateAddress } from "#/utils/address";
 import { narrow } from "#/utils/narrow";

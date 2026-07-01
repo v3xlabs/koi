@@ -186,9 +186,10 @@ impl TryFrom<&Quoter> for AnyQuoter {
     fn try_from(val: &Quoter) -> Result<Self, Self::Error> {
         match &val.config {
             QuoterConfig::Fixed(config) => Ok(FixedQuoter {
-                fixed_rate: config.price.parse().map_err(|e| {
-                    KoiError::Internal(format!("Invalid fixed rate: {}", e))
-                })?,
+                fixed_rate: config
+                    .price
+                    .parse()
+                    .map_err(|e| KoiError::Internal(format!("Invalid fixed rate: {}", e)))?,
                 token_in: val.token_a.clone().into(),
                 token_out: val.token_b.clone().into(),
                 token_in_decimals: config.token_in_decimals,
@@ -211,14 +212,13 @@ impl TryFrom<&Quoter> for AnyQuoter {
                 let (network_id, address) = val.token_a.unwrap_address().ok_or(
                     KoiError::Internal("Missing address for UniswapV2 quoter".to_string()),
                 )?;
-                let (_, address2) = val.token_b.unwrap_address().ok_or(
-                    KoiError::Internal("Missing address for UniswapV2 quoter".to_string()),
-                )?;
+                let (_, address2) = val.token_b.unwrap_address().ok_or(KoiError::Internal(
+                    "Missing address for UniswapV2 quoter".to_string(),
+                ))?;
                 Ok(UniswapV2Quoter {
                     network_id: NetworkId::from(network_id.0),
-                    pair_address: Address::from_str(&config.pair_address).map_err(|e| {
-                        KoiError::Internal(format!("Invalid pair address: {}", e))
-                    })?,
+                    pair_address: Address::from_str(&config.pair_address)
+                        .map_err(|e| KoiError::Internal(format!("Invalid pair address: {}", e)))?,
                     token0: address,
                     token1: address2,
                 }
@@ -228,14 +228,13 @@ impl TryFrom<&Quoter> for AnyQuoter {
                 let (network_id, address) = val.token_a.unwrap_address().ok_or(
                     KoiError::Internal("Missing address for UniswapV3 quoter".to_string()),
                 )?;
-                let (_, address2) = val.token_b.unwrap_address().ok_or(
-                    KoiError::Internal("Missing address for UniswapV3 quoter".to_string()),
-                )?;
+                let (_, address2) = val.token_b.unwrap_address().ok_or(KoiError::Internal(
+                    "Missing address for UniswapV3 quoter".to_string(),
+                ))?;
                 Ok(UniswapV3Quoter {
                     network_id: NetworkId::from(network_id.0),
-                    pool_address: Address::from_str(&config.pool_address).map_err(|e| {
-                        KoiError::Internal(format!("Invalid pool address: {}", e))
-                    })?,
+                    pool_address: Address::from_str(&config.pool_address)
+                        .map_err(|e| KoiError::Internal(format!("Invalid pool address: {}", e)))?,
                     token0: address,
                     token1: address2,
                 }

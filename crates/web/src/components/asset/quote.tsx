@@ -12,7 +12,7 @@ export const AssetQuote: Component<{ asset_identity: string; }> = ({ asset_ident
 );
 
 export const AssetQuoteInner: Component<{ asset_identity: string; }> = ({ asset_identity }) => {
-    const quoteQuery = useAssetQuote(() => ({ path: { asset_identity } }), {throwOnError: false});
+    const quoteQuery = useAssetQuote(() => ({ path: { asset_identity } }), { throwOnError: false });
     const { displayCurrency } = useDisplayCurrency();
     const { privacyMode } = usePrivacyMode();
 

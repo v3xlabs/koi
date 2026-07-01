@@ -3,22 +3,22 @@ import { isAddress } from "viem";
 export type Address = `0x${string}`;
 
 const erc3770NetworkPrefixToChainId: Record<string, number> = {
-    arb1: 42161,
-    arb: 42161,
-    aurora: 1313161554,
-    avax: 43114,
+    arb1: 42_161,
+    arb: 42_161,
+    aurora: 1_313_161_554,
+    avax: 43_114,
     base: 8453,
     bnb: 56,
     bsc: 56,
-    celo: 42220,
+    celo: 42_220,
     eth: 1,
     gno: 100,
     gor: 5,
-    linea: 59144,
+    linea: 59_144,
     matic: 137,
     oeth: 10,
     op: 10,
-    sep: 11155111,
+    sep: 11_155_111,
     zksync: 324,
 };
 

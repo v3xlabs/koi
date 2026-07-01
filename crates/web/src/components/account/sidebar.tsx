@@ -1,5 +1,5 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { FaSolidClock, FaSolidGear, FaSolidGridHorizontal, FaSolidWallet } from "solid-icons/fa";
+import { FaSolidClock, FaSolidGridHorizontal, FaSolidWallet } from "solid-icons/fa";
 import { FiHome, FiPlus } from "solid-icons/fi";
 import { Component, For, JSXElement, Show } from "solid-js";
 

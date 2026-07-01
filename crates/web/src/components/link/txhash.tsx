@@ -4,7 +4,7 @@ import { Component, createMemo, JSX, Show } from "solid-js";
 import { useVendors, VendorFlag } from "#/api/vendor";
 import { addressToHue, truncateAddress } from "#/utils/address";
 
-import { explorerKeyFromFlag, explorerNameFromFlag, ExplorerLinksModal } from "./explorer";
+import { explorerKeyFromFlag, ExplorerLinksModal, explorerNameFromFlag } from "./explorer";
 
 const EXPLORER_TXHASH_LINKS: Partial<Record<VendorFlag, Record<number, string>>> = {
     etherscan_link_tx_hash: {

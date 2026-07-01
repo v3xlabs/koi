@@ -2,11 +2,11 @@ import { Tooltip } from "@kobalte/core/tooltip";
 import { FiGitBranch } from "solid-icons/fi";
 import { Component, For, Match, Show, Switch } from "solid-js";
 
+import { usePrivacyMode } from "#/api/context";
 import { components } from "#/api/schema.gen";
 import { AssetAmount } from "#/components/asset/amount";
 import { AssetPreview } from "#/components/asset/preview";
 import { AddressPreview } from "#/components/link/address";
-import { usePrivacyMode } from "#/api/context";
 import { privateAmount } from "#/utils/privacy";
 
 import { TxField, TxJsonValue, TxValue } from "./value";
@@ -193,7 +193,7 @@ const MaybeAsset: Component<{ asset_identity: string | undefined; fallback: stri
   </Show>
 );
 
-const MaybeAmount: Component<{ amount: string | undefined; asset_identity: string | undefined; }> = props => {
+const MaybeAmount: Component<{ amount: string | undefined; asset_identity: string | undefined; }> = (props) => {
   const { privacyMode } = usePrivacyMode();
 
   return (

@@ -8,7 +8,7 @@ export type AddressInputProperties = {
 
 export const AddressInput: Component<AddressInputProperties> = (props) => {
     const [local, inputProps] = splitProps(props, ["value", "onChange", "invalid", "class", "classList"]);
-    const invalid = () => typeof local.invalid === "function" ? local.invalid() : !!local.invalid;
+    const invalid = () => (typeof local.invalid === "function" ? local.invalid() : !!local.invalid);
 
     return (
         <input

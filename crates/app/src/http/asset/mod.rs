@@ -158,7 +158,9 @@ impl AssetApi {
         let network_identity = asset_identity
             .unwrap_network()
             .ok_or(KoiError::Internal("Network not found".to_string()))?;
-        let asset_out = display_asset.0.unwrap_or(AssetIdentity::Fiat("usd".to_string()));
+        let asset_out = display_asset
+            .0
+            .unwrap_or(AssetIdentity::Fiat("usd".to_string()));
         let asset = Asset::get_by_id(&state.database, &asset_identity).await?;
 
         let amount_in = U256::from(1) * U256::from(10).pow(U256::from(asset.asset_decimals as u32));

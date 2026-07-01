@@ -67,7 +67,13 @@ async fn quote_nom(
     let block_24h = block - (24 * 60 * 60 / 12);
     let (asset_24h_quote, asset_24h_quote_error): (Option<String>, Option<String>) = match state
         .quoters
-        .quote_b(rpc, block_24h, &asset.asset_identity, nominal_amount, asset_out)
+        .quote_b(
+            rpc,
+            block_24h,
+            &asset.asset_identity,
+            nominal_amount,
+            asset_out,
+        )
         .await
     {
         Ok(asset_24h_quote) => (Some(asset_24h_quote.to_string()), None),
@@ -187,7 +193,9 @@ impl Account {
             .await;
 
         let balances = stream::iter(balances)
-            .map(async |(asset, balance)| quote_nom(&asset, balance, state, &rpc, block, &asset_out).await)
+            .map(async |(asset, balance)| {
+                quote_nom(&asset, balance, state, &rpc, block, &asset_out).await
+            })
             .buffer_unordered(8)
             .collect::<Vec<_>>()
             .await;

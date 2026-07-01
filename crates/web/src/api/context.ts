@@ -13,3 +13,9 @@ export const usePrivacyMode = () => {
 
     return { privacyMode, setPrivacyMode };
 };
+
+export const useTheme = () => {
+    const { theme: [theme, setTheme] } = useContext(appcontext);
+
+    return { theme, setTheme };
+};

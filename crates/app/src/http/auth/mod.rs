@@ -10,7 +10,6 @@ pub struct AuthData {
 
 impl Auth {
     pub fn validate(&self) -> Result<(), poem::Error> {
-        
         Ok(())
     }
 

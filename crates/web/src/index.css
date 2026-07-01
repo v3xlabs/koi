@@ -16,7 +16,7 @@
     --color-primary-foreground: oklch(1 0 0);
     --color-primary-hover: oklch(0.5482 0.2114 28.99 / 0.8);
 
-    --color-secondary: oklch(0.1822 0 0);
+    --color-secondary: oklch(0.80 0 0);
     --color-secondary-foreground: oklch(1 0 0);
     --color-secondary-hover: oklch(0.1822 0 0 / 0.8);
 }

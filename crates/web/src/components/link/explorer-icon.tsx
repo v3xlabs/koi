@@ -1,6 +1,7 @@
+import { Component, Show } from "solid-js";
+
 import BlockscoutIcon from "#/assets/blockscout.png";
 import EtherscanIcon from "#/assets/etherscan.svg";
-import { Component, Show } from "solid-js";
 
 export type ExplorerKey = "etherscan" | "blockscout";
 
