@@ -1,5 +1,6 @@
 import { DropdownMenu } from "@kobalte/core/dropdown-menu";
 import { useParams } from "@tanstack/solid-router";
+import { FaSolidGripVertical } from "solid-icons/fa";
 import { FiPlus, FiTrash2 } from "solid-icons/fi";
 import { createMemo, createSignal, For, Match, Show, Suspense, Switch } from "solid-js";
 
@@ -7,6 +8,8 @@ import { useAccount } from "#/api/account";
 import { useNetworks } from "#/api/network";
 import { button } from "#/components/input/button";
 import { NetworkIcon } from "#/components/net/icon";
+import { moveItem } from "#/utils/array";
+import { createPointerDrag } from "#/utils/pointer-drag";
 
 import { BuilderTx, TX_PRESETS, TX_TYPE_META } from ".";
 import { TxApproveBuilder } from "./approve";
@@ -17,7 +20,46 @@ import { TxSwapBuilder } from "./swap";
 import { TxWrapBuilder } from "./wrap";
 
 type Props = {
-    initialPrefill?: { type: BuilderTx["type"]; data: Record<string, string>; };
+    initialPrefill?: {
+        type: BuilderTx["type"];
+        data: Record<string, string>;
+    };
+};
+
+type TxInsertion = {
+    index: number;
+    edge: "before" | "after";
+};
+
+const txInsertionAt = (x: number, y: number): TxInsertion | null => {
+    const el = document.elementFromPoint(x, y);
+    const row = el?.closest<HTMLElement>("[data-drop-builder-tx]");
+
+    if (!row) return null;
+
+    const index = Number(row.dataset.dropBuilderTx);
+
+    if (!Number.isFinite(index)) return null;
+
+    const { top, height } = row.getBoundingClientRect();
+
+    return {
+        index,
+        edge: y < top + height / 2 ? "before" : "after",
+    };
+};
+
+const findTxInsertion = (x: number, y: number, sourceIndex: number) => {
+    const insertion = txInsertionAt(x, y);
+
+    return insertion?.index === sourceIndex ? null : insertion;
+};
+
+const moveTx = (txs: BuilderTx[], sourceIndex: number, insertion: TxInsertion) => {
+    const dropIndex = insertion.index + (insertion.edge === "after" ? 1 : 0);
+    const destination = dropIndex > sourceIndex ? dropIndex - 1 : dropIndex;
+
+    return moveItem(txs, sourceIndex, destination);
 };
 
 export const TxBuilder = (props: Props) => {
@@ -55,6 +97,7 @@ export const TxBuilder = (props: Props) => {
 
     const [txData, setTxData] = createSignal<BuilderTx[]>(props.initialPrefill ? [{ type: props.initialPrefill.type, data: props.initialPrefill.data }] : []);
     const [selectedIndex, setSelectedIndex] = createSignal<number | null>(props.initialPrefill ? 0 : null);
+    const [insertion, setInsertion] = createSignal<TxInsertion | null>(null);
 
     const selectedTx = createMemo(() => {
         const idx = selectedIndex();
@@ -95,6 +138,22 @@ export const TxBuilder = (props: Props) => {
         setTxData(prev => prev.map((tx, i) => (i === index ? { ...tx, type: newType } : tx)));
     };
 
+    const drag = createPointerDrag<number>({
+        onMove: (index, point) => setInsertion(findTxInsertion(point.x, point.y, index)),
+        onDrop: (index, point) => {
+            const target = insertion() ?? findTxInsertion(point.x, point.y, index);
+            const selected = selectedTx();
+
+            if (!target) return;
+
+            const next = moveTx(txData(), index, target);
+
+            setTxData(next);
+            setSelectedIndex(selected ? next.indexOf(selected) : null);
+        },
+        onStop: () => setInsertion(null),
+    });
+
     const handleSubmit = () => {
         const allTx = txData();
 
@@ -102,6 +161,7 @@ export const TxBuilder = (props: Props) => {
     };
 
     const hasNetwork = () => networkIdentity() !== null;
+    const txLabel = (tx: BuilderTx) => TX_PRESETS.find(p => p.type === tx.type)?.name ?? tx.type;
 
     return (
         <div class="rounded-md w-full space-y-4 max-w-7xl">
@@ -182,7 +242,27 @@ export const TxBuilder = (props: Props) => {
                         <div class="w-48 shrink-0 space-y-1">
                             <For each={txData()}>
                                 {(tx, index) => (
-                                    <div class="flex items-center gap-1">
+                                    <div
+                                      data-drop-builder-tx={index()}
+                                      class="relative flex items-center gap-1"
+                                      classList={{
+                                            "opacity-40 pointer-events-none": drag.dragItem() === index(),
+                                        }}
+                                    >
+                                        <Show when={insertion()?.index === index() && insertion()?.edge === "before"}>
+                                            <div class="absolute inset-x-0 top-0 -translate-y-1/2 h-0.5 rounded-full bg-primary pointer-events-none z-10" />
+                                        </Show>
+                                        <Show when={insertion()?.index === index() && insertion()?.edge === "after"}>
+                                            <div class="absolute inset-x-0 bottom-0 translate-y-1/2 h-0.5 rounded-full bg-primary pointer-events-none z-10" />
+                                        </Show>
+                                        <button
+                                          type="button"
+                                          class="touch-none shrink-0 rounded p-1 text-muted hover:text-foreground cursor-grab active:cursor-grabbing"
+                                          onPointerDown={drag.startDrag(index())}
+                                          title="Reorder"
+                                        >
+                                            <FaSolidGripVertical class="size-3.5" />
+                                        </button>
                                         <button
                                           classList={{
                                                 "flex-1 text-left border rounded-md px-3 py-2 text-sm transition-colors": true,
@@ -191,7 +271,7 @@ export const TxBuilder = (props: Props) => {
                                             }}
                                           onClick={() => setSelectedIndex(index())}
                                         >
-                                            {TX_TYPE_META[tx.type].name}
+                                            {txLabel(tx)}
                                         </button>
                                         <button
                                           class="p-1.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors cursor-pointer"
@@ -286,6 +366,18 @@ export const TxBuilder = (props: Props) => {
                             </Show>
                         </div>
                     </div>
+
+                    <Show when={drag.dragItem() !== null && drag.pointer()}>
+                        <div
+                          class="fixed z-50 pointer-events-none rounded-md border border-primary/30 bg-surface px-3 py-2 text-sm shadow-lg"
+                          style={{
+                                left: `${Math.min(drag.pointer()!.x + 12, globalThis.innerWidth - 220)}px`,
+                                top: `${drag.pointer()!.y + 12}px`,
+                            }}
+                        >
+                            {txLabel(txData()[drag.dragItem()!])}
+                        </div>
+                    </Show>
 
                     <Show when={txData().length > 0}>
                         <div class="flex justify-end">
