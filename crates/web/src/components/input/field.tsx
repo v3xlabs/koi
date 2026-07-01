@@ -2,6 +2,7 @@ import { AnyFieldApi } from "@tanstack/solid-form";
 import { Accessor, Component, JSX, Show } from "solid-js";
 
 import { AssetSelect } from "#/components/asset/select";
+import { CombinedAssetAmountInput } from "#/components/input/asset-amount";
 
 type FormFieldProps = {
     field: Accessor<AnyFieldApi>;
@@ -125,6 +126,45 @@ type FormAmountFieldProps = {
     placeholder?: string;
     balance?: string;
     balanceSymbol?: string;
+};
+
+type FormCombinedAssetAmountFieldProps = {
+    amountField: Accessor<AnyFieldApi>;
+    assetField: Accessor<AnyFieldApi>;
+    label: string;
+    networkIdentity?: number;
+    accountIdentity?: number;
+    placeholder?: string;
+};
+
+export const FormCombinedAssetAmountField: Component<FormCombinedAssetAmountFieldProps> = (props) => {
+    const amountState = () => props.amountField().state;
+    const assetState = () => props.assetField().state;
+
+    const allErrors = () => [
+        ...(amountState().meta.isTouched ? amountState().meta.errors : []),
+        ...(assetState().meta.isTouched ? assetState().meta.errors : []),
+    ];
+
+    return (
+        <label class="space-y-1 block">
+            <span class="block">{props.label}</span>
+            <CombinedAssetAmountInput
+              amount={() => amountState().value as string}
+              onAmountChange={v => props.amountField().handleChange(v)}
+              asset={() => assetState().value as string}
+              onAssetChange={v => props.assetField().handleChange(v)}
+              networkIdentity={props.networkIdentity}
+              accountIdentity={props.accountIdentity}
+              placeholder={props.placeholder}
+            />
+            <Show when={allErrors().length > 0}>
+                <span class="text-sm text-red-500" role="alert">
+                    {allErrors().join(", ")}
+                </span>
+            </Show>
+        </label>
+    );
 };
 
 export const FormAmountField: Component<FormAmountFieldProps> = (props) => {
