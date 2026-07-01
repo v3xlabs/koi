@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/solid-router";
 import { Skeleton } from "@kobalte/core/skeleton";
 import { createQueries } from "@tanstack/solid-query";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
@@ -22,7 +23,7 @@ import { AccountAssetManage } from "./manage";
 type Data = { asset: Asset; price: bigint | undefined; price_24h: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; weight: number | undefined; };
 const helper = createColumnHelper<Data>();
 
-const columns = [
+const createColumns = (account_identity: number) => [
     helper.accessor("asset.asset_name", {
         header: "Name",
         cell: ({ row }) => (
@@ -150,11 +151,16 @@ const columns = [
     }),
     helper.display({
         header: "Actions",
-        cell: () => (
+        cell: ({ row }) => (
             <div class="flex items-center gap-2 py-3.5">
-                <button class={button({ variant: "secondary", size: "small", square: true })}>
+                <Link
+                  to="/acc/$account/new-tx"
+                  params={{ account: String(account_identity) }}
+                  search={{ type: "send", asset: row.original.asset.asset_identity }}
+                  class={button({ variant: "secondary", size: "small", square: true })}
+                >
                     <FiArrowUpRight class="size-3" />
-                </button>
+                </Link>
             </div>
         ),
     }),
@@ -241,7 +247,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
     const [sorting, setSorting] = createSignal<SortingState>([{ id: "value", desc: false }]);
 
     const table = createSolidTable({
-        columns,
+        columns: createColumns(account_identity),
         get data() {
             return data();
         },

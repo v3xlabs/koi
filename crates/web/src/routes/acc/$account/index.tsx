@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from "@tanstack/solid-router";
+import { createFileRoute, Link, useParams } from "@tanstack/solid-router";
 import { FaSolidArrowRight, FaSolidRefresh } from "solid-icons/fa";
 import { createSignal, Show, Suspense, useContext } from "solid-js";
 
@@ -82,12 +82,15 @@ export const Route = createFileRoute("/acc/$account/")({
                 </div>
                 <div class="flex gap-2">
                   <Show when={account.data?.metadata.type !== "view"}>
-                    <button
+                    <Link
+                      to="/acc/$account/new-tx"
+                      params={{ account: params().account }}
+                      search={{ type: "send" }}
                       class={button({ variant: "primary", class: "w-full text-sm font-bold" })}
                     >
                       <FaSolidArrowRight class="-rotate-45" />
                       Send
-                    </button>
+                    </Link>
                   </Show>
                   <Show when={narrow(() => account.data?.metadata, x => "evm_address" in x)}>
                     {x => (

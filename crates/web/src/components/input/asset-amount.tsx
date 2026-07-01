@@ -107,7 +107,7 @@ export const CombinedAssetAmountInput: Component<CombinedAssetAmountInputProps> 
         if (balances) {
             const balanceMap = new Map(balances.map(b => [b.asset_identity, b]));
 
-            list = list.filter(a => {
+            list = list.filter((a) => {
                 const b = balanceMap.get(a.asset_identity);
 
                 return b && b.balance && BigInt(b.balance) > 0n;
@@ -120,7 +120,7 @@ export const CombinedAssetAmountInput: Component<CombinedAssetAmountInputProps> 
                 if (qa && qb) {
                     const diff = BigInt(qb) - BigInt(qa);
 
-                    return diff > 0n ? 1 : diff < 0n ? -1 : 0;
+                    return diff > 0n ? 1 : (diff < 0n ? -1 : 0);
                 }
 
                 if (qa) return -1;
@@ -135,7 +135,8 @@ export const CombinedAssetAmountInput: Component<CombinedAssetAmountInputProps> 
     });
 
     const filteredAssets = createMemo(() => {
-        const query = searchQuery().trim().toLowerCase();
+        const query = searchQuery().trim()
+.toLowerCase();
 
         if (!query) return assets();
 
@@ -207,14 +208,17 @@ export const CombinedAssetAmountInput: Component<CombinedAssetAmountInputProps> 
 
     return (
         <div class="space-y-1">
-            <div class="input flex items-center gap-2 px-2 py-1 cursor-text" onClick={e => {
+            <div
+              class="input flex items-center gap-2 px-0.5 py-0.5 cursor-text"
+              onClick={(e) => {
                 const input = e.currentTarget.querySelector("input");
 
                 if (input) input.focus();
-            }}>
+            }}
+            >
                 <input
                   type="text"
-                  class="flex-1 text-sm bg-transparent outline-none placeholder:text-muted tabular-nums"
+                  class="flex-1 text-sm bg-transparent outline-none placeholder:text-muted tabular-nums ps-1.5"
                   placeholder={props.placeholder ?? "0.0"}
                   value={props.amount()}
                   onInput={handleAmountInput}
@@ -222,8 +226,8 @@ export const CombinedAssetAmountInput: Component<CombinedAssetAmountInputProps> 
                 />
                 <button
                   type="button"
-                  class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-alt hover:bg-border transition-colors text-xs font-medium cursor-pointer shrink-0"
-                  onClick={e => {
+                  class="flex items-center gap-1 px-2 py-2 rounded-md bg-surface-alt hover:bg-border transition-colors text-xs font-medium cursor-pointer shrink-0"
+                  onClick={(e) => {
                         e.stopPropagation();
                         setIsOpen(true);
                     }}
@@ -246,7 +250,11 @@ export const CombinedAssetAmountInput: Component<CombinedAssetAmountInputProps> 
                 {balance => (
                     <div class="flex justify-between items-center text-xs text-muted px-1">
                         <span>
-                            {props.balanceLabel ?? "Balance"}: {balance().display} {balance().symbol}
+                            {props.balanceLabel ?? "Balance"}
+:
+{balance().display}
+{" "}
+{balance().symbol}
                         </span>
                         <button
                           type="button"
@@ -287,7 +295,7 @@ export const CombinedAssetAmountInput: Component<CombinedAssetAmountInputProps> 
                                                 </div>
                                             </Show>
                                             <For each={group.options}>
-                                                {assetItem => {
+                                                {(assetItem) => {
                                                     const balanceInfo = createMemo(() => {
                                                         const bm = balancesMap();
                                                         const ab = bm?.get(assetItem.asset_identity);
@@ -332,7 +340,11 @@ export const CombinedAssetAmountInput: Component<CombinedAssetAmountInputProps> 
                                                                                 <div class="text-sm">{quote()}</div>
                                                                             )}
                                                                         </Show>
-                                                                        <div class="text-xs text-muted">{info().amountDisplay} {assetItem.asset_symbol}</div>
+                                                                        <div class="text-xs text-muted">
+{info().amountDisplay}
+{" "}
+{assetItem.asset_symbol}
+                                                                        </div>
                                                                     </div>
                                                                 )}
                                                             </Show>

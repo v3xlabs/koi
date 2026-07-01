@@ -16,7 +16,11 @@ import { TxSendBuilder } from "./send";
 import { TxSwapBuilder } from "./swap";
 import { TxWrapBuilder } from "./wrap";
 
-export const TxBuilder = () => {
+type Props = {
+    initialPrefill?: { type: BuilderTx["type"]; data: Record<string, string> };
+};
+
+export const TxBuilder = (props: Props) => {
     const params = useParams({ from: "/acc/$account" });
     const accountIdentity = Number.parseInt(params().account);
 
@@ -49,8 +53,8 @@ export const TxBuilder = () => {
         return false;
     });
 
-    const [txData, setTxData] = createSignal<BuilderTx[]>([]);
-    const [selectedIndex, setSelectedIndex] = createSignal<number | null>(null);
+    const [txData, setTxData] = createSignal<BuilderTx[]>(props.initialPrefill ? [{ type: props.initialPrefill.type, data: props.initialPrefill.data }] : []);
+    const [selectedIndex, setSelectedIndex] = createSignal<number | null>(props.initialPrefill ? 0 : null);
 
     const selectedTx = createMemo(() => {
         const idx = selectedIndex();
