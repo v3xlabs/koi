@@ -4,7 +4,7 @@ import { Link } from "@tanstack/solid-router";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
 import { FaSolidRefresh } from "solid-icons/fa";
 import { FiArrowUpRight, FiChevronUp, FiPlus } from "solid-icons/fi";
-import { Accessor, Component, createEffect, createMemo, createSignal, For, Show, Suspense } from "solid-js";
+import { Accessor, Component, createEffect, createMemo, createSignal, For, JSX, Show, Suspense } from "solid-js";
 
 import { accountBalanceQuery, refreshAccountBalances, useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
@@ -45,6 +45,36 @@ const SkeletonBlock: Component<{ variant: keyof typeof skeletonBlock; }> = props
       visible
       {...skeletonBlock[props.variant]}
     />
+);
+
+type AccountAssetTableFrameProps = {
+    total: JSX.Element;
+    controls: JSX.Element;
+    header: JSX.Element;
+    children: JSX.Element;
+};
+
+const AccountAssetTableFrame: Component<AccountAssetTableFrameProps> = props => (
+    <div class="w-full space-y-4">
+        <div class="flex justify-between items-center">
+            {props.total}
+            <div>
+                <div class="flex items-center gap-2 justify-end">
+                    {props.controls}
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface px-4 py-2.5 rounded-md w-full">
+            <table class="w-full">
+                <thead class="border-b border-border">
+                    {props.header}
+                </thead>
+                <tbody>
+                    {props.children}
+                </tbody>
+            </table>
+        </div>
+    </div>
 );
 
 const createColumns = (account_identity: number, quoteCurrency: Accessor<string>) => [
@@ -276,13 +306,14 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
     });
 
     return (
-        <div class="w-full space-y-4">
+        <>
             <AssetAdd
               open={addOpen()}
               onOpenChange={onAddOpenChange}
               onSuccess={onAssetCreated}
             />
-            <div class="flex justify-between items-center">
+            <AccountAssetTableFrame
+              total={(
                 <div>
                     <div class="text-sm text-muted font-bold">Total assets value</div>
                     <div class="text-2xl">
@@ -292,202 +323,169 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                         />
                     </div>
                 </div>
-                <div class="">
-                    <div class="flex items-center gap-2 justify-end">
-                        <div class="text-muted text-sm flex items-center gap-2">
-                            <Suspense>
-                                <span class="">
-                                    <FormattedTime value={accountBalancesQuery.data?.updated_at} prefix="Updated " />
-                                </span>
-                            </Suspense>
-                            <Show when={!accountBalancesQuery.isLoading || accountBalancesQuery.data}>
-                                <button
-                                  class={button({ variant: "ghost", size: "small", square: true })}
-                                  onClick={() => { void refreshBalances(); }}
-                                >
-                                    <FaSolidRefresh classList={{
-                                        "size-3.5": true,
-                                        "animate-spin": refreshingBalances(),
-                                    }}
-                                    />
-                                </button>
-                            </Show>
-                        </div>
-                        <AccountAssetManage
-                          account_identity={account_identity}
-                          open={manageOpen()}
-                          onOpenChange={setManageOpen}
-                          onAddAsset={beginAddAssetFromManage}
-                        />
-                        <DisplayCurrencySelector />
-                    </div>
-                </div>
-            </div>
-            <div class="bg-surface px-4 py-2.5 rounded-md w-full">
-                <table class="w-full">
-                    <thead class="border-b border-border">
-                        <For each={table.getHeaderGroups()}>
-                            {headerGroup => (
-                                <tr>
-                                    <For each={headerGroup.headers}>
-                                        {(header, index) => (
-                                            <th classList={{
-                                                "pb-2.5 py-0.5": true,
-                                                "text-left": index() === 0,
-                                                "text-right": index() !== 0,
-                                            }}
-                                            >
-                                                {header.isPlaceholder
-                                                    ? null
-                                                    : flexRender(
-                                                        header.column.columnDef.header,
-                                                        header.getContext(),
-                                                    )}
-                                            </th>
-                                        )}
-                                    </For>
-                                </tr>
-                            )}
-                        </For>
-                    </thead>
-                    <tbody class="">
-                        <For each={table.getRowModel().rows}>
-                            {row => (
-                                <tr class="group relative hover:bg-surface-alt rounded-2xl transition-colors w-full after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px not-last:after:bg-border">
-                                    <For each={row.getVisibleCells()}>
-                                        {(cell, index) => (
-                                            <td
-                                              classList={{
-                                                    "pl-5 -ml-2.5 -translate-x-2.5": index() === 0,
-                                                    "pr-5 -mr-2.5 translate-x-2.5": index() === row.getVisibleCells().length - 1,
-                                                }}
-                                            >
-                                                <div
-                                                  classList={{
-                                                        "text-left": index() === 0,
-                                                        "text-right flex justify-end": index() !== 0,
-                                                        "relative z-10": true,
-                                                    }}
-                                                >
-                                                    {flexRender(
-                                                        cell.column.columnDef.cell,
-                                                        cell.getContext(),
-                                                    )}
-                                                </div>
-                                            </td>
-                                        )}
-                                    </For>
-                                </tr>
-                            )}
-                        </For>
-                        <Show when={table.getRowModel().rows.length === 0}>
-                            <tr
-                              class="group relative hover:bg-surface-alt rounded-2xl transition-colors w-full cursor-pointer"
-                              onClick={() => setManageOpen(true)}
+              )}
+              controls={(
+                <>
+                    <div class="text-muted text-sm flex items-center gap-2">
+                        <Suspense>
+                            <span class="">
+                                <FormattedTime value={accountBalancesQuery.data?.updated_at} prefix="Updated " />
+                            </span>
+                        </Suspense>
+                        <Show when={!accountBalancesQuery.isLoading || accountBalancesQuery.data}>
+                            <button
+                              class={button({ variant: "ghost", size: "small", square: true })}
+                              onClick={() => { void refreshBalances(); }}
                             >
-                                <td
-                                  colspan={table.getVisibleLeafColumns().length}
-                                  class="pl-5 py-3.5"
-                                >
-                                    <div class="flex items-center gap-3 text-muted">
-                                        <div class="size-8 rounded-full border border-dashed border-border flex items-center justify-center">
-                                            <FiPlus class="size-4" />
-                                        </div>
-                                        Add a new asset
-                                    </div>
-                                </td>
-                            </tr>
+                                <FaSolidRefresh classList={{
+                                    "size-3.5": true,
+                                    "animate-spin": refreshingBalances(),
+                                }}
+                                />
+                            </button>
                         </Show>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    </div>
+                    <AccountAssetManage
+                      account_identity={account_identity}
+                      open={manageOpen()}
+                      onOpenChange={setManageOpen}
+                      onAddAsset={beginAddAssetFromManage}
+                    />
+                    <DisplayCurrencySelector />
+                </>
+              )}
+              header={(
+                <For each={table.getHeaderGroups()}>
+                    {headerGroup => (
+                        <tr>
+                            <For each={headerGroup.headers}>
+                                {(header, index) => (
+                                    <th classList={{
+                                        "pb-2.5 py-0.5": true,
+                                        "text-left": index() === 0,
+                                        "text-right": index() !== 0,
+                                    }}
+                                    >
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(header.column.columnDef.header, header.getContext())}
+                                    </th>
+                                )}
+                            </For>
+                        </tr>
+                    )}
+                </For>
+              )}
+            >
+                <For each={table.getRowModel().rows}>
+                    {row => (
+                        <tr class="group relative hover:bg-surface-alt rounded-2xl transition-colors w-full after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px not-last:after:bg-border">
+                            <For each={row.getVisibleCells()}>
+                                {(cell, index) => (
+                                    <td
+                                      classList={{
+                                            "pl-5 -ml-2.5 -translate-x-2.5": index() === 0,
+                                            "pr-5 -mr-2.5 translate-x-2.5": index() === row.getVisibleCells().length - 1,
+                                        }}
+                                    >
+                                        <div
+                                          classList={{
+                                                "text-left": index() === 0,
+                                                "text-right flex justify-end": index() !== 0,
+                                                "relative z-10": true,
+                                            }}
+                                        >
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </div>
+                                    </td>
+                                )}
+                            </For>
+                        </tr>
+                    )}
+                </For>
+                <Show when={table.getRowModel().rows.length === 0}>
+                    <tr
+                      class="group relative hover:bg-surface-alt rounded-2xl transition-colors w-full cursor-pointer"
+                      onClick={() => setManageOpen(true)}
+                    >
+                        <td
+                          colspan={table.getVisibleLeafColumns().length}
+                          class="pl-5 py-3.5"
+                        >
+                            <div class="flex items-center gap-3 text-muted">
+                                <div class="size-8 rounded-full border border-dashed border-border flex items-center justify-center">
+                                    <FiPlus class="size-4" />
+                                </div>
+                                Add a new asset
+                            </div>
+                        </td>
+                    </tr>
+                </Show>
+            </AccountAssetTableFrame>
+        </>
     );
 };
 
 const AccountAssetTableSkeleton: Component = () => (
-    <div class="w-full space-y-4">
-        <div class="flex justify-between items-center">
-            <div>
-                <div class="text-sm text-muted font-bold">Total assets value</div>
-                <div class="text-2xl">
-                    <SkeletonBlock variant="total" />
-                </div>
-            </div>
-            <div>
-                <div class="flex items-center gap-2 justify-end">
-                    <div class="text-muted text-sm flex items-center gap-2">
-                        <SkeletonBlock variant="timestamp" />
-                        <SkeletonBlock variant="action" />
-                    </div>
-                    <SkeletonBlock variant="manage" />
-                    <SkeletonBlock variant="currency" />
-                </div>
+    <AccountAssetTableFrame
+      total={(
+        <div>
+            <div class="text-sm text-muted font-bold">Total assets value</div>
+            <div class="text-2xl">
+                <SkeletonBlock variant="total" />
             </div>
         </div>
-        <div class="bg-surface px-4 py-2.5 rounded-md w-full">
-            <table class="w-full">
-                <thead class="border-b border-border">
-                    <tr>
-                        <For each={tableSkeletonColumns}>
-                            {(column, index) => (
-                                <th classList={{
-                                    "pb-2.5 py-0.5": true,
-                                    "text-left": index() === 0,
-                                    "text-right": index() !== 0,
-                                }}
-                                >
-                                    {column}
-                                </th>
-                            )}
-                        </For>
-                    </tr>
-                </thead>
-                <tbody>
-                    <For each={skeletonRows}>
-                        {() => (
-                            <tr class="relative after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px not-last:after:bg-border">
-                                <td class="pl-5 -ml-2.5 -translate-x-2.5">
-                                    <div class="flex items-center gap-3 py-3.5">
-                                        <SkeletonBlock variant="icon" />
-                                        <div class="space-y-1.5">
-                                            <SkeletonBlock variant="name" />
-                                            <SkeletonBlock variant="symbol" />
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="flex justify-end">
-                                        <SkeletonBlock variant="price" />
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="flex justify-end">
-                                        <SkeletonBlock variant="balance" />
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="flex justify-end">
-                                        <SkeletonBlock variant="weight" />
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="flex justify-end">
-                                        <SkeletonBlock variant="balance" />
-                                    </div>
-                                </td>
-                                <td class="pr-5 -mr-2.5 translate-x-2.5">
-                                    <div class="flex justify-end">
-                                        <SkeletonBlock variant="action" />
-                                    </div>
-                                </td>
-                            </tr>
-                        )}
-                    </For>
-                </tbody>
-            </table>
-        </div>
-    </div>
+      )}
+      controls={(
+        <>
+            <div class="text-muted text-sm flex items-center gap-2">
+                <SkeletonBlock variant="timestamp" />
+                <SkeletonBlock variant="action" />
+            </div>
+            <SkeletonBlock variant="manage" />
+            <SkeletonBlock variant="currency" />
+        </>
+      )}
+      header={(
+        <tr>
+            <For each={tableSkeletonColumns}>
+                {(column, index) => (
+                    <th classList={{
+                        "pb-2.5 py-0.5": true,
+                        "text-left": index() === 0,
+                        "text-right": index() !== 0,
+                    }}
+                    >
+                        {column}
+                    </th>
+                )}
+            </For>
+        </tr>
+      )}
+    >
+        <For each={skeletonRows}>
+            {() => (
+                <tr class="relative after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px not-last:after:bg-border">
+                    <td class="pl-5 -ml-2.5 -translate-x-2.5">
+                        <div class="flex items-center gap-3 py-3.5">
+                            <SkeletonBlock variant="icon" />
+                            <div class="space-y-1.5">
+                                <SkeletonBlock variant="name" />
+                                <SkeletonBlock variant="symbol" />
+                            </div>
+                        </div>
+                    </td>
+                    <td><div class="flex justify-end"><SkeletonBlock variant="price" /></div></td>
+                    <td><div class="flex justify-end"><SkeletonBlock variant="balance" /></div></td>
+                    <td><div class="flex justify-end"><SkeletonBlock variant="weight" /></div></td>
+                    <td><div class="flex justify-end"><SkeletonBlock variant="balance" /></div></td>
+                    <td class="pr-5 -mr-2.5 translate-x-2.5">
+                        <div class="flex justify-end"><SkeletonBlock variant="action" /></div>
+                    </td>
+                </tr>
+            )}
+        </For>
+    </AccountAssetTableFrame>
 );
 
 export const AccountAssetTable: Component<{ account_identity: number; }> = ({ account_identity }) => (
