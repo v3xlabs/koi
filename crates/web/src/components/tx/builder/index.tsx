@@ -65,6 +65,17 @@ export type BuilderTx = BuilderTxRaw
   | BuilderTxWithdraw
   | BuilderTxSwap;
 
+export const TX_TYPE_META = {
+    send: { name: "Send" },
+    swap: { name: "Swap" },
+    deposit: { name: "Deposit" },
+    withdraw: { name: "Withdraw" },
+    approve: { name: "Approve" },
+    wrap: { name: "Wrap" },
+    unwrap: { name: "Unwrap" },
+    raw: { name: "Raw" },
+} as const satisfies Record<BuilderTx["type"], { name: string; }>;
+
 export const TX_PRESETS = [
     {
         type: "send",
