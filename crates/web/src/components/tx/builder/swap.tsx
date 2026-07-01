@@ -1,11 +1,11 @@
 import { createForm } from "@tanstack/solid-form";
 import { createEffect, For } from "solid-js";
 
-import { FormAmountField, FormAssetSelectField } from "#/components/input/field";
+import { FormAmountField, FormAssetSelectField, FormCombinedAssetAmountField } from "#/components/input/field";
 
 type BuilderData = {
-    tokenIn: string;
-    tokenOut: string;
+    assetIn: string;
+    assetOut: string;
     amountIn: string;
     amountOutMin: string;
     slippage: string;
@@ -27,8 +27,8 @@ const SWAP_PROVIDERS = [
 export const TxSwapBuilder = (props: Props) => {
     const form = createForm(() => ({
         defaultValues: {
-            tokenIn: props.data.tokenIn ?? "",
-            tokenOut: props.data.tokenOut ?? "",
+            assetIn: props.data.assetIn ?? "",
+            assetOut: props.data.assetOut ?? "",
             amountIn: props.data.amountIn ?? "",
             slippage: props.data.slippage ?? "0.5",
             amountOutMin: props.data.amountOutMin ?? "",
@@ -41,9 +41,9 @@ export const TxSwapBuilder = (props: Props) => {
         const values = form.state.values;
         const cleaned: Partial<BuilderData> = {};
 
-        if (values.tokenIn) cleaned.tokenIn = values.tokenIn;
+        if (values.assetIn) cleaned.assetIn = values.assetIn;
 
-        if (values.tokenOut) cleaned.tokenOut = values.tokenOut;
+        if (values.assetOut) cleaned.assetOut = values.assetOut;
 
         if (values.amountIn) cleaned.amountIn = values.amountIn;
 
@@ -60,30 +60,25 @@ export const TxSwapBuilder = (props: Props) => {
         <div class="space-y-4">
             <div class="text-lg font-bold">Swap</div>
             <form class="space-y-4">
-                <form.Field name="tokenIn">
-                    {field => <FormAssetSelectField field={field} label="From Token" networkIdentity={props.networkIdentity} />}
-                </form.Field>
-                <form.Field name="tokenOut">
-                    {field => <FormAssetSelectField field={field} label="To Token" networkIdentity={props.networkIdentity} />}
-                </form.Field>
-                <form.Field name="amountIn">
-                    {field => (
-                        <FormAmountField
-                          field={field}
-                          label="Amount"
-                          placeholder="0.0"
-                        />
+                <form.Field name="assetIn">
+                    {assetInField => (
+                        <form.Field name="amountIn">
+                            {amountInField => (
+                                <FormCombinedAssetAmountField
+                                  amountField={amountInField}
+                                  assetField={assetInField}
+                                  label="You pay"
+                                  networkIdentity={props.networkIdentity}
+                                  accountIdentity={props.accountIdentity}
+                                />
+                            )}
+                        </form.Field>
                     )}
                 </form.Field>
-                <form.Field name="slippage">
-                    {field => (
-                        <FormAmountField
-                          field={field}
-                          label="Slippage %"
-                          placeholder="0.5"
-                        />
-                    )}
+                <form.Field name="assetOut">
+                    {field => <FormAssetSelectField field={field} label="You receive" networkIdentity={props.networkIdentity} />}
                 </form.Field>
+
                 <div class="space-y-1">
                     <label class="space-y-1 block">
                         <span class="block">Provider</span>
@@ -102,6 +97,15 @@ export const TxSwapBuilder = (props: Props) => {
                         </select>
                     </label>
                 </div>
+                <form.Field name="slippage">
+                    {field => (
+                        <FormAmountField
+                          field={field}
+                          label="Slippage %"
+                          placeholder="0.5"
+                        />
+                    )}
+                </form.Field>
             </form>
         </div>
     );

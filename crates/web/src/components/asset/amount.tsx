@@ -1,7 +1,7 @@
 import { Accessor, Component, createMemo, Show } from "solid-js";
 
-import { usePrivacyMode } from "#/api/context";
 import { useAsset } from "#/api/asset";
+import { usePrivacyMode } from "#/api/context";
 import { PRIVATE_AMOUNT } from "#/utils/privacy";
 import { formatAmountParts } from "#/utils/units";
 

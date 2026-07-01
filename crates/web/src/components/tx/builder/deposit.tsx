@@ -1,15 +1,13 @@
 import { createForm } from "@tanstack/solid-form";
-import { createEffect, createSignal, useContext } from "solid-js";
-import { formatUnits, isAddress } from "viem";
+import { createEffect, createSignal } from "solid-js";
+import { isAddress } from "viem";
 
-import { appcontext } from "#/api";
-import { useAccountAssetBalance } from "#/api/account";
-import { useAsset } from "#/api/asset";
 import { FormAddressField } from "#/components/account/form/address";
-import { FormAmountField, FormAssetSelectField } from "#/components/input/field";
+import { FormCombinedAssetAmountField } from "#/components/input/field";
 
 type BuilderData = {
     vault: string;
+    asset: string;
     amount: string;
 };
 
@@ -23,15 +21,14 @@ type Props = {
 };
 
 export const TxDepositBuilder = (props: Props) => {
-    const { displayCurrency: [displayCurrency] } = useContext(appcontext);
     const [currentDirection, setCurrentDirection] = createSignal(props.direction);
 
     const form = createForm(() => ({
         defaultValues: {
             vault: props.data.vault ?? "",
-            token: props.data.token ?? "",
+            asset: props.data.asset ?? "",
             amount: props.data.amount ?? "",
-        } as BuilderData & { token: string; },
+        } as BuilderData,
         onSubmit: async () => {},
     }));
 
@@ -45,31 +42,6 @@ export const TxDepositBuilder = (props: Props) => {
 
         props.onChange(cleaned);
     });
-
-    const tokenIdentity = () => form.state.values.token || "native:1";
-    const hasToken = () => !!form.state.values.token;
-
-    const tokenQuery = useAsset(
-        () => ({ path: { asset_identity: tokenIdentity() } }),
-        { enabled: hasToken() },
-    );
-    const balanceQuery = useAccountAssetBalance(
-        () => ({
-            path: { account_identity: props.accountIdentity, asset_identity: tokenIdentity() },
-            query: { display_currency: displayCurrency() },
-        }),
-        { enabled: hasToken() },
-    );
-
-    const balanceHuman = () => {
-        const b = balanceQuery.data?.balance;
-        const d = tokenQuery.data?.asset_decimals;
-        const s = tokenQuery.data?.asset_symbol;
-
-        if (!b || d === undefined) return undefined;
-
-        return { value: formatUnits(BigInt(b), d), symbol: s };
-    };
 
     return (
         <div class="space-y-4">
@@ -105,8 +77,20 @@ export const TxDepositBuilder = (props: Props) => {
                 </button>
             </div>
             <form class="space-y-4">
-                <form.Field name="token">
-                    {field => <FormAssetSelectField field={field} label="Vault Token" networkIdentity={props.networkIdentity} />}
+                <form.Field name="asset">
+                    {assetField => (
+                        <form.Field name="amount">
+                            {amountField => (
+                                <FormCombinedAssetAmountField
+                                  amountField={amountField}
+                                  assetField={assetField}
+                                  label="Vault Asset & Amount"
+                                  networkIdentity={props.networkIdentity}
+                                  accountIdentity={props.accountIdentity}
+                                />
+                            )}
+                        </form.Field>
+                    )}
                 </form.Field>
                 <form.Field
                   name="vault"
@@ -119,17 +103,6 @@ export const TxDepositBuilder = (props: Props) => {
                           field={field}
                           label="Vault Address"
                           placeholder="0x..."
-                        />
-                    )}
-                </form.Field>
-                <form.Field name="amount">
-                    {field => (
-                        <FormAmountField
-                          field={field}
-                          label="Amount"
-                          placeholder="0.0"
-                          balance={balanceHuman()?.value}
-                          balanceSymbol={balanceHuman()?.symbol}
                         />
                     )}
                 </form.Field>
