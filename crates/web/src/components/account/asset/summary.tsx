@@ -3,7 +3,7 @@ import { createQueries } from "@tanstack/solid-query";
 import { Link } from "@tanstack/solid-router";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
 import { FiChevronRight, FiChevronUp } from "solid-icons/fi";
-import { Component, createMemo, createSignal, For, Suspense } from "solid-js";
+import { Accessor, Component, createEffect, createMemo, createSignal, For, Suspense } from "solid-js";
 
 import { accountBalanceQuery, useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
@@ -16,8 +16,25 @@ import { AssetIcon } from "../../asset/icon";
 
 type Data = { asset: Asset; price: bigint | undefined; price_24h: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; };
 const helper = createColumnHelper<Data>();
+const skeletonRows = Array.from({ length: 3 });
+const skeletonBlock = {
+    action: { width: 80, height: 32, radius: 6, class: "skeleton" },
+    icon: { height: 32, circle: true, class: "skeleton" },
+    name: { width: 96, height: 16, radius: 4, class: "skeleton" },
+    symbol: { width: 64, height: 12, radius: 4, class: "skeleton" },
+    value: { width: 80, height: 16, radius: 4, class: "skeleton" },
+} as const;
 
-const columns = [
+const keepPreviousData: <T>(previousData: T | undefined) => T | undefined = previousData => previousData;
+
+const SkeletonBlock: Component<{ variant: keyof typeof skeletonBlock; }> = props => (
+    <Skeleton
+      visible
+      {...skeletonBlock[props.variant]}
+    />
+);
+
+const createColumns = (quoteCurrency: Accessor<string>) => [
     helper.accessor("asset.asset_name", {
         header: "Name",
         cell: ({ row }) => {
@@ -47,7 +64,6 @@ const columns = [
     helper.accessor("value", {
         header: "Value",
         cell: ({ row }) => {
-            const { displayCurrency } = useDisplayCurrency();
             const { privacyMode } = usePrivacyMode();
 
             const percentageChange = row.original.price && row.original.price_24h ? percentNumber(row.original.price - row.original.price_24h, row.original.price_24h) : undefined;
@@ -55,8 +71,8 @@ const columns = [
             return (
                 <div class="space-y-1 items-end flex flex-col justify-end">
                     <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md">
-                        <span class="tabular-nums" title={privateAmountTitle(privacyMode(), row.original.value === undefined ? undefined : formatAmount(row.original.value, { precision: 2, decimals: 6, currency: displayCurrency() }))}>
-                            {row.original.value === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() }))}
+                        <span class="tabular-nums" title={privateAmountTitle(privacyMode(), row.original.value === undefined ? undefined : formatAmount(row.original.value, { precision: 2, decimals: 6, currency: quoteCurrency() }))}>
+                            {row.original.value === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: quoteCurrency() }))}
                         </span>
                     </Skeleton>
                     <div class="">
@@ -97,8 +113,18 @@ const AccountAssetSummaryInner: Component<{ account_identity: number; }> = ({ ac
     }));
 
     const { displayCurrency } = useDisplayCurrency();
-    const accountBalancesQuery = useAccountBalances(() => accountBalanceQuery(account_identity, displayCurrency()));
+    const accountBalancesQuery = useAccountBalances(
+        () => accountBalanceQuery(account_identity, displayCurrency()),
+        { placeholderData: keepPreviousData },
+    );
+    const [quoteCurrency, setQuoteCurrency] = createSignal(displayCurrency());
     const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
+
+    createEffect(() => {
+        if (accountBalancesQuery.data && !accountBalancesQuery.isPlaceholderData) {
+            setQuoteCurrency(displayCurrency());
+        }
+    });
 
     const data = createMemo(() => bulk.flatMap((asset): Data[] => {
         if (!asset.data) return [];
@@ -123,7 +149,7 @@ const AccountAssetSummaryInner: Component<{ account_identity: number; }> = ({ ac
     const [sorting, setSorting] = createSignal<SortingState>([{ id: "value", desc: false }]);
 
     const table = createSolidTable({
-        columns,
+        columns: createColumns(quoteCurrency),
         get data() {
             return data();
         },
@@ -204,6 +230,36 @@ const AccountAssetSummaryInner: Component<{ account_identity: number; }> = ({ ac
 const AccountAssetSummarySkeleton: Component = () => (
     <div class="bg-surface px-6 py-2.5 rounded-md w-full">
         <div class="flex justify-between items-center">
+            <div class="text-sm text-muted font-bold">
+                Asset overview
+            </div>
+            <SkeletonBlock variant="action" />
+        </div>
+        <div class="-mx-2.5 overflow-x-clip">
+            <table class="w-full">
+                <tbody class="w-full">
+                    <For each={skeletonRows}>
+                        {() => (
+                            <tr class="relative after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px not-last:after:bg-border">
+                                <td class="pl-5 -ml-2.5 -translate-x-2.5">
+                                    <div class="flex items-center gap-2.5 py-3.5">
+                                        <SkeletonBlock variant="icon" />
+                                        <div class="space-y-1.5">
+                                            <SkeletonBlock variant="name" />
+                                            <SkeletonBlock variant="symbol" />
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="pr-5 -mr-2.5 translate-x-2.5">
+                                    <div class="flex justify-end">
+                                        <SkeletonBlock variant="value" />
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
+                    </For>
+                </tbody>
+            </table>
         </div>
     </div>
 );

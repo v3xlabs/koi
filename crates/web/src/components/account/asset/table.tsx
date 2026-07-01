@@ -4,7 +4,7 @@ import { Link } from "@tanstack/solid-router";
 import { createColumnHelper, createSolidTable, flexRender, getCoreRowModel, getSortedRowModel, SortingState } from "@tanstack/solid-table";
 import { FaSolidRefresh } from "solid-icons/fa";
 import { FiArrowUpRight, FiChevronUp, FiPlus } from "solid-icons/fi";
-import { Component, createMemo, createSignal, For, Show, Suspense } from "solid-js";
+import { Accessor, Component, createEffect, createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
 import { accountBalanceQuery, refreshAccountBalances, useAccountAssets, useAccountBalances } from "#/api/account";
 import { Asset, useAsset } from "#/api/asset";
@@ -22,8 +22,32 @@ import { AccountAssetManage } from "./manage";
 
 type Data = { asset: Asset; price: bigint | undefined; price_24h: bigint | undefined; balance: bigint | undefined; value: bigint | undefined; weight: number | undefined; };
 const helper = createColumnHelper<Data>();
+const skeletonRows = Array.from({ length: 5 });
+const tableSkeletonColumns = ["Name", "Price", "Balance", "Weight", "Value", "Actions"];
+const skeletonBlock = {
+    action: { width: 32, height: 32, radius: 6, class: "skeleton" },
+    balance: { width: 80, height: 16, radius: 4, class: "skeleton" },
+    currency: { width: 128, height: 32, radius: 6, class: "skeleton" },
+    icon: { height: 32, circle: true, class: "skeleton" },
+    manage: { width: 104, height: 32, radius: 6, class: "skeleton" },
+    name: { width: 112, height: 16, radius: 4, class: "skeleton" },
+    price: { width: 64, height: 16, radius: 4, class: "skeleton" },
+    symbol: { width: 56, height: 12, radius: 4, class: "skeleton" },
+    timestamp: { width: 96, height: 20, radius: 4, class: "skeleton" },
+    total: { width: 128, height: 32, class: "skeleton mt-1" },
+    weight: { width: 48, height: 16, radius: 4, class: "skeleton" },
+} as const;
 
-const createColumns = (account_identity: number) => [
+const keepPreviousData: <T>(previousData: T | undefined) => T | undefined = previousData => previousData;
+
+const SkeletonBlock: Component<{ variant: keyof typeof skeletonBlock; }> = props => (
+    <Skeleton
+      visible
+      {...skeletonBlock[props.variant]}
+    />
+);
+
+const createColumns = (account_identity: number, quoteCurrency: Accessor<string>) => [
     helper.accessor("asset.asset_name", {
         header: "Name",
         cell: ({ row }) => (
@@ -43,24 +67,16 @@ const createColumns = (account_identity: number) => [
     helper.accessor("price", {
         header: "Price",
         cell: ({ row }) => {
-            const { displayCurrency } = useDisplayCurrency();
             const { privacyMode } = usePrivacyMode();
 
             return (
                 <div class="flex items-center gap-2 py-3.5">
                     <span class="min-w-4">
-                        <Show
-                          when={row.original.price !== undefined}
-                          fallback={(
-                                <span class="text-muted">
-                                    ---
-                                </span>
-                            )}
-                        >
-                            <span class="tabular-nums" title={privateAmountTitle(privacyMode(), row.original.price === undefined ? undefined : formatAmount(row.original.price, { decimals: 6, precision: 2, currency: displayCurrency() }))}>
-                                {row.original.price === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.price, { decimals: 6, precision: 2, notation: "compact", currency: displayCurrency() }))}
+                        <Skeleton visible={row.original.price === undefined} class="skeleton min-w-16 inline-block text-right">
+                            <span class="tabular-nums" title={privateAmountTitle(privacyMode(), row.original.price === undefined ? undefined : formatAmount(row.original.price, { decimals: 6, precision: 2, currency: quoteCurrency() }))}>
+                                {row.original.price === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.price, { decimals: 6, precision: 2, notation: "compact", currency: quoteCurrency() }))}
                             </span>
-                        </Show>
+                        </Skeleton>
                     </span>
                 </div>
             );
@@ -101,27 +117,17 @@ const createColumns = (account_identity: number) => [
     helper.accessor("value", {
         header: "Value",
         cell: ({ row }) => {
-            const { displayCurrency } = useDisplayCurrency();
             const { privacyMode } = usePrivacyMode();
 
             const percentageChange = row.original.price && row.original.price_24h ? percentNumber(row.original.price - row.original.price_24h, row.original.price_24h) : undefined;
 
             return (
                 <div class="space-y-1 items-end flex flex-col justify-end">
-                    {/* <Skeleton visible={row.original.price === undefined || row.original.balance === undefined} class="skeleton max-w-24 max-h-4 text-end rounded-md"> */}
-                    <Show
-                      when={row.original.value !== undefined}
-                      fallback={(
-                            <span>
-                                -
-                            </span>
-                        )}
-                    >
+                    <Skeleton visible={row.original.value === undefined} class="skeleton min-w-20 inline-block text-right">
                         <span class="tabular-nums">
-                            {row.original.value === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: displayCurrency() }))}
+                            {row.original.value === undefined ? "-" : privateAmount(privacyMode(), formatAmount(row.original.value, { precision: 2, decimals: 6, notation: "compact", currency: quoteCurrency() }))}
                         </span>
-                    </Show>
-                    {/* </Skeleton> */}
+                    </Skeleton>
                     <div class="">
                         <span classList={{
                             "text-xs flex items-center gap-0.5": true,
@@ -175,7 +181,11 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
         queries: assetQueries(),
     }));
 
-    const accountBalancesQuery = useAccountBalances(() => accountBalanceQuery(account_identity, displayCurrency()));
+    const accountBalancesQuery = useAccountBalances(
+        () => accountBalanceQuery(account_identity, displayCurrency()),
+        { placeholderData: keepPreviousData },
+    );
+    const [quoteCurrency, setQuoteCurrency] = createSignal(displayCurrency());
     const balances = createMemo(() => accountBalancesQuery.data?.balances ?? []);
     const [refreshingBalances, setRefreshingBalances] = createSignal(false);
     const [manageOpen, setManageOpen] = createSignal(false);
@@ -224,6 +234,12 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
         }
     };
 
+    createEffect(() => {
+        if (accountBalancesQuery.data && !accountBalancesQuery.isPlaceholderData) {
+            setQuoteCurrency(displayCurrency());
+        }
+    });
+
     const totalValue = createMemo(() => BigInt(accountBalancesQuery.data?.total_quote ?? 0));
 
     const data = createMemo(() => bulk.flatMap((asset): Data[] => {
@@ -247,7 +263,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
     const [sorting, setSorting] = createSignal<SortingState>([{ id: "value", desc: false }]);
 
     const table = createSolidTable({
-        columns: createColumns(account_identity),
+        columns: createColumns(account_identity, quoteCurrency),
         get data() {
             return data();
         },
@@ -272,7 +288,7 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                     <div class="text-2xl">
                         <AssetAmount
                           amount={() => totalValue()}
-                          asset={displayCurrency}
+                          asset={quoteCurrency}
                         />
                     </div>
                 </div>
@@ -383,26 +399,6 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
                             </tr>
                         </Show>
                     </tbody>
-                    <tfoot>
-                        <For each={table.getFooterGroups()}>
-                            {footerGroup => (
-                                <tr>
-                                    <For each={footerGroup.headers}>
-                                        {header => (
-                                            <th>
-                                                {header.isPlaceholder
-                                                    ? null
-                                                    : flexRender(
-                                                        header.column.columnDef.footer,
-                                                        header.getContext(),
-                                                    )}
-                                            </th>
-                                        )}
-                                    </For>
-                                </tr>
-                            )}
-                        </For>
-                    </tfoot>
                 </table>
             </div>
         </div>
@@ -410,8 +406,86 @@ const AccountAssetTableInner: Component<{ account_identity: number; }> = ({ acco
 };
 
 const AccountAssetTableSkeleton: Component = () => (
-    <div class="bg-surface px-6 py-2.5 rounded-md w-full">
+    <div class="w-full space-y-4">
         <div class="flex justify-between items-center">
+            <div>
+                <div class="text-sm text-muted font-bold">Total assets value</div>
+                <div class="text-2xl">
+                    <SkeletonBlock variant="total" />
+                </div>
+            </div>
+            <div>
+                <div class="flex items-center gap-2 justify-end">
+                    <div class="text-muted text-sm flex items-center gap-2">
+                        <SkeletonBlock variant="timestamp" />
+                        <SkeletonBlock variant="action" />
+                    </div>
+                    <SkeletonBlock variant="manage" />
+                    <SkeletonBlock variant="currency" />
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface px-4 py-2.5 rounded-md w-full">
+            <table class="w-full">
+                <thead class="border-b border-border">
+                    <tr>
+                        <For each={tableSkeletonColumns}>
+                            {(column, index) => (
+                                <th classList={{
+                                    "pb-2.5 py-0.5": true,
+                                    "text-left": index() === 0,
+                                    "text-right": index() !== 0,
+                                }}
+                                >
+                                    {column}
+                                </th>
+                            )}
+                        </For>
+                    </tr>
+                </thead>
+                <tbody>
+                    <For each={skeletonRows}>
+                        {() => (
+                            <tr class="relative after:absolute after:bottom-0 after:left-2.5 after:right-2.5 after:h-px not-last:after:bg-border">
+                                <td class="pl-5 -ml-2.5 -translate-x-2.5">
+                                    <div class="flex items-center gap-3 py-3.5">
+                                        <SkeletonBlock variant="icon" />
+                                        <div class="space-y-1.5">
+                                            <SkeletonBlock variant="name" />
+                                            <SkeletonBlock variant="symbol" />
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex justify-end">
+                                        <SkeletonBlock variant="price" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex justify-end">
+                                        <SkeletonBlock variant="balance" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex justify-end">
+                                        <SkeletonBlock variant="weight" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex justify-end">
+                                        <SkeletonBlock variant="balance" />
+                                    </div>
+                                </td>
+                                <td class="pr-5 -mr-2.5 translate-x-2.5">
+                                    <div class="flex justify-end">
+                                        <SkeletonBlock variant="action" />
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
+                    </For>
+                </tbody>
+            </table>
         </div>
     </div>
 );
