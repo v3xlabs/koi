@@ -229,13 +229,12 @@ impl AccountApi {
         display_currency: Query<AssetIdentity>,
     ) -> Result<Json<AccountBalance>> {
         let _auth_data = auth.unwrap()?;
-        let _display_currency = display_currency;
 
         let account = Account::get_by_id(&state.database, account_identity.0).await?;
 
         Ok(Json(
             account
-                .fetch_asset_balance(&state, &asset_identity.0)
+                .fetch_asset_balance(&state, &asset_identity.0, &display_currency.0)
                 .await?,
         ))
     }

@@ -1,6 +1,8 @@
 import { AnyFieldApi } from "@tanstack/solid-form";
 import { Accessor, Component, JSX, Show } from "solid-js";
 
+import { AssetSelect } from "#/components/asset/select";
+
 type FormFieldProps = {
     field: Accessor<AnyFieldApi>;
     label: string;
@@ -89,3 +91,84 @@ export const FormNumberField: Component<FormNumberFieldProps> = props => (
         )}
     </FormField>
 );
+
+type FormAssetSelectFieldProps = {
+    field: Accessor<AnyFieldApi>;
+    label: string;
+    networkIdentity?: number;
+};
+
+export const FormAssetSelectField: Component<FormAssetSelectFieldProps> = (props) => {
+    const state = () => props.field().state;
+    const value = () => state().value as string;
+
+    return (
+        <label class="space-y-1 block">
+            <AssetSelect
+              label={props.label}
+              value={value}
+              networkIdentity={props.networkIdentity}
+              onChange={v => props.field().handleChange(v)}
+            />
+            <Show when={state().meta.isTouched && state().meta.errors.length > 0}>
+                <span class="text-sm text-red-500" role="alert">
+                    {state().meta.errors.join(", ")}
+                </span>
+            </Show>
+        </label>
+    );
+};
+
+type FormAmountFieldProps = {
+    field: Accessor<AnyFieldApi>;
+    label: string;
+    placeholder?: string;
+    balance?: string;
+    balanceSymbol?: string;
+};
+
+export const FormAmountField: Component<FormAmountFieldProps> = (props) => {
+    const state = () => props.field().state;
+    const value = () => state().value as string;
+
+    return (
+        <FormField field={props.field} label={props.label}>
+            {field => (
+                <div class="space-y-1">
+                    <input
+                      type="text"
+                      class="input w-full"
+                      placeholder={props.placeholder ?? "0.0"}
+                      value={value()}
+                      onInput={(e) => {
+                            const raw = e.target.value;
+
+                            if (raw === "" || /^\d*\.?\d*$/.test(raw)) {
+                                field().handleChange(raw);
+                            }
+                        }}
+                      onBlur={field().handleBlur}
+                    />
+                    <Show when={props.balance !== undefined}>
+                        <div class="flex justify-between items-center text-xs text-muted">
+                            <span>
+                                Balance:
+{" "}
+{props.balance}
+{" "}
+{props.balanceSymbol ?? ""}
+                            </span>
+                            <button
+                              type="button"
+                              class="text-primary font-medium hover:underline cursor-pointer"
+                              onClick={() => field().handleChange(props.balance ?? "0")}
+                            >
+                                Max
+                            </button>
+                        </div>
+                    </Show>
+                </div>
+            )}
+        </FormField>
+    );
+};

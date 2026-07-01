@@ -11,6 +11,7 @@ type AssetSelectProps = {
     label: string;
     value: Accessor<string>;
     onChange: (value: string) => void;
+    networkIdentity?: number;
 };
 
 type AssetGroup = {
@@ -35,7 +36,21 @@ const assetGroup = (asset: Asset): Omit<AssetGroup, "options"> => {
 
 export const AssetSelect: Component<AssetSelectProps> = (props) => {
     const assetsQuery = useAssets();
-    const assets = createMemo(() => assetsQuery.data?.assets ?? []);
+    const assets = createMemo(() => {
+        const all = assetsQuery.data?.assets ?? [];
+
+        if (props.networkIdentity === undefined) return all;
+
+        const networkId = props.networkIdentity.toString();
+
+        return all.filter((asset) => {
+            const [kind, chainId] = asset.asset_identity.split(":");
+
+            if (kind === "fiat") return false;
+
+            return chainId === networkId;
+        });
+    });
     const assetGroups = createMemo(() => {
         const groups = new Map<string, AssetGroup>();
 
