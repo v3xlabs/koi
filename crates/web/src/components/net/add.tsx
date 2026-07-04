@@ -4,6 +4,7 @@ import { createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
 import { Network, useCreateNetwork, useNetworkPresets, useNetworks } from "#/api/network";
 import { button } from "#/components/input/button";
+import { cacheImageUrl } from "#/utils/image-cache";
 
 import { NetworkIconSuggestions } from "./discovery";
 
@@ -76,7 +77,7 @@ export const NetworkAdd = () => {
                                             <div class="input w-full flex items-center gap-3 px-3">
                                                 <div class="size-8 shrink-0 flex items-center justify-center rounded-full bg-surface-alt overflow-hidden">
                                                     <Show when={iconUrl()}>
-                                                        {icon => <img src={icon()} alt={name() || "Network icon"} class="size-6 aspect-square rounded-full" />}
+                                                        {icon => <img src={cacheImageUrl(icon())} alt={name() || "Network icon"} class="size-6 aspect-square rounded-full" />}
                                                     </Show>
                                                 </div>
                                                 <input
@@ -118,7 +119,7 @@ export const NetworkAdd = () => {
                                                 <li class="w-full">
                                                     <button class={button({ variant: "secondary", class: "w-full justify-start" })} onClick={() => createNetwork.mutate({ data: preset })}>
                                                         <Show when={preset.network_icon_url}>
-                                                            {icon => <img src={icon()} alt={preset.network_name} class="size-4 aspect-square" />}
+                                                            {icon => <img src={cacheImageUrl(icon())} alt={preset.network_name} class="size-4 aspect-square" />}
                                                         </Show>
                                                         <span>
                                                             {preset.network_name}

@@ -1,6 +1,7 @@
 import { Component, createMemo, Show } from "solid-js";
 
 import { Asset, useAsset } from "#/api/asset";
+import { cacheImageUrl } from "#/utils/image-cache";
 
 type AssetIconProps = { asset: Asset; class?: string; } | { asset_identity: string; class?: string; };
 
@@ -25,7 +26,7 @@ export const AssetIconImage: Component<{ asset?: Asset; class?: string; }> = pro
     >
         {icon => (
             <img
-              src={icon()}
+              src={cacheImageUrl(icon())}
               alt={props.asset?.asset_name}
               classList={{
                     [props.class ?? "size-6"]: true,

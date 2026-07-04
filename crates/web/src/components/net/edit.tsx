@@ -3,6 +3,7 @@ import { Component, createMemo, For, Show, Suspense } from "solid-js";
 
 import { useNetwork, useNetworkEndpoints } from "#/api/network";
 import { button } from "#/components/input/button";
+import { cacheImageUrl } from "#/utils/image-cache";
 
 import { NetworkDelete } from "./delete";
 import { NetworkEndpointAdd } from "./endpoint/add";
@@ -65,7 +66,7 @@ export const NetworkEdit: Component<{ network_identity: number; embedded?: boole
                 <div class="flex justify-between items-end">
                     <div class="flex items-center gap-2 px-1 pb-2 pt-1">
                         <Show when={network()?.network_icon_url}>
-                            {icon => <img src={icon()} alt={network()?.network_name} class="size-4 aspect-square rounded-full" />}
+                            {icon => <img src={cacheImageUrl(icon())} alt={network()?.network_name} class="size-4 aspect-square rounded-full" />}
                         </Show>
                         <div class="flex items-baseline gap-1">
                             <span>{network()?.network_name}</span>
@@ -119,7 +120,7 @@ export const NetworkEdit: Component<{ network_identity: number; embedded?: boole
                                     <div class="input w-full flex items-center gap-3 px-3">
                                         <div class="size-8 shrink-0 flex items-center justify-center rounded-full bg-surface-alt overflow-hidden">
                                             <Show when={network()?.network_icon_url}>
-                                                {icon => <img src={icon()} alt={network()?.network_name} class="size-8 aspect-square rounded-full" />}
+                                                {icon => <img src={cacheImageUrl(icon())} alt={network()?.network_name} class="size-8 aspect-square rounded-full" />}
                                             </Show>
                                         </div>
                                         <input

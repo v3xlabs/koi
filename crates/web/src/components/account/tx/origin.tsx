@@ -1,5 +1,6 @@
 import { Component, createMemo, Match, Show, Switch } from "solid-js";
 
+import { cacheImageUrl } from "#/utils/image-cache";
 import { narrow } from "#/utils/narrow";
 
 import { TxField } from "./value";
@@ -71,7 +72,7 @@ export const TxOrigin: Component<{ origin: string; }> = (props) => {
       <Show when={knownOrigin()}>
         {known => (
           <div class="flex items-center gap-2">
-            <img src={known().icon} alt={known().name} class="size-5 rounded" />
+            <img src={cacheImageUrl(known().icon)} alt={known().name} class="size-5 rounded" />
             <div>
               <div class="text-sm font-medium">{known().name}</div>
             </div>

@@ -5,6 +5,7 @@ import { For, Show } from "solid-js";
 
 import { useNetworks } from "#/api/network";
 import { button } from "#/components/input/button";
+import { cacheImageUrl } from "#/utils/image-cache";
 
 export const NetworkWidget = () => {
     const networksQuery = useNetworks();
@@ -21,7 +22,7 @@ export const NetworkWidget = () => {
                             <li>
                                 <button class={button({ variant: "ghost", class: "w-full justify-start text-sm" })}>
                                     <Show when={network.network_icon_url}>
-                                        {icon => <img src={icon()} alt={network.network_name} class="size-4 aspect-square rounded-full" />}
+                                        {icon => <img src={cacheImageUrl(icon())} alt={network.network_name} class="size-4 aspect-square rounded-full" />}
                                     </Show>
                                     {network.network_name}
                                 </button>
