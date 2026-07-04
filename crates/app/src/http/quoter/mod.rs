@@ -76,7 +76,10 @@ impl QuoterApi {
 
         let quoter = Quoter::insert(&state.database, payload.0).await?;
 
-        state.quoters.build_graph(&state.database).await?;
+        state
+            .quoters
+            .build_graph(&state.database, &state.vendors)
+            .await?;
 
         Ok(Json(quoter))
     }
@@ -100,7 +103,10 @@ impl QuoterApi {
 
         let quoter = Quoter::update(&state.database, &quoter_identity, payload.0).await?;
 
-        state.quoters.build_graph(&state.database).await?;
+        state
+            .quoters
+            .build_graph(&state.database, &state.vendors)
+            .await?;
 
         Ok(Json(quoter))
     }

@@ -2634,7 +2634,7 @@ export type components = {
             pool_address: string;
         };
         /** @enum {string} */
-        VendorFlag: "avara_asset_icons" | "zerion_asset_icons" | "smoldapp_asset_icons" | "smoldapp_network_icons" | "safewallet_network_icons" | "safewallet_asset_icons" | "safewallet_transactions_api" | "etherscan_asset_icons" | "etherscan_link_tx_hash" | "etherscan_link_address" | "etherscan_link_block" | "etherscan_link_contracts" | "blockscout_asset_icons" | "blockscout_link_tx_hash" | "blockscout_link_address" | "blockscout_link_block" | "blockscout_link_contracts";
+        VendorFlag: "ecb_quoter" | "avara_asset_icons" | "zerion_asset_icons" | "smoldapp_asset_icons" | "smoldapp_network_icons" | "safewallet_network_icons" | "safewallet_asset_icons" | "safewallet_transactions_api" | "etherscan_asset_icons" | "etherscan_link_tx_hash" | "etherscan_link_address" | "etherscan_link_block" | "etherscan_link_contracts" | "blockscout_asset_icons" | "blockscout_link_tx_hash" | "blockscout_link_address" | "blockscout_link_block" | "blockscout_link_contracts";
         /** VendorFlagInfo */
         VendorFlagInfo: {
             flag: components["schemas"]["VendorFlag"];

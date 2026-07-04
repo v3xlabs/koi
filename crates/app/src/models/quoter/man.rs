@@ -14,6 +14,7 @@ use crate::{
     models::{
         asset::{Asset, identity::AssetIdentity},
         network::{Network, identity::NetworkIdentity},
+        vendor::{flags::VendorFlag, man::VendorManager},
     },
     state::{AppState, DB},
 };
@@ -56,7 +57,7 @@ pub struct QuoteOutput {
 }
 
 impl QuoterManager {
-    pub async fn init(database: &SqlitePool) -> Result<Self, KoiError> {
+    pub async fn init(database: &SqlitePool, vendors: &VendorManager) -> Result<Self, KoiError> {
         let quoters = query_as::<_, Quoter>("SELECT * FROM quoters")
             .fetch_all(database)
             .await?;
@@ -79,16 +80,22 @@ impl QuoterManager {
             cache,
         };
 
-        me.build_graph(database).await?;
+        me.build_graph(database, vendors).await?;
 
         Ok(me)
     }
 
-    pub async fn build_graph(&self, database: &DB) -> Result<(), KoiError> {
+    pub async fn build_graph(
+        &self,
+        database: &DB,
+        vendors: &VendorManager,
+    ) -> Result<(), KoiError> {
+        self.cache.invalidate_all();
+
         let networks = Network::all(database).await?;
 
         for network in networks {
-            self.build_network_graph(database, &network.network_identity)
+            self.build_network_graph(database, vendors, &network.network_identity)
                 .await?;
         }
 
@@ -98,6 +105,7 @@ impl QuoterManager {
     async fn build_network_graph(
         &self,
         database: &DB,
+        vendors: &VendorManager,
         network_identity: &NetworkIdentity,
     ) -> Result<(), KoiError> {
         info!("Building graph for network {}", network_identity);
@@ -110,7 +118,10 @@ impl QuoterManager {
             .map(|x| x.try_into())
             .collect::<Result<Vec<_>, _>>()?;
 
-        let graph = Router::from_iter(quoters).with_ecb();
+        let mut graph = Router::from_iter(quoters);
+        if vendors.has_flag(VendorFlag::EcbQuoter) {
+            graph = graph.with_ecb();
+        }
 
         info!("Graph {}", graph.to_graphviz());
 

@@ -16,6 +16,9 @@ use tracing::info;
 #[serde(rename_all = "snake_case")]
 #[oai(rename_all = "snake_case")]
 pub enum VendorFlag {
+    #[strum(props(comment = "ECB Fiat Price Feed"))]
+    EcbQuoter,
+
     #[strum(props(comment = "Asset Icon Discovery"))]
     AvaraAssetIcons,
 
@@ -90,6 +93,10 @@ impl Display for VendorFlag {
 }
 
 impl VendorFlag {
+    pub fn touches_routing(&self) -> bool {
+        matches!(self, Self::EcbQuoter)
+    }
+
     pub fn all() -> Vec<VendorFlagInfo> {
         Self::iter()
             .map(|flag| VendorFlagInfo {

@@ -67,6 +67,12 @@ impl VendorApi {
     ) -> Result<Json<()>> {
         let _auth_data = auth.unwrap()?;
         state.vendors.set_flag(&flag, true, &state.database).await?;
+        if flag.touches_routing() {
+            state
+                .quoters
+                .build_graph(&state.database, &state.vendors)
+                .await?;
+        }
 
         Ok(Json(()))
     }
@@ -87,6 +93,12 @@ impl VendorApi {
             .vendors
             .set_flag(&flag, false, &state.database)
             .await?;
+        if flag.touches_routing() {
+            state
+                .quoters
+                .build_graph(&state.database, &state.vendors)
+                .await?;
+        }
 
         Ok(Json(()))
     }
