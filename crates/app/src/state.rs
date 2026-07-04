@@ -8,7 +8,7 @@ use crate::{
     db::{SkipMigrations, connect},
     error::KoiError,
     models::{
-        abi::AbiManager, account::balance_cache::BalanceCacheManager,
+        abi::AbiManager, account::balance_cache::BalanceCacheManager, image_cache::ImageCache,
         network::manager::NetworkManager, quoter::man::QuoterManager, vendor::man::VendorManager,
     },
 };
@@ -25,6 +25,7 @@ pub struct State {
     pub balances: BalanceCacheManager,
     pub vendors: VendorManager,
     pub abis: AbiManager,
+    pub images: ImageCache,
 }
 
 impl State {
@@ -39,6 +40,7 @@ impl State {
         let quoters = QuoterManager::init(&database).await?;
         let balances = BalanceCacheManager::new();
         let abis = AbiManager::new(config.abi_cache_dir.clone().into());
+        let images = ImageCache::new(config.image_cache_dir.clone().into());
 
         Ok(Arc::new(State {
             networks,
@@ -48,6 +50,7 @@ impl State {
             abis,
             database,
             config,
+            images,
         }))
     }
 
