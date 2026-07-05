@@ -92,6 +92,15 @@ impl QuoterManager {
     ) -> Result<(), KoiError> {
         self.cache.invalidate_all();
 
+        let mut fiat_graph = Router::default();
+        if vendors.has_flag(VendorFlag::EcbQuoter) {
+            fiat_graph = fiat_graph.with_ecb();
+        }
+        self.graph
+            .lock()
+            .expect("graph mutex poisoned")
+            .insert(NetworkIdentity(0), fiat_graph);
+
         let networks = Network::all(database).await?;
 
         for network in networks {
@@ -225,6 +234,14 @@ impl QuoterManager {
         amount_in: U256,
     ) -> Result<U256, KoiError> {
         let route = self.route(network_identity, asset_in, asset_out)?;
+        if network_identity == &NetworkIdentity(0) {
+            let network = NetworkTime::with_fiat_now().instant();
+            return route
+                .quote(&network, amount_in)
+                .await
+                .map_err(KoiError::from);
+        }
+
         let provider = state
             .networks
             .get_pool(network_identity)
