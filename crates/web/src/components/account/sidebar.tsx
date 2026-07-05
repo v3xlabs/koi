@@ -8,6 +8,7 @@ import { useAccount } from "#/api/account";
 import { button } from "../input/button";
 import { AccountSwitcher } from "../navbar/account-switcher";
 import { Branding } from "../navbar/branding";
+import { sidebarBrandingActive } from "../sidebar/left";
 
 const NavLink: Component<{ href: string; icon?: Component; children: JSXElement; }> = ({ href, icon, children }) => (
     <Link
@@ -29,7 +30,9 @@ export const AccountSidebar = () => {
 
     return (
         <div class="px-4 py-2 w-screen max-w-64 h-full space-y-2 flex flex-col">
-            <Branding />
+            <Show when={!sidebarBrandingActive()}>
+                <Branding />
+            </Show>
             <div class="space-y-2">
                 <AccountSwitcher />
             </div>
@@ -88,9 +91,6 @@ export const AccountSidebar = () => {
                         </div>
                     )}
                 </For>
-            </div>
-            <div>
-                ... last synced
             </div>
         </div>
     );
