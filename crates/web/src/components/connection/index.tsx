@@ -63,7 +63,7 @@ export const ConnectionButton = () => {
             <Popover.Trigger class="nav-icon-button relative">
                 <FaSolidChain class={(connections.data?.connections.length ?? 0) > 0 ? "text-primary-foreground" : "text-muted"} />
                 <Show when={(connections.data?.connections.length ?? 0) > 0}>
-                    <div class="absolute bottom-1.5 right-1.5 text-muted text-xs bg-surface-alt rounded-full px-1.5 py-0.5 flex items-center justify-center">
+                    <div class="absolute bottom-[-0.3em] right-[-0.3em] text-muted text-xs bg-surface-alt rounded-full px-1.5 py-0.5 flex items-center justify-center">
                         {connections.data?.connections.length}
                     </div>
                 </Show>
