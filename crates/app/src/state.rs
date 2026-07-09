@@ -11,6 +11,7 @@ use crate::{
         abi::AbiManager, account::balance_cache::BalanceCacheManager,
         connection::ConnectionManager, event::AppEventBus, network::manager::NetworkManager,
         quoter::man::QuoterManager, vendor::man::VendorManager,
+        wallet_request::WalletRequestManager,
     },
 };
 
@@ -27,6 +28,7 @@ pub struct State {
     pub vendors: VendorManager,
     pub abis: AbiManager,
     pub connections: ConnectionManager,
+    pub wallet_requests: WalletRequestManager,
     pub events: AppEventBus,
 }
 
@@ -43,7 +45,8 @@ impl State {
         let balances = BalanceCacheManager::new();
         let abis = AbiManager::new(config.abi_cache_dir.clone().into());
         let events = AppEventBus::new();
-        let connections = ConnectionManager::new(events.clone());
+        let wallet_requests = WalletRequestManager::new(database.clone(), events.clone());
+        let connections = ConnectionManager::new(events.clone(), wallet_requests.clone());
 
         Ok(Arc::new(State {
             networks,
@@ -52,6 +55,7 @@ impl State {
             vendors,
             abis,
             connections,
+            wallet_requests,
             events,
             database,
             config,
