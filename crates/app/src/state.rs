@@ -8,8 +8,9 @@ use crate::{
     db::{SkipMigrations, connect},
     error::KoiError,
     models::{
-        abi::AbiManager, account::balance_cache::BalanceCacheManager, event::AppEventBus,
-        network::manager::NetworkManager, quoter::man::QuoterManager, vendor::man::VendorManager,
+        abi::AbiManager, account::balance_cache::BalanceCacheManager,
+        connection::ConnectionManager, event::AppEventBus, network::manager::NetworkManager,
+        quoter::man::QuoterManager, vendor::man::VendorManager,
     },
 };
 
@@ -25,6 +26,7 @@ pub struct State {
     pub balances: BalanceCacheManager,
     pub vendors: VendorManager,
     pub abis: AbiManager,
+    pub connections: ConnectionManager,
     pub events: AppEventBus,
 }
 
@@ -41,6 +43,7 @@ impl State {
         let balances = BalanceCacheManager::new();
         let abis = AbiManager::new(config.abi_cache_dir.clone().into());
         let events = AppEventBus::new();
+        let connections = ConnectionManager::new(events.clone());
 
         Ok(Arc::new(State {
             networks,
@@ -48,6 +51,7 @@ impl State {
             balances,
             vendors,
             abis,
+            connections,
             events,
             database,
             config,

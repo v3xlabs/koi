@@ -76,6 +76,7 @@ sourcify = "0.0.4"
 moka = { version = "0.12.0", features = ["future"] }
 tower = "0.5.3"
 anyhow = "1"
+openlv = "0.0.2"
 
 [dev-dependencies]
 tempfile = "3"

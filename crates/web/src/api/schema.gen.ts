@@ -1962,6 +1962,150 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all OpenLV connections
+         * @description GET /api/connections
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["ConnectionsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create an OpenLV connection
+         * @description POST /api/connections
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["ConnectConnectionRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["FrontendConnection"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connections/{connection_id}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disconnect an OpenLV connection
+         * @description POST /api/connections/:connection_id/disconnect
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    connection_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["FrontendConnection"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connections/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove an OpenLV connection
+         * @description DELETE /api/connections/:connection_id
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    connection_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -2132,6 +2276,20 @@ export type components = {
         AssetsResponse: {
             assets: components["schemas"]["Asset"][];
         };
+        /** ConnectConnectionRequest */
+        ConnectConnectionRequest: {
+            url: string;
+            /** Format: uint64 */
+            account_identity: number;
+            /** Format: uint64 */
+            network_identity: number;
+        };
+        /** @enum {string} */
+        ConnectionStatus: "created" | "signaling" | "ready" | "linking" | "connected" | "disconnected";
+        /** ConnectionsResponse */
+        ConnectionsResponse: {
+            connections: components["schemas"]["FrontendConnection"][];
+        };
         /** DecodeTransactionRequest */
         DecodeTransactionRequest: {
             /** Format: address */
@@ -2275,6 +2433,16 @@ export type components = {
             token_in_decimals: number;
             /** Format: uint8 */
             token_out_decimals: number;
+        };
+        /** FrontendConnection */
+        FrontendConnection: {
+            /** Format: uuid */
+            connection_id: string;
+            status: components["schemas"]["ConnectionStatus"];
+            /** Format: uint64 */
+            account_identity: number;
+            /** Format: uint64 */
+            network_identity: number;
         };
         /** GenerateMnemonicResponse */
         GenerateMnemonicResponse: {

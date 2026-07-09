@@ -61,6 +61,7 @@ fn default_command() -> Commands {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    koi::install_crypto_provider();
 
     let args = std::env::args_os().collect::<Vec<_>>();
     let explicit_api = api_was_explicit(&args);
