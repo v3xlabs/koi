@@ -4602,6 +4602,7 @@ dependencies = [
  "koi-gui",
  "koi-tui",
  "reqwest 0.12.28",
+ "rustls",
  "tokio",
  "tracing",
  "tracing-subscriber",

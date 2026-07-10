@@ -14,14 +14,14 @@ use crate::models::{
 use crate::{error::KoiError, models::event::AppEventBus};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Object)]
-pub struct FrontendConnection {
+pub struct ActivateAppConnection {
     pub connection_id: Uuid,
     pub status: ConnectionStatus,
     pub account_identity: AccountIdentity,
     pub network_identity: NetworkIdentity,
 }
 
-struct BackendConnection {
+struct AppConnection {
     connection_id: Uuid,
     session: Arc<Session>,
     account_identity: AccountIdentity,
@@ -40,9 +40,9 @@ pub enum ConnectionStatus {
     Disconnected,
 }
 
-impl BackendConnection {
-    fn to_response(&self) -> FrontendConnection {
-        FrontendConnection {
+impl AppConnection {
+    fn to_response(&self) -> ActivateAppConnection {
+        ActivateAppConnection {
             connection_id: self.connection_id,
             status: self.session.state().status.into(),
             account_identity: self.account_identity.clone(),
@@ -52,7 +52,7 @@ impl BackendConnection {
 }
 
 pub struct ConnectionManager {
-    connections: RwLock<HashMap<Uuid, BackendConnection>>,
+    connections: RwLock<HashMap<Uuid, AppConnection>>,
     events: AppEventBus,
     requests: WalletRequestManager,
 }
@@ -66,12 +66,12 @@ impl ConnectionManager {
         }
     }
 
-    pub async fn all(&self) -> Vec<FrontendConnection> {
+    pub async fn all(&self) -> Vec<ActivateAppConnection> {
         self.connections
             .read()
             .await
             .values()
-            .map(BackendConnection::to_response)
+            .map(AppConnection::to_response)
             .collect()
     }
 
@@ -80,7 +80,7 @@ impl ConnectionManager {
         url: String,
         account_identity: AccountIdentity,
         network_identity: NetworkIdentity,
-    ) -> Result<FrontendConnection, KoiError> {
+    ) -> Result<ActivateAppConnection, KoiError> {
         let connection_id = Uuid::new_v4();
         let requests = self.requests.clone();
         let request_account = account_identity.clone();
@@ -105,7 +105,7 @@ impl ConnectionManager {
             .await?;
         session.connect().await?;
 
-        let connection = BackendConnection {
+        let connection = AppConnection {
             connection_id,
             account_identity,
             network_identity,
@@ -124,7 +124,7 @@ impl ConnectionManager {
         Ok(response)
     }
 
-    pub async fn disconnect(&self, connection_id: Uuid) -> Result<FrontendConnection, KoiError> {
+    pub async fn disconnect(&self, connection_id: Uuid) -> Result<ActivateAppConnection, KoiError> {
         self.session(connection_id).await?.close().await?;
         self.requests
             .reject_connection(connection_id, "Connection disconnected")
@@ -153,12 +153,12 @@ impl ConnectionManager {
         Ok(())
     }
 
-    async fn connection(&self, connection_id: Uuid) -> Result<FrontendConnection, KoiError> {
+    async fn connection(&self, connection_id: Uuid) -> Result<ActivateAppConnection, KoiError> {
         self.connections
             .read()
             .await
             .get(&connection_id)
-            .map(BackendConnection::to_response)
+            .map(AppConnection::to_response)
             .ok_or_else(|| connection_not_found(connection_id))
     }
 

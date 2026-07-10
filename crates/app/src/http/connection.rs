@@ -1,7 +1,7 @@
 use crate::{
     http::auth::Auth,
     models::{
-        account::identity::AccountIdentity, connection::FrontendConnection,
+        account::identity::AccountIdentity, connection::ActivateAppConnection,
         network::identity::NetworkIdentity,
     },
     state::AppState,
@@ -21,7 +21,7 @@ pub fn api() -> impl OpenApi {
 
 #[derive(Serialize, Deserialize, Object)]
 pub struct ConnectionsResponse {
-    pub connections: Vec<FrontendConnection>,
+    pub connections: Vec<ActivateAppConnection>,
 }
 
 #[derive(Serialize, Deserialize, Object)]
@@ -58,7 +58,7 @@ impl ConnectionApi {
         auth: Auth,
         state: Data<&AppState>,
         payload: Json<ConnectConnectionRequest>,
-    ) -> Result<Json<FrontendConnection>> {
+    ) -> Result<Json<ActivateAppConnection>> {
         let _auth_data = auth.unwrap()?;
         let request = payload.0;
 
@@ -87,7 +87,7 @@ impl ConnectionApi {
         auth: Auth,
         state: Data<&AppState>,
         connection_id: Path<Uuid>,
-    ) -> Result<Json<FrontendConnection>> {
+    ) -> Result<Json<ActivateAppConnection>> {
         let _auth_data = auth.unwrap()?;
 
         Ok(Json(state.connections.disconnect(connection_id.0).await?))
