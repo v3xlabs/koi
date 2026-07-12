@@ -4,6 +4,7 @@ import { createFetch } from "openapi-hooks";
 import { Accessor, createContext, createEffect, createSignal, onCleanup, onMount, ParentComponent } from "solid-js";
 
 import { queryClient } from "./client";
+import { useAppRealtime } from "./realtime";
 import type { paths } from "./schema.gen";
 
 const baseUrl = location.origin + "/api/";
@@ -14,7 +15,7 @@ export const api = createFetch<paths>({
         "Content-Type": "application/json",
         "Authorization": "Bearer hello",
     },
-    onError: async (_error) => {
+    onError: async () => {
         // const errorData = (await error.response?.json()) as { error: string; };
 
         // console.error(error, errorData);
@@ -66,6 +67,8 @@ export const appcontext = createContext<AppContext>({
 export const AppProvider: ParentComponent = (props) => {
     console.log("app provider!");
     const [isOnline, setIsOnline] = createSignal(globalThis.navigator.onLine);
+
+    useAppRealtime();
 
     const handleOnline = () => {
         setIsOnline(globalThis.navigator.onLine);

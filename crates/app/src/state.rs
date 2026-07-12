@@ -9,7 +9,9 @@ use crate::{
     error::KoiError,
     models::{
         abi::AbiManager, account::balance_cache::BalanceCacheManager,
-        network::manager::NetworkManager, quoter::man::QuoterManager, vendor::man::VendorManager,
+        connection::ConnectionManager, event::AppEventBus, network::manager::NetworkManager,
+        quoter::man::QuoterManager, vendor::man::VendorManager,
+        wallet_request::WalletRequestManager,
     },
 };
 
@@ -25,6 +27,9 @@ pub struct State {
     pub balances: BalanceCacheManager,
     pub vendors: VendorManager,
     pub abis: AbiManager,
+    pub connections: ConnectionManager,
+    pub wallet_requests: WalletRequestManager,
+    pub events: AppEventBus,
 }
 
 impl State {
@@ -39,6 +44,9 @@ impl State {
         let quoters = QuoterManager::init(&database).await?;
         let balances = BalanceCacheManager::new();
         let abis = AbiManager::new(config.abi_cache_dir.clone().into());
+        let events = AppEventBus::new();
+        let wallet_requests = WalletRequestManager::new(database.clone(), events.clone());
+        let connections = ConnectionManager::new(events.clone(), wallet_requests.clone());
 
         Ok(Arc::new(State {
             networks,
@@ -46,6 +54,9 @@ impl State {
             balances,
             vendors,
             abis,
+            connections,
+            wallet_requests,
+            events,
             database,
             config,
         }))

@@ -26,6 +26,8 @@ pub enum KoiError {
     AlloyHex(#[from] alloy::primitives::hex::FromHexError),
     #[error("eth prices error: {0}")]
     EthPrices(#[from] eth_prices::error::EthPricesError),
+    #[error("openlv error: {0}")]
+    OpenLv(#[from] openlv::OpenLvError),
 }
 
 #[derive(Debug, Serialize, Deserialize, Object)]

@@ -1,4 +1,4 @@
-use std::ffi::OsString;
+use std::{ffi::OsString, sync::Once};
 
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
@@ -61,6 +61,10 @@ fn default_command() -> Commands {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    static INIT: Once = Once::new();
+    INIT.call_once(|| {
+        let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+    });
 
     let args = std::env::args_os().collect::<Vec<_>>();
     let explicit_api = api_was_explicit(&args);

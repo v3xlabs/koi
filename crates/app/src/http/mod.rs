@@ -1,5 +1,5 @@
 use poem::endpoint::EmbeddedFilesEndpoint;
-use poem::{EndpointExt, Route, Server, handler, listener::TcpListener, web::Html};
+use poem::{EndpointExt, Route, Server, get, handler, listener::TcpListener, web::Html};
 use poem_openapi::Tags;
 use poem_openapi::{OpenApi, OpenApiService};
 use rust_embed::RustEmbed;
@@ -10,10 +10,13 @@ use crate::state::AppState;
 mod account;
 mod asset;
 mod auth;
+mod connection;
 mod health;
 mod net;
 mod quoter;
+mod realtime;
 mod vendor;
+mod wallet_request;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -35,6 +38,10 @@ pub enum ApiTags {
     Task,
     /// Health endpoints
     Health,
+    /// Connection endpoints
+    Connection,
+    /// Wallet request endpoints
+    WalletRequest,
 }
 
 fn get_api() -> impl OpenApi {
@@ -44,6 +51,8 @@ fn get_api() -> impl OpenApi {
         asset::api(),
         quoter::api(),
         vendor::api(),
+        connection::api(),
+        wallet_request::api(),
         health::api(),
     )
 }
@@ -76,6 +85,7 @@ pub async fn serve(state: AppState) {
     let frontend = EmbeddedFilesEndpoint::<WebAssets>::new().index_file("index.html");
 
     let app = Route::new()
+        .at("/api/realtime", get(realtime::realtime))
         .nest("openapi.json", service.spec_endpoint())
         .nest("/api", service)
         .at("/docs", get_openapi_docs)

@@ -1962,6 +1962,312 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all OpenLV connections
+         * @description GET /api/connections
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["ConnectionsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create an OpenLV connection
+         * @description POST /api/connections
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["ConnectConnectionRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["ActivateAppConnection"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connections/{connection_id}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disconnect an OpenLV connection
+         * @description POST /api/connections/:connection_id/disconnect
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    connection_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["ActivateAppConnection"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connections/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove an OpenLV connection
+         * @description DELETE /api/connections/:connection_id
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    connection_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": Record<string, never>;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List pending wallet requests
+         * @description GET /api/wallet-requests
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["WalletRequestsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet-requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a pending wallet request
+         * @description GET /api/wallet-requests/:request_id
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    request_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["FrontendWalletRequest"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet-requests/{request_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a pending wallet request
+         * @description POST /api/wallet-requests/:request_id/approve
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    request_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["FrontendWalletRequest"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet-requests/{request_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject a pending wallet request
+         * @description POST /api/wallet-requests/:request_id/reject
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    request_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["RejectWalletRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["FrontendWalletRequest"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -2096,6 +2402,16 @@ export type components = {
         AccountsResponse: {
             accounts: components["schemas"]["Account"][];
         };
+        /** ActivateAppConnection */
+        ActivateAppConnection: {
+            /** Format: uuid */
+            connection_id: string;
+            status: components["schemas"]["ConnectionStatus"];
+            /** Format: uint64 */
+            account_identity: number;
+            /** Format: uint64 */
+            network_identity: number;
+        };
         /** Asset */
         Asset: {
             asset_identity: string;
@@ -2131,6 +2447,20 @@ export type components = {
         /** AssetsResponse */
         AssetsResponse: {
             assets: components["schemas"]["Asset"][];
+        };
+        /** ConnectConnectionRequest */
+        ConnectConnectionRequest: {
+            url: string;
+            /** Format: uint64 */
+            account_identity: number;
+            /** Format: uint64 */
+            network_identity: number;
+        };
+        /** @enum {string} */
+        ConnectionStatus: "created" | "signaling" | "ready" | "linking" | "connected" | "disconnected";
+        /** ConnectionsResponse */
+        ConnectionsResponse: {
+            connections: components["schemas"]["ActivateAppConnection"][];
         };
         /** DecodeTransactionRequest */
         DecodeTransactionRequest: {
@@ -2276,6 +2606,24 @@ export type components = {
             /** Format: uint8 */
             token_out_decimals: number;
         };
+        /** FrontendWalletRequest */
+        FrontendWalletRequest: {
+            /** Format: uuid */
+            request_id: string;
+            /** Format: uuid */
+            connection_id: string;
+            kind: components["schemas"]["WalletRequestKind"];
+            method: string;
+            params: unknown;
+            raw_request: unknown;
+            /** Format: uint64 */
+            account_identity: number;
+            /** Format: uint64 */
+            network_identity: number;
+            account_address?: string;
+            /** Format: date-time */
+            created_at: string;
+        };
         /** GenerateMnemonicResponse */
         GenerateMnemonicResponse: {
             mnemonic: string;
@@ -2414,6 +2762,10 @@ export type components = {
         RawCall: {
             /** Format: bytes */
             data: string;
+        };
+        /** RejectWalletRequest */
+        RejectWalletRequest: {
+            message?: string;
         };
         /** RpcCallSample */
         RpcCallSample: {
@@ -2653,6 +3005,12 @@ export type components = {
         ViewWallet: {
             /** Format: address */
             evm_address: string;
+        };
+        /** @enum {string} */
+        WalletRequestKind: "permission" | "asset" | "signature" | "transaction" | "network" | "read" | "unknown";
+        /** WalletRequestsResponse */
+        WalletRequestsResponse: {
+            requests: components["schemas"]["FrontendWalletRequest"][];
         };
         WalletType: components["schemas"]["WalletType_Safe"] | components["schemas"]["WalletType_EOA"] | components["schemas"]["WalletType_View"] | components["schemas"]["WalletType_Railgun"];
         WalletType_EOA: {

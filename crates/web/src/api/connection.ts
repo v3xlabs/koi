@@ -1,43 +1,31 @@
-import { connectSession, Session, SessionState } from "@openlv/session";
-import { webrtc } from "@openlv/transport";
-import { createMemo } from "solid-js";
-import { createStore } from "solid-js/store";
+import { queryClient } from "./client";
+import { createApi, createApiMutation } from "./query";
+import { components } from "./schema.gen";
 
-export type Connection = {
-    connection_id: string;
-    status: SessionState;
-    account_identity: string;
-    network_identity: string;
-    session: Session;
+export type Connection = components["schemas"]["ActivateAppConnection"];
+
+export const connectionKeys = {
+    all: ["connections"] as const,
 };
 
-const connections = createStore<Connection[]>([]);
-
-export const useConnections = () => createMemo(() => connections[0]);
-export const removeConnection = (connection_id: string) => {
-    connections[1](prev => prev.filter(c => c.connection_id !== connection_id));
+const invalidateConnections = () => {
+    queryClient.invalidateQueries({ queryKey: connectionKeys.all });
 };
-export const addConnection = async (url: string, account_identity: string, network_identity: string) => {
-    const session = await connectSession(url, async (msg) => {
-        console.log("SMSG", msg);
 
-        return msg;
-    }, webrtc());
+export const useConnections = createApi("/connections", "get", () => connectionKeys.all);
 
-    const connection: Connection = {
-        connection_id: crypto.randomUUID(),
-        status: session.getState().status,
-        account_identity,
-        network_identity,
-        session,
-    };
+export const useAddConnection = createApiMutation("/connections", "post", {
+    onSuccess: invalidateConnections,
+});
 
-    session.emitter.on("state_change", (state) => {
-        console.log("STATE CHANGE", state?.status);
-        connections[1](prev => prev.map(c => (c.connection_id === connection.connection_id ? { ...c, status: state?.status ?? "disconnected" } : c)));
-    });
+export const useDisconnectConnection = createApiMutation(
+    "/connections/{connection_id}/disconnect",
+    "post",
+    {
+        onSuccess: invalidateConnections,
+    },
+);
 
-    connections[1](prev => [...prev, connection]);
-
-    await session.connect();
-};
+export const useRemoveConnection = createApiMutation("/connections/{connection_id}", "delete", {
+    onSuccess: invalidateConnections,
+});
