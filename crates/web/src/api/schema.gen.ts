@@ -3007,7 +3007,7 @@ export type components = {
             evm_address: string;
         };
         /** @enum {string} */
-        WalletRequestKind: "permission" | "signature" | "transaction" | "network" | "read" | "unknown";
+        WalletRequestKind: "permission" | "asset" | "signature" | "transaction" | "network" | "read" | "unknown";
         /** WalletRequestsResponse */
         WalletRequestsResponse: {
             requests: components["schemas"]["FrontendWalletRequest"][];

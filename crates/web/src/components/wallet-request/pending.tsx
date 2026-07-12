@@ -71,6 +71,9 @@ const requestTitle = (request: WalletRequest) => {
     case "permission": {
       return "Account permission";
     }
+    case "asset": {
+      return "Asset request";
+    }
     case "signature": {
       return "Signature request";
     }
