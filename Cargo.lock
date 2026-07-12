@@ -4232,8 +4232,8 @@ dependencies = [
  "clap",
  "dotenvy",
  "koi-app",
+ "koi-cli",
  "koi-gui",
- "koi-tui",
  "reqwest 0.12.28",
  "tokio",
  "tracing",
@@ -4284,6 +4284,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "koi-cli"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "crossterm 0.28.1",
+ "image",
+ "koi-app",
+ "koi-client",
+ "ratatui",
+ "ratatui-image",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "koi-client"
 version = "0.0.1"
 dependencies = [
@@ -4305,23 +4322,6 @@ dependencies = [
  "tray-icon",
  "webkit2gtk",
  "wry",
-]
-
-[[package]]
-name = "koi-tui"
-version = "0.0.1"
-dependencies = [
- "anyhow",
- "crossterm 0.28.1",
- "image",
- "koi-app",
- "koi-client",
- "ratatui",
- "ratatui-image",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "tokio",
 ]
 
 [[package]]

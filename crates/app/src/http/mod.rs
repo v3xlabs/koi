@@ -49,7 +49,7 @@ fn get_api() -> impl OpenApi {
 }
 
 #[derive(RustEmbed)]
-#[folder = "../web/dist"]
+#[folder = "../../interfaces/web/dist"]
 struct WebAssets;
 
 #[handler]

@@ -5,17 +5,13 @@ default:
     just --list
 
 install:
-    cd crates/web && pnpm install
-    cd crates/app && cargo fmt
-    cd crates/bin && cargo fmt
-    cd crates/gui && cargo fmt
-    cd crates/tui && cargo fmt
-    cd crates/client && cargo fmt
+    cd interfaces/web && pnpm install
+    cargo fmt --all
 
 ui:
-    cd crates/web && pnpm dev
+    cd interfaces/web && pnpm dev
 openapi:
-    cd crates/web && pnpm openapi
+    cd interfaces/web && pnpm openapi
 
 [private]
 run +args:
@@ -23,7 +19,7 @@ run +args:
 
 [private]
 build-web:
-    cd crates/web && pnpm build
+    cd interfaces/web && pnpm build
 
 dev: (run "daemon")
 tui: (run "tui")
@@ -32,17 +28,14 @@ migrate: (run "migrate")
 migrate-skip: (run "migrate" "--skip")
 
 lint:
-    cd crates/app && cargo fmt && cargo clippy
-    cd crates/bin && cargo fmt && cargo clippy
-    cd crates/gui && cargo fmt && cargo clippy
-    cd crates/tui && cargo fmt && cargo clippy
-    cd crates/client && cargo fmt && cargo clippy
-    cd crates/web && pnpm lint --fix
+    cargo fmt --all
+    cargo clippy --workspace
+    cd interfaces/web && pnpm lint --fix
 bacon:
     cd crates/bin && bacon
 
 build:
-    cd crates/web && pnpm build
+    cd interfaces/web && pnpm build
     cd crates/bin && cargo build --release
 
 [parallel]

@@ -1,15 +1,16 @@
 [package]
-name = "koi-tui"
+name = "koi-cli"
 version = "0.0.1"
 edition = "2024"
 
 [lib]
-name = "koi_tui"
+name = "koi_cli"
 path = "src/lib.rs"
 
 [dependencies]
-koi = { path = "../app", package = "koi-app" }
-koi-client = { path = "../client" }
+koi = { path = "../../crates/app", package = "koi-app" }
+koi-client = { path = "../../crates/client", package = "koi-client" }
+
 ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
 ratatui-image = { version = "11", default-features = false, features = ["image-defaults", "crossterm"] }
 image = { version = "0.25", default-features = false, features = ["png"] }
