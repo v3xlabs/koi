@@ -19,7 +19,7 @@ use crate::{
         event::AppEventBus,
         network::identity::NetworkIdentity,
     },
-    state::DB,
+    state::{AppState, DB},
 };
 
 mod assets;
@@ -153,6 +153,8 @@ impl WalletRequestManager {
     }
 
     pub async fn reject_connection(&self, connection_id: Uuid, message: impl Into<String>) {
+        self.permissions.revoke(connection_id).await;
+
         let message = message.into();
         let request_ids = self
             .pending
@@ -179,6 +181,7 @@ impl WalletRequestManager {
 
     pub async fn handle_openlv_request(
         &self,
+        state: &AppState,
         connection_id: Uuid,
         account_identity: AccountIdentity,
         network_identity: NetworkIdentity,
@@ -186,6 +189,7 @@ impl WalletRequestManager {
     ) -> Result<Value, OpenLvError> {
         if let Some(result) = self
             .immediate_response(
+                state,
                 connection_id,
                 &account_identity,
                 &network_identity,
@@ -196,8 +200,15 @@ impl WalletRequestManager {
             return Ok(result);
         }
 
-        let request_id = Uuid::new_v4();
         let method = request_method(&raw_request);
+        if !is_approvable_method(&method) {
+            return Ok(provider_error(
+                4200,
+                format!("Unsupported wallet method: {method}"),
+            ));
+        }
+
+        let request_id = Uuid::new_v4();
         let params = raw_request
             .get("params")
             .cloned()
@@ -205,6 +216,7 @@ impl WalletRequestManager {
         let account_address = self.account_address(&account_identity).await;
         let (default_result, approved_action) = self
             .approved_result(
+                state,
                 &account_identity,
                 &network_identity,
                 &method,
@@ -258,6 +270,7 @@ impl WalletRequestManager {
 
     async fn immediate_response(
         &self,
+        state: &AppState,
         connection_id: Uuid,
         account_identity: &AccountIdentity,
         network_identity: &NetworkIdentity,
@@ -288,7 +301,12 @@ impl WalletRequestManager {
 
                 Some(
                     self.assets
-                        .get(account_identity, account_address.as_deref(), raw_request)
+                        .get(
+                            state,
+                            account_identity,
+                            account_address.as_deref(),
+                            raw_request,
+                        )
                         .await
                         .unwrap_or_else(|error| provider_error(4001, error)),
                 )
@@ -307,6 +325,7 @@ impl WalletRequestManager {
 
     async fn approved_result(
         &self,
+        state: &AppState,
         account_identity: &AccountIdentity,
         network_identity: &NetworkIdentity,
         method: &str,
@@ -330,7 +349,7 @@ impl WalletRequestManager {
             "wallet_getAssets" => {
                 match self
                     .assets
-                    .get(account_identity, account_address, raw_request)
+                    .get(state, account_identity, account_address, raw_request)
                     .await
                 {
                     Ok(result) => (
@@ -447,6 +466,18 @@ fn classify_method(method: &str) -> WalletRequestKind {
         | "eth_estimateGas" => WalletRequestKind::Read,
         _ => WalletRequestKind::Unknown,
     }
+}
+
+fn is_approvable_method(method: &str) -> bool {
+    matches!(
+        method,
+        "eth_requestAccounts"
+            | "wallet_requestPermissions"
+            | "wallet_getAssets"
+            | "wallet_watchAsset"
+            | "personal_sign"
+            | "eth_sign"
+    )
 }
 
 fn provider_error(code: i64, message: impl Into<String>) -> Value {

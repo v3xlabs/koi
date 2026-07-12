@@ -11,6 +11,7 @@ use crate::models::{
     account::identity::AccountIdentity, network::identity::NetworkIdentity,
     wallet_request::WalletRequestManager,
 };
+use crate::state::AppState;
 use crate::{error::KoiError, models::event::AppEventBus};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Object)]
@@ -77,6 +78,7 @@ impl ConnectionManager {
 
     pub async fn connect(
         &self,
+        state: &AppState,
         url: String,
         account_identity: AccountIdentity,
         network_identity: NetworkIdentity,
@@ -85,15 +87,18 @@ impl ConnectionManager {
         let requests = self.requests.clone();
         let request_account = account_identity.clone();
         let request_network = network_identity.clone();
+        let request_state = state.clone();
         let session = wallet(&url)
             .on_request(move |message: Value| {
                 let requests = requests.clone();
                 let account_identity = request_account.clone();
                 let network_identity = request_network.clone();
+                let state = request_state.clone();
 
                 async move {
                     requests
                         .handle_openlv_request(
+                            &state,
                             connection_id,
                             account_identity,
                             network_identity,

@@ -5,7 +5,14 @@ use serde_json::{Value, json};
 use tokio::sync::RwLock;
 
 use super::request_object_param;
-use crate::models::{account::identity::AccountIdentity, network::identity::NetworkIdentity};
+use crate::{
+    models::{
+        account::identity::AccountIdentity,
+        asset::{Asset, identity::AssetIdentity},
+        network::identity::NetworkIdentity,
+    },
+    state::AppState,
+};
 
 #[derive(Clone, Default)]
 pub struct Assets(Arc<RwLock<HashMap<AccountIdentity, Vec<WatchedAsset>>>>);
@@ -22,6 +29,7 @@ pub struct WatchedAsset {
 impl Assets {
     pub async fn get(
         &self,
+        state: &AppState,
         account: &AccountIdentity,
         account_address: Option<&str>,
         request: &Value,
@@ -39,19 +47,29 @@ impl Assets {
             );
         }
 
-        let assets = self.0.read().await;
+        let account_address = Address::from_str(requested_account)
+            .map_err(|error| format!("invalid account address: {error}"))?;
+        let assets = self
+            .0
+            .read()
+            .await
+            .get(account)
+            .cloned()
+            .unwrap_or_default();
         let mut result = serde_json::Map::new();
-        for asset in assets.get(account).into_iter().flatten() {
-            if !matches_filters(asset, params) {
+        for asset in assets {
+            if !matches_filters(&asset, params) {
                 continue;
             }
+
+            let response = asset.response(state, account_address).await?;
 
             result
                 .entry(format!("0x{:x}", asset.chain.0))
                 .or_insert_with(|| json!([]))
                 .as_array_mut()
                 .unwrap()
-                .push(asset.response());
+                .push(response);
         }
 
         Ok(Value::Object(result))
@@ -74,17 +92,22 @@ impl Assets {
 }
 
 impl WatchedAsset {
-    fn response(&self) -> Value {
-        json!({
+    async fn response(&self, state: &AppState, account: Address) -> Result<Value, String> {
+        let identity = AssetIdentity::ERC20(self.chain.clone(), self.address);
+        let balance = Asset::fetch_erc20_balance(state, &identity, account)
+            .await
+            .map_err(|error| format!("failed to fetch {} balance: {error}", self.symbol))?;
+
+        Ok(json!({
             "address": self.address.to_checksum(None),
-            "balance": "0x0",
+            "balance": format!("0x{balance:x}"),
             "type": "erc20",
             "metadata": {
                 "name": self.symbol,
                 "symbol": self.symbol,
                 "decimals": self.decimals,
             },
-        })
+        }))
     }
 }
 

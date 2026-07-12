@@ -23,6 +23,10 @@ impl Permissions {
             .extend(methods.iter().cloned());
     }
 
+    pub async fn revoke(&self, connection_id: Uuid) {
+        self.0.write().await.remove(&connection_id);
+    }
+
     pub async fn has(&self, connection_id: Uuid, method: &str) -> bool {
         self.0
             .read()

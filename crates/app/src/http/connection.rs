@@ -66,6 +66,7 @@ impl ConnectionApi {
             state
                 .connections
                 .connect(
+                    &state,
                     request.url,
                     request.account_identity,
                     request.network_identity,

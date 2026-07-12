@@ -2,7 +2,7 @@ import { queryClient } from "./client";
 import { createApi, createApiMutation } from "./query";
 import { components } from "./schema.gen";
 
-export type Connection = components["schemas"]["Connection"];
+export type Connection = components["schemas"]["ActivateAppConnection"];
 
 export const connectionKeys = {
     all: ["connections"] as const,
