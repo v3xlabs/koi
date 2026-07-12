@@ -1,9 +1,5 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use alloy::{
-    hex,
-    signers::{SignerSync, local::PrivateKeySigner},
-};
 use chrono::{DateTime, Utc};
 use openlv::OpenLvError;
 use poem_openapi::{Enum, Object};
@@ -24,15 +20,12 @@ use crate::{
 
 mod assets;
 mod permissions;
+mod signing;
 
 use assets::{Assets, WatchedAsset};
 use permissions::{Permissions, requested_permissions, requested_permissions_response};
 
 const APPROVAL_TIMEOUT: Duration = Duration::from_secs(55);
-// Belongs to 0x954c70105D0448301E8c9E96501252C08A2457E1
-const DEV_OPENLV_PRIVATE_KEY: &str =
-    "0x0e32f7d963ec6bdc0cae2b2b3cc101664083548b522fc68c015bb780dca2a28f";
-
 #[derive(Clone, Debug, Serialize, Deserialize, Object)]
 pub struct FrontendWalletRequest {
     pub request_id: Uuid,
@@ -109,7 +102,7 @@ impl WalletRequestManager {
             .read()
             .await
             .values()
-            .map(PendingWalletRequest::to_response)
+            .map(FrontendWalletRequest::from)
             .collect::<Vec<_>>();
 
         requests.sort_by_key(|request| request.created_at);
@@ -121,13 +114,18 @@ impl WalletRequestManager {
             .read()
             .await
             .get(&request_id)
-            .map(PendingWalletRequest::to_response)
-            .ok_or_else(|| request_not_found(request_id))
+            .map(FrontendWalletRequest::from)
+            .ok_or_else(|| KoiError::Internal(format!("wallet request not found: {request_id}")))
     }
 
     pub async fn approve(&self, request_id: Uuid) -> Result<FrontendWalletRequest, KoiError> {
-        let request = self.take(request_id).await?;
-        let response = request.to_response();
+        let request = self
+            .pending
+            .write()
+            .await
+            .remove(&request_id)
+            .ok_or_else(|| KoiError::Internal(format!("wallet request not found: {request_id}")))?;
+        let response = FrontendWalletRequest::from(&request);
         self.apply_approved_action(&request).await;
 
         let _ = request.reply.send(request.default_result);
@@ -141,8 +139,13 @@ impl WalletRequestManager {
         request_id: Uuid,
         message: Option<String>,
     ) -> Result<FrontendWalletRequest, KoiError> {
-        let request = self.take(request_id).await?;
-        let response = request.to_response();
+        let request = self
+            .pending
+            .write()
+            .await
+            .remove(&request_id)
+            .ok_or_else(|| KoiError::Internal(format!("wallet request not found: {request_id}")))?;
+        let response = FrontendWalletRequest::from(&request);
         let _ = request.reply.send(provider_error(
             4001,
             message.unwrap_or_else(|| "User rejected the request".to_string()),
@@ -256,14 +259,6 @@ impl WalletRequestManager {
         }
     }
 
-    async fn take(&self, request_id: Uuid) -> Result<PendingWalletRequest, KoiError> {
-        self.pending
-            .write()
-            .await
-            .remove(&request_id)
-            .ok_or_else(|| request_not_found(request_id))
-    }
-
     fn notify_changed(&self) {
         self.events.invalidate_route("/wallet-requests");
     }
@@ -283,6 +278,9 @@ impl WalletRequestManager {
             "net_version" => Some(json!(network_identity.0.to_string())),
             "web3_clientVersion" => Some(json!("Koi/OpenLV")),
             "eth_accounts" => {
+                if !self.permissions.has(connection_id, method.as_str()).await {
+                    return Some(json!([]));
+                }
                 let accounts = self
                     .account_address(account_identity)
                     .await
@@ -370,11 +368,11 @@ impl WalletRequestManager {
                 }
             }
             "personal_sign" => (
-                self.sign_message_result(personal_sign_message(raw_request)),
+                signing::sign_message(method, raw_request, account_address),
                 ApprovedWalletAction::None,
             ),
             "eth_sign" => (
-                self.sign_message_result(eth_sign_message(raw_request)),
+                signing::sign_message(method, raw_request, account_address),
                 ApprovedWalletAction::None,
             ),
             _ => (
@@ -395,45 +393,23 @@ impl WalletRequestManager {
             }
         }
     }
-
-    fn sign_message_result(&self, message: Result<Vec<u8>, String>) -> Value {
-        let message = match message {
-            Ok(message) => message,
-            Err(error) => return provider_error(4001, error),
-        };
-        let signer = match DEV_OPENLV_PRIVATE_KEY.parse::<PrivateKeySigner>() {
-            Ok(signer) => signer,
-            Err(error) => {
-                return provider_error(4001, format!("Invalid OpenLV signing key: {error}"));
-            }
-        };
-
-        match signer.sign_message_sync(&message) {
-            Ok(signature) => json!(signature.to_string()),
-            Err(error) => provider_error(4001, format!("Failed to sign message: {error}")),
-        }
-    }
 }
 
-impl PendingWalletRequest {
-    fn to_response(&self) -> FrontendWalletRequest {
+impl From<&PendingWalletRequest> for FrontendWalletRequest {
+    fn from(request: &PendingWalletRequest) -> Self {
         FrontendWalletRequest {
-            request_id: self.request_id,
-            connection_id: self.connection_id,
-            kind: self.kind,
-            method: self.method.clone(),
-            params: self.params.clone(),
-            raw_request: self.raw_request.clone(),
-            account_identity: self.account_identity.clone(),
-            network_identity: self.network_identity.clone(),
-            account_address: self.account_address.clone(),
-            created_at: self.created_at,
+            request_id: request.request_id,
+            connection_id: request.connection_id,
+            kind: request.kind,
+            method: request.method.clone(),
+            params: request.params.clone(),
+            raw_request: request.raw_request.clone(),
+            account_identity: request.account_identity.clone(),
+            network_identity: request.network_identity.clone(),
+            account_address: request.account_address.clone(),
+            created_at: request.created_at,
         }
     }
-}
-
-fn request_not_found(request_id: Uuid) -> KoiError {
-    KoiError::Internal(format!("wallet request not found: {request_id}"))
 }
 
 fn request_method(request: &Value) -> String {
@@ -487,43 +463,4 @@ fn provider_error(code: i64, message: impl Into<String>) -> Value {
             "message": message.into(),
         },
     })
-}
-
-fn personal_sign_message(raw_request: &Value) -> Result<Vec<u8>, String> {
-    request_params(raw_request)
-        .and_then(|params| params.first())
-        .ok_or_else(|| "personal_sign missing message parameter".to_string())
-        .and_then(message_bytes)
-}
-
-fn eth_sign_message(raw_request: &Value) -> Result<Vec<u8>, String> {
-    request_params(raw_request)
-        .and_then(|params| params.get(1))
-        .ok_or_else(|| "eth_sign missing message parameter".to_string())
-        .and_then(message_bytes)
-}
-
-fn request_params(raw_request: &Value) -> Option<&Vec<Value>> {
-    raw_request.get("params").and_then(Value::as_array)
-}
-
-fn request_object_param(raw_request: &Value) -> Option<&Value> {
-    raw_request.get("params").and_then(|params| {
-        params
-            .as_array()
-            .and_then(|items| items.first())
-            .or(Some(params))
-    })
-}
-
-fn message_bytes(value: &Value) -> Result<Vec<u8>, String> {
-    let message = value
-        .as_str()
-        .ok_or_else(|| "message parameter must be a string".to_string())?;
-
-    if let Some(hex_message) = message.strip_prefix("0x") {
-        hex::decode(hex_message).map_err(|error| format!("invalid hex message: {error}"))
-    } else {
-        Ok(message.as_bytes().to_vec())
-    }
 }

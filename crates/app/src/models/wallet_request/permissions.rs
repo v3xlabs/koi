@@ -8,8 +8,6 @@ use serde_json::{Value, json};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use super::request_params;
-
 #[derive(Clone, Default)]
 pub struct Permissions(Arc<RwLock<HashMap<Uuid, HashSet<String>>>>);
 
@@ -58,7 +56,9 @@ impl Permissions {
 }
 
 pub fn requested_permissions(raw_request: &Value) -> Vec<String> {
-    request_params(raw_request)
+    raw_request
+        .get("params")
+        .and_then(Value::as_array)
         .and_then(|params| params.first())
         .or_else(|| raw_request.get("params"))
         .and_then(Value::as_object)

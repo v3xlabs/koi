@@ -4,7 +4,6 @@ use alloy::primitives::Address;
 use serde_json::{Value, json};
 use tokio::sync::RwLock;
 
-use super::request_object_param;
 use crate::{
     models::{
         account::identity::AccountIdentity,
@@ -34,7 +33,14 @@ impl Assets {
         account_address: Option<&str>,
         request: &Value,
     ) -> Result<Value, String> {
-        let params = request_object_param(request)
+        let params = request
+            .get("params")
+            .and_then(|params| {
+                params
+                    .as_array()
+                    .and_then(|items| items.first())
+                    .or(Some(params))
+            })
             .ok_or_else(|| "wallet_getAssets missing parameters".to_string())?;
         let requested_account = params
             .get("account")
@@ -116,7 +122,14 @@ pub fn watched_asset(
     network: &NetworkIdentity,
     request: &Value,
 ) -> Result<WatchedAsset, String> {
-    let params = request_object_param(request)
+    let params = request
+        .get("params")
+        .and_then(|params| {
+            params
+                .as_array()
+                .and_then(|items| items.first())
+                .or(Some(params))
+        })
         .ok_or_else(|| "wallet_watchAsset missing parameter".to_string())?;
     let asset_type = params
         .get("type")
