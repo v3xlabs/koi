@@ -7,7 +7,10 @@ use serde_json::Value;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use crate::models::{account::identity::AccountIdentity, network::identity::NetworkIdentity};
+use crate::models::{
+    account::identity::AccountIdentity, network::identity::NetworkIdentity,
+    wallet_request::WalletRequestManager,
+};
 use crate::{error::KoiError, models::event::AppEventBus};
 
 #[derive(Clone, Debug, Serialize, Deserialize, Object)]
@@ -51,13 +54,15 @@ impl AppConnection {
 pub struct ConnectionManager {
     connections: RwLock<HashMap<Uuid, AppConnection>>,
     events: AppEventBus,
+    requests: WalletRequestManager,
 }
 
 impl ConnectionManager {
-    pub fn new(events: AppEventBus) -> Self {
+    pub fn new(events: AppEventBus, requests: WalletRequestManager) -> Self {
         Self {
             connections: RwLock::new(HashMap::new()),
             events,
+            requests,
         }
     }
 
@@ -76,13 +81,32 @@ impl ConnectionManager {
         account_identity: AccountIdentity,
         network_identity: NetworkIdentity,
     ) -> Result<ActivateAppConnection, KoiError> {
+        let connection_id = Uuid::new_v4();
+        let requests = self.requests.clone();
+        let request_account = account_identity.clone();
+        let request_network = network_identity.clone();
         let session = wallet(&url)
-            .on_request(|message: Value| async move { Ok(message) })
+            .on_request(move |message: Value| {
+                let requests = requests.clone();
+                let account_identity = request_account.clone();
+                let network_identity = request_network.clone();
+
+                async move {
+                    requests
+                        .handle_openlv_request(
+                            connection_id,
+                            account_identity,
+                            network_identity,
+                            message,
+                        )
+                        .await
+                }
+            })
             .await?;
         session.connect().await?;
 
         let connection = AppConnection {
-            connection_id: Uuid::new_v4(),
+            connection_id,
             account_identity,
             network_identity,
             session: Arc::new(session),
@@ -102,6 +126,9 @@ impl ConnectionManager {
 
     pub async fn disconnect(&self, connection_id: Uuid) -> Result<ActivateAppConnection, KoiError> {
         self.session(connection_id).await?.close().await?;
+        self.requests
+            .reject_connection(connection_id, "Connection disconnected")
+            .await;
         self.notify_changed();
 
         self.connection(connection_id).await
@@ -118,6 +145,9 @@ impl ConnectionManager {
         if entry.session.state().status != SessionState::Disconnected {
             entry.session.close().await?;
         }
+        self.requests
+            .reject_connection(connection_id, "Connection removed")
+            .await;
         self.notify_changed();
 
         Ok(())

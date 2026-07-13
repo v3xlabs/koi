@@ -16,6 +16,7 @@ mod net;
 mod quoter;
 mod realtime;
 mod vendor;
+mod wallet_request;
 
 #[derive(Tags)]
 pub enum ApiTags {
@@ -39,6 +40,8 @@ pub enum ApiTags {
     Health,
     /// Connection endpoints
     Connection,
+    /// Wallet request endpoints
+    WalletRequest,
 }
 
 fn get_api() -> impl OpenApi {
@@ -49,6 +52,7 @@ fn get_api() -> impl OpenApi {
         quoter::api(),
         vendor::api(),
         connection::api(),
+        wallet_request::api(),
         health::api(),
     )
 }

@@ -8,3 +8,4 @@ pub mod network;
 pub mod quoter;
 pub mod tx;
 pub mod vendor;
+pub mod wallet_request;
