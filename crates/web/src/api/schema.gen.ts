@@ -2402,6 +2402,16 @@ export type components = {
         AccountsResponse: {
             accounts: components["schemas"]["Account"][];
         };
+        /** ActivateAppConnection */
+        ActivateAppConnection: {
+            /** Format: uuid */
+            connection_id: string;
+            status: components["schemas"]["ConnectionStatus"];
+            /** Format: uint64 */
+            account_identity: number;
+            /** Format: uint64 */
+            network_identity: number;
+        };
         /** Asset */
         Asset: {
             asset_identity: string;
@@ -2595,16 +2605,6 @@ export type components = {
             token_in_decimals: number;
             /** Format: uint8 */
             token_out_decimals: number;
-        };
-        /** ActivateAppConnection */
-        ActivateAppConnection: {
-            /** Format: uuid */
-            connection_id: string;
-            status: components["schemas"]["ConnectionStatus"];
-            /** Format: uint64 */
-            account_identity: number;
-            /** Format: uint64 */
-            network_identity: number;
         };
         /** FrontendWalletRequest */
         FrontendWalletRequest: {
@@ -3007,7 +3007,7 @@ export type components = {
             evm_address: string;
         };
         /** @enum {string} */
-        WalletRequestKind: "permission" | "signature" | "transaction" | "network" | "read" | "unknown";
+        WalletRequestKind: "permission" | "asset" | "signature" | "transaction" | "network" | "read" | "unknown";
         /** WalletRequestsResponse */
         WalletRequestsResponse: {
             requests: components["schemas"]["FrontendWalletRequest"][];
