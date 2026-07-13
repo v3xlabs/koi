@@ -2,6 +2,7 @@ import { Accessor, createMemo, For, Show } from "solid-js";
 
 import { useNetworkMetadataDiscovery } from "#/api/network";
 import { button } from "#/components/input/button";
+import { CachedImage } from "#/utils/image-cache";
 
 export const NetworkIconSuggestions = (props: {
     network_identity: Accessor<number | undefined>;
@@ -39,7 +40,7 @@ export const NetworkIconSuggestions = (props: {
                               class={button({ variant: "outline" })}
                               onClick={() => props.onSelect(iconUrl)}
                             >
-                                <img src={iconUrl} alt={source} class="size-8 aspect-square rounded-full" />
+                                <CachedImage src={iconUrl} alt={source} class="size-8 aspect-square rounded-full" />
                                 <span class="text-sm capitalize">{source}</span>
                             </button>
                         </li>

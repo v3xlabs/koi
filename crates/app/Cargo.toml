@@ -54,6 +54,7 @@ chrono = "0.4.39"
 serde_with = { version = "3.9.0", features = ["json", "chrono"] }
 uuid = { version = "1.11.0", features = ["v4", "serde"] }
 hex = "0.4.3"
+sha2 = "0.10"
 serde_json = {version="1.0.138", features = ["preserve_order", "raw_value"]}
 figment = { version = "0.10.19", features = ["env", "json"] }
 dirs = "6"

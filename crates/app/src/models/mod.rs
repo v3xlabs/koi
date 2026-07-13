@@ -2,6 +2,7 @@ pub mod abi;
 pub mod account;
 pub mod alloy;
 pub mod asset;
+pub mod image_cache;
 pub mod network;
 pub mod quoter;
 pub mod tx;

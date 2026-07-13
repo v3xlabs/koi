@@ -60,8 +60,12 @@ impl NetworkApi {
         payload: Json<Network>,
     ) -> Result<Json<Network>> {
         let _auth_data = auth.unwrap()?;
+        let mut network = payload.0;
+        if let Some(icon) = &network.network_icon_url {
+            network.network_icon_url = Some(state.images.store_reference(icon).await?);
+        }
 
-        Ok(Json(Network::create(&state.database, payload.0).await?))
+        Ok(Json(Network::create(&state.database, network).await?))
     }
 
     /// Get network presets
@@ -151,9 +155,17 @@ impl NetworkApi {
         payload: Json<NetworkUpdate>,
     ) -> Result<Json<Network>> {
         let _auth_data = auth.unwrap()?;
+        let mut network = payload.0;
+        if let Some(icon) = network
+            .network_icon_url
+            .clone()
+            .filter(|icon| !icon.trim().is_empty())
+        {
+            network.network_icon_url = Some(state.images.store_reference(&icon).await?);
+        }
 
         Ok(Json(
-            Network::update(&state.database, &network_identity, payload.0).await?,
+            Network::update(&state.database, &network_identity, network).await?,
         ))
     }
 
