@@ -1,5 +1,5 @@
+use crate::models::network::identity::NetworkIdentity;
 use crate::{
-    error::KoiError,
     http::auth::Auth,
     models::asset::{
         Asset, AssetUpdate, identity::AssetIdentity, metadata::AssetMetadataDiscovery,
@@ -155,9 +155,6 @@ impl AssetApi {
     ) -> Result<Json<String>> {
         let _auth_data = auth.unwrap()?;
 
-        let network_identity = asset_identity
-            .unwrap_network()
-            .ok_or(KoiError::Internal("Network not found".to_string()))?;
         let asset_out = display_asset
             .0
             .unwrap_or(AssetIdentity::Fiat("usd".to_string()));
@@ -165,6 +162,9 @@ impl AssetApi {
 
         let amount_in = U256::from(1) * U256::from(10).pow(U256::from(asset.asset_decimals as u32));
 
+        let network_identity = asset_identity
+            .unwrap_network()
+            .unwrap_or(NetworkIdentity(0));
         let quote = state
             .quoters
             .quote(

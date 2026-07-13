@@ -36,7 +36,7 @@ impl State {
         let database = connect(&config.database_url, None).await?;
         let vendors = VendorManager::init(&database).await?;
         let networks = NetworkManager::default();
-        let quoters = QuoterManager::init(&database).await?;
+        let quoters = QuoterManager::init(&database, &vendors).await?;
         let balances = BalanceCacheManager::new();
         let abis = AbiManager::new(config.abi_cache_dir.clone().into());
 
