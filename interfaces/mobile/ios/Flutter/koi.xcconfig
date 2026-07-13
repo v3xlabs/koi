@@ -1,0 +1,15 @@
+// Links the koi Rust core (static lib) into Runner.
+//
+// Build the lib first (from the repo root):
+//   just rust-ios        # device (aarch64-apple-ios)
+//   just rust-ios-sim    # simulator (aarch64-apple-ios-sim)
+//
+// -force_load keeps the linker from dead-stripping the flutter_rust_bridge
+// symbols, which are only reached via dlsym at runtime.
+
+KOI_RUST_TARGET[sdk=iphoneos*]=aarch64-apple-ios
+KOI_RUST_TARGET[sdk=iphonesimulator*]=aarch64-apple-ios-sim
+
+KOI_RUST_LIB=$(SRCROOT)/../../../target/$(KOI_RUST_TARGET)/release/libkoi_ffi.a
+
+OTHER_LDFLAGS=$(inherited) -force_load $(KOI_RUST_LIB)

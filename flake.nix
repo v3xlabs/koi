@@ -26,6 +26,15 @@
         overlays = [rust-overlay.overlays.default];
       };
 
+      mobilePkgs = import nixpkgs {
+        inherit system;
+        overlays = [rust-overlay.overlays.default];
+        config = {
+          allowUnfree = true;
+          android_sdk.accept_license = true;
+        };
+      };
+
       rustTarget =
         versions.rustTargets.${system}
         or (throw "koi: no pre-built release for ${system}");
@@ -50,5 +59,6 @@
       };
 
       devShells.default = import ./nix/devshell.nix {pkgs = devPkgs;};
+      devShells.mobile = import ./nix/mobile.nix {pkgs = mobilePkgs;};
     });
 }

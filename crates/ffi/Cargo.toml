@@ -1,0 +1,13 @@
+[package]
+name = "koi-ffi"
+version = "0.0.1"
+edition = "2024"
+
+[lib]
+name = "koi_ffi"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+# pinned: must match the flutter_rust_bridge_codegen binary and the
+# flutter_rust_bridge version in interfaces/mobile/pubspec.yaml
+flutter_rust_bridge = "=2.9.0"

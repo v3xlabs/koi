@@ -2,6 +2,11 @@
 
 core code lives in rust, app code is just for ui and hooking into os.
 
+## Platform
+
+Android and iOS platform specific code lives in `interfaces/mobile` and is connected via `crates/ffi`.
+Desktop, Web, and CLI code lives in the `crates/bin` directory.
+
 ## General
 
 utalize ethereum-rpc first, per user config
