@@ -10,6 +10,7 @@ use crate::state::AppState;
 mod account;
 mod asset;
 mod auth;
+mod connection;
 mod health;
 mod net;
 mod quoter;
@@ -36,6 +37,8 @@ pub enum ApiTags {
     Task,
     /// Health endpoints
     Health,
+    /// Connection endpoints
+    Connection,
 }
 
 fn get_api() -> impl OpenApi {
@@ -45,6 +48,7 @@ fn get_api() -> impl OpenApi {
         asset::api(),
         quoter::api(),
         vendor::api(),
+        connection::api(),
         health::api(),
     )
 }
