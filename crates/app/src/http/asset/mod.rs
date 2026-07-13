@@ -53,8 +53,12 @@ impl AssetApi {
         payload: Json<Asset>,
     ) -> Result<Json<Asset>> {
         let _auth_data = auth.unwrap()?;
+        let mut asset = payload.0;
+        if let Some(icon) = &asset.asset_icon_url {
+            asset.asset_icon_url = Some(state.images.store_reference(icon).await?);
+        }
 
-        Ok(Json(Asset::create(&state.database, payload.0).await?))
+        Ok(Json(Asset::create(&state.database, asset).await?))
     }
 
     /// Get an asset by ID
@@ -113,9 +117,17 @@ impl AssetApi {
         payload: Json<AssetUpdate>,
     ) -> Result<Json<Asset>> {
         let _auth_data = auth.unwrap()?;
+        let mut asset = payload.0;
+        if let Some(icon) = asset
+            .asset_icon_url
+            .clone()
+            .filter(|icon| !icon.trim().is_empty())
+        {
+            asset.asset_icon_url = Some(state.images.store_reference(&icon).await?);
+        }
 
         Ok(Json(
-            Asset::update(&state.database, &asset_identity, payload.0).await?,
+            Asset::update(&state.database, &asset_identity, asset).await?,
         ))
     }
 

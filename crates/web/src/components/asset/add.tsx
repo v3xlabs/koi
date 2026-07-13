@@ -3,7 +3,7 @@ import { Component, createMemo, createSignal, For, JSX, Show } from "solid-js";
 import { match } from "ts-pattern";
 
 import { Asset, useAssetMetadataDiscovery, useCreateAsset } from "#/api/asset";
-import { cacheImageUrl } from "#/utils/image-cache";
+import { CachedImage } from "#/utils/image-cache";
 
 import { Modal } from "../dialog";
 import { AddressInput } from "../input/address";
@@ -267,7 +267,7 @@ const AssetAddInner: Component<AssetAddInnerProps> = (props) => {
                             {([iconUrl, source]) => (
                                 <li>
                                     <button class={button({ variant: "outline" })} onClick={() => setAssetIconUrl(iconUrl)}>
-                                        <img src={cacheImageUrl(iconUrl)} alt={source} class="size-8 aspect-square rounded-full" />
+                                        <CachedImage src={iconUrl} alt={source} class="size-8 aspect-square rounded-full" />
                                         {source}
                                     </button>
                                 </li>

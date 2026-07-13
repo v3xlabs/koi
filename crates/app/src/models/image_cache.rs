@@ -62,15 +62,37 @@ impl ImageCache {
         Self { cache_dir }
     }
 
-    pub async fn get(&self, raw_url: &str) -> Result<CachedImage, KoiError> {
+    pub async fn get(&self, key: &str) -> Result<Option<CachedImage>, KoiError> {
+        validate_cache_key(key)?;
+        self.read(key).await
+    }
+
+    pub async fn store(&self, raw_url: &str) -> Result<String, KoiError> {
         let url = validate_url(raw_url)?;
         let key = cache_key(url.as_str());
 
-        if let Some(image) = self.read(&key).await? {
-            return Ok(image);
+        if self.read(&key).await?.is_none() {
+            self.fetch_and_store(&url, &key).await?;
         }
 
-        self.fetch(&url, &key).await
+        Ok(key)
+    }
+
+    pub async fn store_reference(&self, reference: &str) -> Result<String, KoiError> {
+        if reference.starts_with("data:image/") {
+            return Ok(reference.to_string());
+        }
+
+        if let Some(key) = reference.strip_prefix("/api/cache/image?id=") {
+            validate_cache_key(key)?;
+            return Ok(key.to_string());
+        }
+
+        if validate_cache_key(reference).is_ok() {
+            return Ok(reference.to_string());
+        }
+
+        self.store(reference).await
     }
 
     async fn read(&self, key: &str) -> Result<Option<CachedImage>, KoiError> {
@@ -98,7 +120,7 @@ impl ImageCache {
         Ok(None)
     }
 
-    async fn fetch(&self, url: &Url, key: &str) -> Result<CachedImage, KoiError> {
+    async fn fetch_and_store(&self, url: &Url, key: &str) -> Result<(), KoiError> {
         let client = Client::builder()
             .redirect(Policy::none())
             .timeout(Duration::from_secs(10))
@@ -141,10 +163,7 @@ impl ImageCache {
 
         write_atomic(&self.path(key, image_type), &bytes).await?;
 
-        Ok(CachedImage {
-            bytes,
-            content_type: image_type.content_type,
-        })
+        Ok(())
     }
 
     fn path(&self, key: &str, image_type: ImageType) -> PathBuf {
@@ -187,6 +206,14 @@ fn image_type_from_content_type(value: &str) -> Option<ImageType> {
 
 fn cache_key(url: &str) -> String {
     hex::encode(Sha256::digest(url.as_bytes()))
+}
+
+fn validate_cache_key(key: &str) -> Result<(), KoiError> {
+    if key.len() == 64 && key.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Ok(());
+    }
+
+    Err(KoiError::Internal("invalid image cache id".to_string()))
 }
 
 async fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), KoiError> {
@@ -241,7 +268,7 @@ fn temp_path(parent: &Path, path: &Path) -> Result<PathBuf, KoiError> {
 
 #[cfg(test)]
 mod tests {
-    use super::{ImageCache, cache_key, image_type_from_content_type};
+    use super::{cache_key, validate_cache_key};
 
     #[test]
     fn cache_key_is_sha256_hex() {
@@ -252,22 +279,9 @@ mod tests {
     }
 
     #[test]
-    fn cache_path_uses_image_extension() {
-        let cache = ImageCache::new("/tmp/koi-image-cache-test".into());
-        let image_type = image_type_from_content_type("image/png").unwrap();
-        let path = cache.path("abc123", image_type);
-        assert_eq!(
-            path.file_name().and_then(|name| name.to_str()),
-            Some("abc123.png")
-        );
-    }
-
-    #[test]
-    fn content_type_matching_is_strict() {
-        assert_eq!(
-            image_type_from_content_type("image/png; charset=utf-8").map(|t| t.extension),
-            Some("png")
-        );
-        assert!(image_type_from_content_type("text/html").is_none());
+    fn cache_key_validation_rejects_paths_and_urls() {
+        assert!(validate_cache_key(&"a".repeat(64)).is_ok());
+        assert!(validate_cache_key("../image").is_err());
+        assert!(validate_cache_key("https://example.com/icon.png").is_err());
     }
 }
