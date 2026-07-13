@@ -2106,6 +2106,168 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/wallet-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List pending wallet requests
+         * @description GET /api/wallet-requests
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["WalletRequestsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet-requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a pending wallet request
+         * @description GET /api/wallet-requests/:request_id
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    request_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["FrontendWalletRequest"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet-requests/{request_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a pending wallet request
+         * @description POST /api/wallet-requests/:request_id/approve
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    request_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["FrontendWalletRequest"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet-requests/{request_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject a pending wallet request
+         * @description POST /api/wallet-requests/:request_id/reject
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    request_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json; charset=utf-8": components["schemas"]["RejectWalletRequest"];
+                };
+            };
+            responses: {
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json; charset=utf-8": components["schemas"]["FrontendWalletRequest"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -2444,6 +2606,24 @@ export type components = {
             /** Format: uint64 */
             network_identity: number;
         };
+        /** FrontendWalletRequest */
+        FrontendWalletRequest: {
+            /** Format: uuid */
+            request_id: string;
+            /** Format: uuid */
+            connection_id: string;
+            kind: components["schemas"]["WalletRequestKind"];
+            method: string;
+            params: unknown;
+            raw_request: unknown;
+            /** Format: uint64 */
+            account_identity: number;
+            /** Format: uint64 */
+            network_identity: number;
+            account_address?: string;
+            /** Format: date-time */
+            created_at: string;
+        };
         /** GenerateMnemonicResponse */
         GenerateMnemonicResponse: {
             mnemonic: string;
@@ -2582,6 +2762,10 @@ export type components = {
         RawCall: {
             /** Format: bytes */
             data: string;
+        };
+        /** RejectWalletRequest */
+        RejectWalletRequest: {
+            message?: string;
         };
         /** RpcCallSample */
         RpcCallSample: {
@@ -2821,6 +3005,12 @@ export type components = {
         ViewWallet: {
             /** Format: address */
             evm_address: string;
+        };
+        /** @enum {string} */
+        WalletRequestKind: "permission" | "signature" | "transaction" | "network" | "read" | "unknown";
+        /** WalletRequestsResponse */
+        WalletRequestsResponse: {
+            requests: components["schemas"]["FrontendWalletRequest"][];
         };
         WalletType: components["schemas"]["WalletType_Safe"] | components["schemas"]["WalletType_EOA"] | components["schemas"]["WalletType_View"] | components["schemas"]["WalletType_Railgun"];
         WalletType_EOA: {

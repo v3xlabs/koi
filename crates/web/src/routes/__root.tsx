@@ -1,6 +1,8 @@
 import { createRootRoute, Outlet } from "@tanstack/solid-router";
 import { Suspense } from "solid-js";
 
+import { PendingWalletRequests } from "#/components/wallet-request/pending";
+
 export const Route = createRootRoute({
   component: () => (
     <>
@@ -9,6 +11,7 @@ export const Route = createRootRoute({
           <Outlet />
         </Suspense>
       </div>
+      <PendingWalletRequests />
     </>
   ),
   notFoundComponent: () => (
