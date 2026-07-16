@@ -1,8 +1,16 @@
 import { Command } from "cmdk-solid";
-import { Component, Show } from "solid-js";
+import { Accessor, Component, JSX, Show } from "solid-js";
+
+export type CommandPage = "accounts" | "assets" | "currency" | "theme";
 
 export type CommandGroupProperties = {
     close: () => void;
+};
+
+export type PagedCommandGroupProperties = CommandGroupProperties & {
+    page: Accessor<CommandPage | undefined>;
+    search: Accessor<string>;
+    openPage: (page: CommandPage) => void;
 };
 
 export const CommandMenuItem: Component<{
@@ -11,6 +19,7 @@ export const CommandMenuItem: Component<{
     icon: Component<{ class?: string; }>;
     title: string;
     description?: string;
+    suffix?: JSX.Element;
     onSelect: () => void;
 }> = props => (
     <Command.Item
@@ -28,5 +37,6 @@ export const CommandMenuItem: Component<{
                 {description => <div class="truncate text-xs text-muted">{description()}</div>}
             </Show>
         </div>
+        {props.suffix}
     </Command.Item>
 );

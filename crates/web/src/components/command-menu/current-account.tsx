@@ -1,8 +1,8 @@
 import { Toast, toaster } from "@kobalte/core/toast";
 import { useNavigate, useRouterState } from "@tanstack/solid-router";
 import { Command } from "cmdk-solid";
-import { FaSolidAddressCard, FaSolidGear, FaSolidRefresh } from "solid-icons/fa";
-import { FiCopy, FiFilePlus } from "solid-icons/fi";
+import { FaSolidAddressCard, FaSolidGear, FaSolidQrcode, FaSolidRefresh } from "solid-icons/fa";
+import { FiCopy, FiExternalLink, FiFilePlus } from "solid-icons/fi";
 import { createMemo, For, Show } from "solid-js";
 
 import { refreshAccountBalances, useAccount } from "#/api/account";
@@ -13,6 +13,10 @@ import { narrow } from "#/utils/narrow";
 import { CommandGroupProperties, CommandMenuItem } from "./item";
 
 type AccountRoute = "" | "assets" | "history" | "settings" | "settings/assets" | "new-tx";
+type CurrentAccountCommandProperties = CommandGroupProperties & {
+    showReceive: (address: string) => void;
+    showExplorer: (address: string, networks: number[]) => void;
+};
 
 const showToast = (message: string) => toaster.show(props => (
     <Toast toastId={props.toastId} class="toast">
@@ -20,7 +24,7 @@ const showToast = (message: string) => toaster.show(props => (
     </Toast>
 ));
 
-export const CurrentAccountCommands = (props: CommandGroupProperties) => {
+export const CurrentAccountCommands = (props: CurrentAccountCommandProperties) => {
     const navigate = useNavigate();
     const routerState = useRouterState();
     const { displayCurrency } = useDisplayCurrency();
@@ -78,6 +82,18 @@ export const CurrentAccountCommands = (props: CommandGroupProperties) => {
             () => showToast("Balances refreshed"),
             () => showToast("Failed to refresh balances"),
         );
+    };
+
+    const openReceive = () => {
+        const address = currentAddress();
+
+        if (address) props.showReceive(address);
+    };
+
+    const openExplorer = () => {
+        const address = currentAddress();
+
+        if (address) props.showExplorer(address, currentAccount.data?.networks ?? []);
     };
 
     return (
@@ -146,14 +162,32 @@ export const CurrentAccountCommands = (props: CommandGroupProperties) => {
                   onSelect={() => goToAccountRoute("settings")}
                 />
                 <Show when={currentAddress()}>
-                    <CommandMenuItem
-                      value="copy current account address"
-                      keywords={["clipboard", "evm", "receive"]}
-                      icon={FiCopy}
-                      title="Copy account address"
-                      description="Copy the current EVM address"
-                      onSelect={copyCurrentAddress}
-                    />
+                    <>
+                        <CommandMenuItem
+                          value="receive current account funds"
+                          keywords={["qr", "deposit", "address"]}
+                          icon={FaSolidQrcode}
+                          title="Receive"
+                          description="Show the current account QR code"
+                          onSelect={openReceive}
+                        />
+                        <CommandMenuItem
+                          value="open current account explorer"
+                          keywords={["external", "etherscan", "blockscout"]}
+                          icon={FiExternalLink}
+                          title="Open in explorer"
+                          description="Choose a block explorer for this account"
+                          onSelect={openExplorer}
+                        />
+                        <CommandMenuItem
+                          value="copy current account address"
+                          keywords={["clipboard", "evm", "receive"]}
+                          icon={FiCopy}
+                          title="Copy account address"
+                          description="Copy the current EVM address"
+                          onSelect={copyCurrentAddress}
+                        />
+                    </>
                 </Show>
             </Command.Group>
         </Show>

@@ -17,7 +17,14 @@ const EXPLORER_ADDRESS_LINKS: Partial<Record<VendorFlag, Record<number, string>>
     },
 };
 
-export const AddressExternalLinkModal: Component<{ address: string; networks: number[]; children?: JSX.Element; class?: string; }> = (props) => {
+export const AddressExternalLinkModal: Component<{
+    address: string;
+    networks: number[];
+    children?: JSX.Element;
+    class?: string;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+}> = (props) => {
     const vendorsQuery = useVendors();
     const vendors = createMemo(() => vendorsQuery.data?.vendors);
 
@@ -50,12 +57,6 @@ export const AddressExternalLinkModal: Component<{ address: string; networks: nu
             .toSorted((a, b) => a.network_identity - b.network_identity || a.explorerName.localeCompare(b.explorerName));
     });
 
-    const hue = createMemo(() => addressToHue(props.address));
-
-    const copyAddress = async () => {
-        await navigator.clipboard.writeText(props.address);
-    };
-
     return (
         <ExplorerLinksModal
           title="Open in explorer"
@@ -63,8 +64,10 @@ export const AddressExternalLinkModal: Component<{ address: string; networks: nu
           class={props.class}
           emptyMessage="No block explorer links are enabled for this address."
           links={links}
+          open={props.open}
+          onOpenChange={props.onOpenChange}
         >
-            {props.children ?? "Link"}
+            {props.children}
         </ExplorerLinksModal>
     );
 };
