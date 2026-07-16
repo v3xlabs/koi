@@ -122,7 +122,8 @@ textarea.input {
     &[data-highlighted] {
         @apply bg-surface-alt;
     }
-    &[data-disabled] {
+    &[data-disabled="true"],
+    &[aria-disabled="true"] {
         @apply cursor-not-allowed opacity-50;
     }
 }
@@ -242,6 +243,52 @@ textarea.input {
     &[data-expanded] {
         animation: contentShow 100ms ease-in forwards;
     }
+}
+
+.command-menu__overlay {
+    @apply fixed inset-0 z-50 bg-[oklch(0_0_0/0.25)];
+}
+
+.command-menu__content {
+    @apply fixed left-1/2 top-16 z-50 w-[min(640px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-lg border border-border bg-surface shadow-2xl outline-none;
+}
+
+.command-menu__input-wrap {
+    @apply flex h-12 items-center gap-3 border-b border-border px-3;
+}
+
+.command-menu__input {
+    @apply h-full min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted;
+}
+
+.command-menu__list {
+    @apply max-h-[min(520px,calc(100vh-120px))] overflow-y-auto p-2;
+    scroll-padding-block: 8px;
+}
+
+.command-menu__empty {
+    @apply px-3 py-8 text-center text-sm text-muted;
+}
+
+[cmdk-group-heading] {
+    @apply px-2 pb-1 pt-3 text-xs font-semibold uppercase text-muted;
+}
+
+.command-menu__item {
+    @apply flex min-h-12 cursor-pointer select-none items-center gap-3 rounded-md px-2.5 py-2 outline-none transition-colors;
+
+    &[data-selected="true"],
+    &[aria-selected="true"] {
+        @apply bg-surface-alt;
+    }
+}
+
+.command-menu__item-icon {
+    @apply flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted;
+}
+
+.command-menu__shortcut {
+    @apply shrink-0 rounded border border-border bg-background px-1.5 py-0.5 text-[11px] leading-none text-muted;
 }
 
 /* Kobalte positioner uses min-width: max-content, which ignores sameWidth */
