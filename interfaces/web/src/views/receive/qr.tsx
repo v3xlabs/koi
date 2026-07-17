@@ -7,6 +7,8 @@ import { SegmentedControl } from "#/components/input/segmented";
 
 type ReceiveQRProperties = {
     address: Accessor<string>;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
 const supportedQRType = [
@@ -29,7 +31,7 @@ export const ReceiveQR: ParentComponent<ReceiveQRProperties> = (props) => {
     const qrImage = createMemo(() => `data:image/svg+xml;base64,${btoa(qr())}`);
 
     return (
-        <Modal>
+        <Modal open={props.open} onOpenChange={props.onOpenChange}>
             {props.children}
             <Modal.Portal>
                 <Modal.Overlay />

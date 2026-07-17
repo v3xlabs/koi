@@ -59,8 +59,8 @@ figment = { version = "0.10.19", features = ["env", "json"] }
 dirs = "6"
 bytes = { version = "1.10.1", features = ["serde"] }
 rustls = "0.23.19"
-alloy = { version = "1.8.3", features = ["json-rpc", "transport-throttle"] }
-alloy-signer-local = "1.8.3"
+alloy = { version = "2", features = ["json-rpc", "transport-throttle"] }
+alloy-signer-local = "2"
 coins-bip32 = "0.12"
 coins-bip39 = "0.12"
 k256 = "0.13"
