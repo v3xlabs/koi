@@ -1,19 +1,37 @@
-import { createFileRoute, useNavigate } from "@tanstack/solid-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/solid-router";
 import { createMemo, createSignal } from "solid-js";
+import { isAddress } from "viem";
 
 import { useCreateAccount, useNextAccountId } from "#/api/account";
 import { AddressInput } from "#/components/input/address";
 import { button } from "#/components/input/button";
 import { NetworkSelect } from "#/components/net/input";
+import { parseAddressInput } from "#/utils/address";
+
+type ImportViewSearch = {
+  address?: string;
+};
+
+const searchAddress = (value: unknown) => {
+  if (typeof value !== "string") return undefined;
+
+  const address = parseAddressInput(value).address;
+
+  return isAddress(address) ? address : undefined;
+};
 
 export const Route = createFileRoute("/acc/_n/import/view")({
+  validateSearch: (search: Record<string, unknown>): ImportViewSearch => ({
+    address: searchAddress(search.address),
+  }),
   staticData: {
     title: "Import View",
   },
   component: () => {
     const navigate = useNavigate();
+    const search = useSearch({ from: "/acc/_n/import/view" });
     const nextAccountId = useNextAccountId();
-    const [address, setAddress] = createSignal("");
+    const [address, setAddress] = createSignal(search().address ?? "");
     const [name, setName] = createSignal("");
     const [networks, setNetworks] = createSignal<number[]>([]);
     const createAccount = useCreateAccount(({ data: { account_identity, name, networks, address, display_order } }: { data: { account_identity: number; name: string; networks: number[]; address: string; display_order: number; }; }) => ({

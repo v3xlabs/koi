@@ -35,6 +35,7 @@
     "@tanstack/solid-router": "^1.168.20",
     "@tanstack/solid-table": "^8.21.3",
     "blo": "^2.0.0",
+    "cmdk-solid": "^1.1.2",
     "date-fns": "^4.1.0",
     "eslint": "^9.39.2",
     "eslint-plugin-v3xlabs": "^1.7.14",

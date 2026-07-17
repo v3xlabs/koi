@@ -72,13 +72,19 @@ type ExplorerLinksModalProps = {
     class?: string;
     emptyMessage?: string;
     links: () => ExplorerLink[];
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 };
 
 export const ExplorerLinksModal: Component<ExplorerLinksModalProps> = props => (
-    <Modal>
-        <Modal.Trigger class={props.class}>
-            {props.children ?? "Link"}
-        </Modal.Trigger>
+    <Modal open={props.open} onOpenChange={props.onOpenChange}>
+        <Show when={props.children}>
+            {children => (
+                <Modal.Trigger class={props.class}>
+                    {children()}
+                </Modal.Trigger>
+            )}
+        </Show>
         <Modal.Portal>
             <Modal.Overlay />
             <Modal.Positioner>
