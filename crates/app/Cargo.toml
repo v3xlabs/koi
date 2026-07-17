@@ -67,7 +67,7 @@ k256 = "0.13"
 rand = "0.8"
 tracing-log = "0.2.0"
 petgraph = "0.8.3"
-eth-prices = { version = "0.0.10", features = ["ecb", "time"] }
+eth-prices = { version = "1", features = ["ecb", "time"] }
 strum = "0.28"
 strum_macros = "0.28"
 serde_plain = "1"

@@ -105,7 +105,7 @@ async fn main() {
                 }
             };
 
-            if let Err(error) = koi_tui::run(api).await {
+            if let Err(error) = koi_cli::run(api).await {
                 eprintln!("TUI error: {error:#}");
                 std::process::exit(1);
             }

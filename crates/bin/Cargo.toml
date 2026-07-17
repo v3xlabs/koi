@@ -10,8 +10,8 @@ path = "src/main.rs"
 [dependencies]
 koi = { path = "../app", package = "koi-app" }
 clap = { version = "4", features = ["derive"] }
-koi-gui = { path = "../gui", optional = true }
-koi-tui = { path = "../tui" }
+koi-gui = { path = "../../interfaces/gui", optional = true }
+koi-cli = { path = "../../interfaces/cli" }
 anyhow = "1"
 dotenvy = "0.15.7"
 reqwest = { version = "0.12.5", features = [

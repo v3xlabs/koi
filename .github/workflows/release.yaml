@@ -22,20 +22,20 @@ jobs:
         with:
           node-version: '24'
           cache: 'pnpm'
-          cache-dependency-path: crates/web/pnpm-lock.yaml
+          cache-dependency-path: interfaces/web/pnpm-lock.yaml
 
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: crates/web
+        working-directory: interfaces/web
 
       - name: Build frontend
         run: pnpm build
-        working-directory: crates/web
+        working-directory: interfaces/web
 
       - uses: actions/upload-artifact@v7
         with:
           name: web-dist
-          path: crates/web/dist/
+          path: interfaces/web/dist/
           retention-days: 1
 
   build-binary:
@@ -73,7 +73,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: web-dist
-          path: crates/web/dist/
+          path: interfaces/web/dist/
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -163,7 +163,7 @@ jobs:
           APP="Koi"
           BIN="target/${{ matrix.target }}/release/koi"
           APPDIR="AppDir"
-          ICON="crates/web/public/favicon_x64.png"
+          ICON="interfaces/web/public/favicon_x64.png"
 
           mkdir -p "${APPDIR}/usr/bin"
           mkdir -p "${APPDIR}/usr/share/applications"
