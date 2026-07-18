@@ -1,11 +1,10 @@
-use poem_openapi::NewType;
 use serde::{Deserialize, Serialize};
 use sqlx::{
     Decode, Encode, Sqlite,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone, NewType, PartialEq, Hash, Eq, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Hash, Eq, Copy)]
 pub struct GroupIdentity(pub u64);
 
 impl sqlx::Type<Sqlite> for GroupIdentity {
@@ -36,24 +35,23 @@ impl<'q> Encode<'q, Sqlite> for GroupIdentity {
     }
 }
 
-use poem_openapi::Object;
 use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
 
 use crate::{error::KoiError, state::DB};
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountGroup {
     pub group_identity: GroupIdentity,
     pub name: String,
     pub display_order: u32,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountGroupCreate {
     pub name: String,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountGroupUpdate {
     pub name: Option<String>,
 }

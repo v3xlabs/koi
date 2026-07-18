@@ -2,7 +2,6 @@ use std::{fmt::Display, str::FromStr};
 
 use alloy::primitives::Address;
 use eth_prices::asset::AssetIdentifier;
-use poem_openapi::types::Example;
 use serde::{Deserialize, Serialize};
 use sqlx::{
     Decode, Encode, Sqlite,
@@ -11,11 +10,6 @@ use sqlx::{
 
 use crate::{error::KoiError, models::network::identity::NetworkIdentity};
 
-use poem_openapi::{
-    registry::MetaSchemaRef,
-    types::{ParseError, ParseFromJSON, ParseFromParameter, ParseResult, ToJSON},
-};
-use serde_json::Value;
 use sqlx::{FromRow, Row, sqlite::SqliteRow};
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq)]
@@ -104,66 +98,10 @@ impl<'de> Deserialize<'de> for AssetIdentity {
     }
 }
 
-impl Example for AssetIdentity {
-    fn example() -> Self {
-        Self::ERC20(
-            NetworkIdentity(1),
-            Address::from_str("0x0000000000000000000000000000000000000000").unwrap(),
-        )
-    }
-}
-
-impl poem_openapi::types::Type for AssetIdentity {
-    const IS_REQUIRED: bool = true;
-
-    type RawValueType = String;
-
-    type RawElementValueType = String;
-
-    fn name() -> std::borrow::Cow<'static, str> {
-        "NetworkIdentity".into()
-    }
-
-    fn schema_ref() -> MetaSchemaRef {
-        <String as poem_openapi::types::Type>::schema_ref()
-    }
-
-    fn as_raw_value(&self) -> Option<&Self::RawValueType> {
-        None
-    }
-
-    fn raw_element_iter<'a>(
-        &'a self,
-    ) -> Box<dyn Iterator<Item = &'a Self::RawElementValueType> + 'a> {
-        todo!()
-    }
-}
-
-impl ParseFromJSON for AssetIdentity {
-    fn parse_from_json(value: Option<Value>) -> ParseResult<Self> {
-        match value {
-            Some(Value::String(s)) => Ok(s.parse()?),
-            _ => Err(ParseError::custom("Invalid asset identity")),
-        }
-    }
-}
-
-impl ToJSON for AssetIdentity {
-    fn to_json(&self) -> Option<Value> {
-        Some(Value::String(self.to_string()))
-    }
-}
-
 impl<'r> FromRow<'r, SqliteRow> for AssetIdentity {
     fn from_row(row: &'r SqliteRow) -> Result<Self, sqlx::Error> {
         let s: String = row.try_get("asset_identity")?;
         s.parse().map_err(|_| sqlx::Error::RowNotFound)
-    }
-}
-
-impl ParseFromParameter for AssetIdentity {
-    fn parse_from_parameter(value: &str) -> ParseResult<Self> {
-        Ok(value.parse()?)
     }
 }
 

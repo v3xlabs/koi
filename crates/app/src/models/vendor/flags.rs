@@ -1,6 +1,5 @@
 use std::{fmt::Display, str::FromStr};
 
-use poem_openapi::{Enum, Object};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     Decode, Encode, Sqlite, Type,
@@ -10,11 +9,8 @@ use strum::{EnumProperty, IntoEnumIterator};
 use strum_macros::{EnumIter, EnumProperty};
 use tracing::info;
 
-#[derive(
-    Debug, Serialize, Deserialize, Enum, EnumIter, EnumProperty, Hash, PartialEq, Eq, Clone,
-)]
+#[derive(Debug, Serialize, Deserialize, EnumIter, EnumProperty, Hash, PartialEq, Eq, Clone)]
 #[serde(rename_all = "snake_case")]
-#[oai(rename_all = "snake_case")]
 pub enum VendorFlag {
     #[strum(props(comment = "Asset Icon Discovery"))]
     AvaraAssetIcons,
@@ -68,7 +64,7 @@ pub enum VendorFlag {
     BlockscoutLinkContracts,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VendorFlagInfo {
     pub flag: VendorFlag,
     pub comment: String,

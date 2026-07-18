@@ -1,13 +1,12 @@
 use std::{fmt::Display, num::ParseIntError, str::FromStr};
 
-use poem_openapi::NewType;
 use serde::{Deserialize, Serialize};
 use sqlx::{
     Decode, Encode, Sqlite,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone, NewType, PartialEq, Hash, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Hash, Eq)]
 pub struct AccountIdentity(pub u64);
 
 impl sqlx::types::Type<Sqlite> for AccountIdentity {

@@ -2,18 +2,14 @@ import { Tooltip } from "@kobalte/core/tooltip";
 import { FiGitBranch } from "solid-icons/fi";
 import { Component, For, Match, Show, Switch } from "solid-js";
 
+import type { Decoded, DecodedCall, DecodedParam } from "#/api/bindings.gen";
 import { usePrivacyMode } from "#/api/context";
-import { components } from "#/api/schema.gen";
 import { AssetAmount } from "#/components/asset/amount";
 import { AssetPreview } from "#/components/asset/preview";
 import { AddressPreview } from "#/components/link/address";
 import { privateAmount } from "#/utils/privacy";
 
 import { TxField, TxJsonValue, TxValue } from "./value";
-
-type DecodedCall = components["schemas"]["DecodedCall"];
-type Decoded = components["schemas"]["Decoded"];
-type DecodedParam = components["schemas"]["DecodedParam"];
 
 const callTitle = (call: DecodedCall) => {
   const decoded = call.decoded;

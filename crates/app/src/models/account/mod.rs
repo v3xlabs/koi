@@ -1,4 +1,3 @@
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
 
@@ -20,7 +19,7 @@ pub mod identity;
 pub mod layout;
 pub mod metadata;
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Account {
     pub account_identity: AccountIdentity,
     pub name: String,
@@ -32,7 +31,7 @@ pub struct Account {
     pub display_order: u32,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccountUpdate {
     pub name: Option<String>,
     pub networks: Option<Vec<NetworkIdentity>>,

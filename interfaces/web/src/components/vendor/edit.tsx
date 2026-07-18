@@ -7,8 +7,8 @@ import { Toggle } from "../input/toggle";
 
 export const VendorFlagToggle: Component<{ info: VendorFlagInfo; state: Accessor<boolean>; }> = ({ info, state }) => {
     const enabled = createMemo(() => state());
-    const enableMutation = useVendorFlagEnable(() => ({ path: { flag: info.flag } }));
-    const disableMutation = useVendorFlagDisable(() => ({ path: { flag: info.flag } }));
+    const enableMutation = useVendorFlagEnable((variables: Record<string, never>) => ({ ...variables, path: { flag: info.flag } }));
+    const disableMutation = useVendorFlagDisable((variables: Record<string, never>) => ({ ...variables, path: { flag: info.flag } }));
 
     return (
         <div class={info.unfinished ? "opacity-50 w-full" : "w-full"}>

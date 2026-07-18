@@ -9,7 +9,9 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "openapi": "openapi-typescript http://0.0.0.0:7777/openapi.json -t -o ./src/api/schema.gen.ts",
+    "rpc-bindings": "cargo run --manifest-path ../../Cargo.toml -p koi-api --bin rpc-bindings && ts-to-zod src/api/bindings.gen.ts src/api/bindings.zod.gen.ts --skipValidation && node scripts/normalize-rpc-zod.mjs",
+    "rpc-bindings-check": "pnpm rpc-bindings && git diff --exit-code -- src/api/rpc-contract.gen.ts src/api/bindings.zod.gen.ts",
+    "rpc-typecheck": "tsc -p tsconfig.rpc.json",
     "lint": "eslint ."
   },
   "license": "MIT",
@@ -19,6 +21,7 @@
     "eslint-plugin-v3xlabs": "^1.7.14",
     "solid-devtools": "^0.34.3",
     "tailwindcss": "^4.1.13",
+    "ts-to-zod": "5.1.0",
     "typescript": "^5.9.2",
     "vite": "^7.1.4",
     "vite-plugin-solid": "^2.11.8"
@@ -28,7 +31,6 @@
     "@openlv/session": "0.0.1-beta.11",
     "@openlv/transport": "0.0.1-beta.8",
     "@solid-primitives/storage": "^4.3.4",
-    "@tanstack/query-persist-client-core": "^5.100.10",
     "@tanstack/router-plugin": "^1.167.22",
     "@tanstack/solid-form": "^1.33.0",
     "@tanstack/solid-hotkeys": "^0.9.1",
@@ -39,13 +41,12 @@
     "date-fns": "^4.1.0",
     "eslint": "^9.39.2",
     "eslint-plugin-v3xlabs": "^1.7.14",
-    "openapi-hooks": "^0.1.1",
-    "openapi-typescript": "^7.13.0",
     "qr": "^0.5.5",
     "solid-icons": "^1.2.0",
     "solid-js": "^1.9.9",
     "ts-pattern": "^5.9.0",
-    "viem": "^2.52.2"
+    "viem": "^2.52.2",
+    "zod": "4.4.3"
   },
   "packageManager": "pnpm@11.5.1"
 }

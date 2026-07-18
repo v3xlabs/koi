@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": [
+    "src/api/bindings.gen.ts",
+    "src/api/bindings.zod.gen.ts",
+    "src/api/rpc-contract.gen.ts",
+    "src/api/rpc-transport.ts",
+    "src/api/rpc.gen.ts"
+  ]
+}

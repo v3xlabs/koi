@@ -1,4 +1,3 @@
-use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as};
 
@@ -10,7 +9,7 @@ pub mod manager;
 pub mod metadata;
 pub mod pool;
 
-#[derive(Debug, Serialize, Deserialize, Object, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Network {
     /// evm chain id
     pub network_identity: NetworkIdentity,
@@ -20,7 +19,7 @@ pub struct Network {
     pub network_icon_url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct NetworkUpdate {
     pub network_name: Option<String>,
     pub network_icon_url: Option<String>,
@@ -117,15 +116,5 @@ impl Network {
                 network_icon_url: Some("https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg".to_string()),
             },
         ]
-    }
-}
-
-impl Example for Network {
-    fn example() -> Self {
-        Self {
-            network_identity: NetworkIdentity(1),
-            network_name: "Ethereum Mainnet".to_string(),
-            network_icon_url: Some("https://example.com/icon.png".to_string()),
-        }
     }
 }

@@ -13,7 +13,6 @@ use alloy::{
     transports::{TransportError, TransportFut},
 };
 use chrono::Utc;
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Semaphore;
 use tower::{Layer, Service};
@@ -50,7 +49,7 @@ struct RpcMethodCounter {
     errors: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RpcEndpointStats {
     pub in_flight: u64,
     pub queued: u64,
@@ -70,14 +69,14 @@ pub struct RpcEndpointStats {
     pub recent: Vec<RpcCallSample>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RpcMethodStats {
     pub method: String,
     pub total: u64,
     pub errors: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RpcCallSample {
     pub timestamp: u64,
     pub methods: Vec<String>,

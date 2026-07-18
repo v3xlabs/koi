@@ -1,5 +1,4 @@
 use identity::AssetIdentity;
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as};
 
@@ -10,7 +9,7 @@ pub mod erc20;
 pub mod identity;
 pub mod metadata;
 
-#[derive(Debug, Serialize, Deserialize, Object, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct Asset {
     pub asset_identity: AssetIdentity,
     pub asset_name: String,
@@ -19,7 +18,7 @@ pub struct Asset {
     pub asset_icon_url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AssetUpdate {
     pub asset_name: Option<String>,
     pub asset_symbol: Option<String>,

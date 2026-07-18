@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/solid-router";
 import { FiMoreVertical } from "solid-icons/fi";
 import { Component, createSignal } from "solid-js";
 
-import { useAccount, useUpdateAccount } from "#/api/account";
+import { AccountUpdate, useAccount, useUpdateAccount } from "#/api/account";
 import { Modal } from "#/components/dialog";
 import { button } from "#/components/input/button";
 
@@ -19,7 +19,7 @@ export const AccountRowMenu: Component<AccountRowMenuProps> = (props) => {
 
     const accountQuery = useAccount(() => ({ path: { account_identity: props.account_identity } }));
 
-    const updateAccount = useUpdateAccount(({ data }) => ({
+    const updateAccount = useUpdateAccount(({ data }: { data: AccountUpdate; }) => ({
         path: { account_identity: props.account_identity },
         contentType: "application/json; charset=utf-8",
         data,

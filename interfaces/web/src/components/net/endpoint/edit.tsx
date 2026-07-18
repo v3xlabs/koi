@@ -1,6 +1,6 @@
 import { Component, createMemo, createSignal, Show } from "solid-js";
 
-import { NetworkEndpoint, useNetworkEndpointStatus, useUpdateNetworkEndpoint } from "#/api/network";
+import { NetworkEndpoint, NetworkEndpointUpdate, useNetworkEndpointStatus, useUpdateNetworkEndpoint } from "#/api/network";
 import { button } from "#/components/input/button";
 import { narrow } from "#/utils/narrow";
 
@@ -8,7 +8,7 @@ import { NetworkEndpointDelete } from "./delete";
 import { NetworkEndpointRpcStats } from "./status";
 
 export const NetworkEndpointItem: Component<{ network_identity: number; endpoint: NetworkEndpoint; }> = ({ network_identity, endpoint }) => {
-    const updateNetworkEndpoint = useUpdateNetworkEndpoint(({ data }: { data: NetworkEndpoint; }) => ({
+    const updateNetworkEndpoint = useUpdateNetworkEndpoint(({ data }: { data: NetworkEndpointUpdate; }) => ({
         path: {
             network_identity,
             endpoint_identity: endpoint.endpoint_identity ?? "",
@@ -100,8 +100,6 @@ export const NetworkEndpointItem: Component<{ network_identity: number; endpoint
                   disabled={!isDirty()}
                   onClick={() => updateNetworkEndpoint.mutate({
                         data: {
-                            endpoint_identity: endpoint.endpoint_identity,
-                            network_identity,
                             endpoint_label: label(),
                             endpoint_type: type(),
                             endpoint_url: url(),

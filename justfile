@@ -10,8 +10,11 @@ install:
 
 ui:
     cd interfaces/web && pnpm dev
-openapi:
-    cd interfaces/web && pnpm openapi
+rpc-bindings:
+    cd interfaces/web && pnpm rpc-bindings
+
+rpc-bindings-check:
+    cd interfaces/web && pnpm rpc-bindings-check
 
 [private]
 run +args:
@@ -22,7 +25,6 @@ build-web:
     cd interfaces/web && pnpm build
 
 dev: (run "daemon")
-tui: (run "tui")
 gui: (build-web) (run "gui")
 migrate: (run "migrate")
 migrate-skip: (run "migrate" "--skip")
@@ -47,6 +49,8 @@ both: ui dev
 # (config lives in the pubspec's flutter_rust_bridge section)
 bridge:
     cd interfaces/mobile && flutter_rust_bridge_codegen generate
+    cd interfaces/mobile && dart run tool/normalize_frb_bindings.dart
+    cargo fmt -p koi-ffi
 
 # Host-side test of the full bridge: flutter test loads the real rust cdylib
 # via the generated loader's ioDirectory (crates/ffi/target -> ../../target)

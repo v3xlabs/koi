@@ -2,7 +2,7 @@ import { Toast, toaster } from "@kobalte/core/toast";
 import { createFileRoute, useParams } from "@tanstack/solid-router";
 import { Accessor, Component, createMemo, createSignal, Show, Suspense } from "solid-js";
 
-import { Account, useAccount, useUpdateAccount } from "#/api/account";
+import { Account, AccountUpdate, useAccount, useUpdateAccount } from "#/api/account";
 import { button } from "#/components/input/button";
 import { NetworkSelect } from "#/components/net/input";
 
@@ -30,20 +30,19 @@ const AccountEdit: Component<{ account: Accessor<Account>; }> = ({ account }) =>
 
   const isDirty = createMemo(() => chosenName() !== account()?.name || selectedNetworks() !== account()?.networks);
 
-  const updateAccount = useUpdateAccount(({ data }: { data: Account; }) => ({
-    path: { account_identity: account()?.account_identity },
+  const updateAccount = useUpdateAccount(({ data }: { data: AccountUpdate; }) => ({
+    path: { account_identity: account().account_identity },
     contentType: "application/json; charset=utf-8",
     data,
   }));
 
   const mutate = () => {
     // TODO:
-    const account_identity = account()?.account_identity;
     const metadata = account()?.metadata;
     const name = chosenName();
     const networks = selectedNetworks();
 
-    updateAccount.mutate({ data: { account_identity, metadata, name, networks } }, {
+    updateAccount.mutate({ data: { metadata, name, networks } }, {
       onSuccess: () => {
         toaster.show(props => (
           <Toast toastId={props.toastId} class="toast">

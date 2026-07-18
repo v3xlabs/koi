@@ -1,4 +1,3 @@
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -14,7 +13,7 @@ use crate::{
 pub mod decode;
 pub mod simulate;
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Tx {
     pub network_identity: NetworkIdentity,
     pub tx_hash: Option<ApiBytes>,
@@ -27,7 +26,7 @@ pub struct Tx {
     pub extra: TxExtra,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TxBase {
     pub network_identity: NetworkIdentity,
     pub tx_hash: Option<ApiBytes>,
@@ -66,12 +65,12 @@ impl TxBase {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TxExtra {
     pub safe_wallet: Option<SafeWalletTxExtra>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SafeWalletTxExtra {
     pub nonce: Option<u64>,
     pub execution_date: Option<String>,
@@ -85,5 +84,5 @@ pub struct SafeWalletTxExtra {
     pub extra: serde_json::Value,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PendingTx {}

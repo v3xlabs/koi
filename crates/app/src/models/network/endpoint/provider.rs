@@ -19,7 +19,6 @@ use alloy::{
     },
 };
 use chrono::Utc;
-use poem_openapi::{Object, Union};
 use rustls::lock::Mutex;
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
@@ -72,7 +71,7 @@ pub enum RpcError {
     NetworkIdentityNotEvm,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RpcStatusAlive {
     block_number: u64,
     network_identity: NetworkIdentity,
@@ -80,19 +79,19 @@ pub struct RpcStatusAlive {
     rpc: RpcEndpointStats,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RpcStatusDead {
     error: String,
     rpc: RpcEndpointStats,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RpcStatusDisabled {
     rpc: RpcEndpointStats,
 }
 
-#[derive(Debug, Serialize, Deserialize, Union)]
-#[oai(discriminator_name = "status")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(tag = "status")]
 pub enum RpcStatus {
     Alive(RpcStatusAlive),
     Dead(RpcStatusDead),

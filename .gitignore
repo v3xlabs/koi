@@ -7,6 +7,7 @@ cache/
 # symlink to the workspace target dir (created by `just mobile-test` so the
 # generated dart loader finds libkoi_ffi on the host)
 crates/ffi/target
+crates/api/bindings/
 
 # built by `just rust-android`, never committed
 interfaces/mobile/android/app/src/main/jniLibs/

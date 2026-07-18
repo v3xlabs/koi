@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -10,12 +9,12 @@ use crate::{
     vendor::{safe_wallet, smoldapp},
 };
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct NetworkMetadataOption {
     pub icon_url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct NetworkMetadataDiscovery {
     pub network_identity: NetworkIdentity,
     pub options: HashMap<String, NetworkMetadataOption>,

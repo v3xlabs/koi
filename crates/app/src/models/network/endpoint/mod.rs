@@ -1,4 +1,3 @@
-use poem_openapi::{Object, types::Example};
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as, query_scalar};
 
@@ -11,7 +10,7 @@ use crate::{
 pub mod metrics;
 pub mod provider;
 
-#[derive(Debug, Serialize, Deserialize, FromRow, Object)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct NetworkEndpoint {
     pub endpoint_identity: i32,
     pub endpoint_label: Option<String>,
@@ -21,7 +20,7 @@ pub struct NetworkEndpoint {
     pub network_identity: NetworkIdentity,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct NetworkEndpointUpdate {
     pub endpoint_label: Option<String>,
     pub endpoint_type: Option<String>,
@@ -40,10 +39,12 @@ impl Network {
 
 impl NetworkEndpoint {
     pub async fn get_next_id(database: &DB) -> Result<i32, KoiError> {
-        query_scalar::<_, i32>("SELECT MAX(endpoint_identity) + 1 FROM network_endpoints")
-            .fetch_one(database)
-            .await
-            .map_err(KoiError::from)
+        query_scalar::<_, i32>(
+            "SELECT COALESCE(MAX(endpoint_identity), 0) + 1 FROM network_endpoints",
+        )
+        .fetch_one(database)
+        .await
+        .map_err(KoiError::from)
     }
 
     pub async fn create(
@@ -118,18 +119,5 @@ impl NetworkEndpoint {
             .fetch_one(database)
             .await
             .map_err(KoiError::from)
-    }
-}
-
-impl Example for NetworkEndpoint {
-    fn example() -> Self {
-        Self {
-            endpoint_identity: 1,
-            endpoint_label: None,
-            endpoint_type: "http".to_string(),
-            endpoint_url: "https://example.com".to_string(),
-            endpoint_disabled: false,
-            network_identity: NetworkIdentity(1),
-        }
     }
 }

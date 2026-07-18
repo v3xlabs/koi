@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:koi/main.dart';
+import 'package:koi/src/core/bridge/api.dart';
 import 'package:koi/src/core/bridge/frb_generated.dart';
 
 void main() {
@@ -10,10 +10,10 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('greets from the rust core', (tester) async {
-    await tester.pumpWidget(const KoiApp());
+  test('pings through the in-process rust dispatcher', () async {
+    final client = await createClient();
+    final response = await systemPing(client: client);
 
-    expect(find.textContaining('Hello, koi!'), findsOneWidget);
-    expect(find.textContaining('rust core'), findsOneWidget);
+    expect(response, 'OK');
   });
 }
