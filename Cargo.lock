@@ -3753,7 +3753,6 @@ dependencies = [
  "koi-app",
  "koi-daemon",
  "koi-gui",
- "reqwest 0.12.28",
  "tokio",
  "tracing",
  "tracing-subscriber",

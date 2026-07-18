@@ -16,9 +16,6 @@ export default defineConfig({
     port: 5173,
     host: "localhost",
     proxy: {
-      "/bootstrap": {
-        target: "http://localhost:7777",
-      },
       "/rpc": {
         target: "http://localhost:7777",
         ws: true,

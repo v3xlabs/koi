@@ -104,10 +104,6 @@ export const createRpcClient = (): RpcTransport => {
     };
 
     const openSocket = async () => {
-        const bootstrap = await fetch("/bootstrap", { cache: "no-store" });
-
-        if (!bootstrap.ok) throw new Error(`daemon bootstrap failed (${bootstrap.status})`);
-
         const scheme = location.protocol === "https:" ? "wss:" : "ws:";
         const webSocket = new WebSocket(`${scheme}//${location.host}/rpc`);
 

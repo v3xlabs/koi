@@ -124,11 +124,9 @@ async fn prepare_daemon() -> anyhow::Result<Option<tokio::task::JoinHandle<()>>>
 
 #[cfg(feature = "gui")]
 async fn daemon_is_healthy() -> bool {
-    let url = format!("{DAEMON_ORIGIN}/bootstrap");
-    reqwest::get(url)
+    tokio::net::TcpStream::connect(koi_daemon::LISTEN_ADDRESS)
         .await
-        .map(|response| response.status().is_success())
-        .unwrap_or(false)
+        .is_ok()
 }
 
 #[cfg(feature = "gui")]

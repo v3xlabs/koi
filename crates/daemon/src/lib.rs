@@ -40,7 +40,6 @@ pub async fn serve(state: AppState) -> std::io::Result<()> {
     let frontend =
         poem::endpoint::EmbeddedFilesEndpoint::<WebAssets>::new().index_file("index.html");
     let app = Route::new()
-        .at("/bootstrap", poem::get(bootstrap))
         .at("/rpc", poem::get(rpc))
         .at("/*", frontend)
         .data(daemon);
@@ -49,15 +48,6 @@ pub async fn serve(state: AppState) -> std::io::Result<()> {
     Server::new(TcpListener::bind(LISTEN_ADDRESS))
         .run(app)
         .await
-}
-
-#[handler]
-async fn bootstrap() -> Response {
-    Response::builder()
-        .status(StatusCode::OK)
-        .content_type("application/json")
-        .header(header::CACHE_CONTROL, "no-store")
-        .body("{\"ready\":true}")
 }
 
 #[handler]
