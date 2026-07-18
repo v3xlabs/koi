@@ -3,8 +3,10 @@ use sqlx::{
     Decode, Encode, Sqlite,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
 };
+use ts_rs::TS;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Hash, Eq, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Hash, Eq, Copy, TS)]
+#[ts(type = "number")]
 pub struct GroupIdentity(pub u64);
 
 impl sqlx::Type<Sqlite> for GroupIdentity {
@@ -39,19 +41,20 @@ use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
 
 use crate::{error::KoiError, state::DB};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct AccountGroup {
     pub group_identity: GroupIdentity,
     pub name: String,
     pub display_order: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct AccountGroupCreate {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(optional_fields)]
 pub struct AccountGroupUpdate {
     pub name: Option<String>,
 }

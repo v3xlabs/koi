@@ -5,8 +5,10 @@ use sqlx::{
     Decode, Encode, Sqlite,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
 };
+use ts_rs::TS;
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Hash, Eq, TS)]
+#[ts(type = "number")]
 pub struct NetworkIdentity(pub u64);
 
 impl sqlx::types::Type<Sqlite> for NetworkIdentity {

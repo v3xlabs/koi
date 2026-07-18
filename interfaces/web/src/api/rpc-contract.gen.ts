@@ -1,136 +1,66 @@
-/* Generated from the Rust RpcMethod markers. */
+/* Generated from the Rust RPC contract. Do not edit. */
 
-import type {
-    Account,
-    AccountBalance,
-    AccountBalances,
-    AccountGroup,
-    AccountGroupCreate,
-    AccountGroupUpdate,
-    AccountLayout,
-    AccountLayoutUpdate,
-    AccountUpdate,
-    Asset,
-    AssetMetadataDiscovery,
-    AssetUpdate,
-    DecodeTransactionRequest,
-    DecodeTransactionResponse,
-    Network,
-    NetworkEndpoint,
-    NetworkEndpointUpdate,
-    NetworkMetadataDiscovery,
-    NetworkUpdate,
-    Quoter,
-    QuoterCreate,
-    QuoterDiscovery,
-    QuoterDiscoveryResponse,
-    QuoterUpdate,
-    RpcErrorObject,
-    RpcPoolStats,
-    RpcStatus,
-    SimulateTransactionRequest,
-    SimulateTransactionResponse,
-    Tx,
-    VendorFlag,
-    VendorFlagInfo,
-} from "./bindings.gen";
+import type * as RpcBindings from "./bindings.gen";
 
-export type RpcIdentity = number | string | null;
-export type RpcRequestEnvelope = { jsonrpc: "2.0"; id?: RpcIdentity; method: string; params: Record<string, unknown> };
-export type RpcSuccessEnvelope = { jsonrpc: "2.0"; id: RpcIdentity; result: unknown };
-export type RpcErrorEnvelope = { jsonrpc: "2.0"; id: RpcIdentity; error: RpcErrorObject };
-export type RpcResponseEnvelope = RpcSuccessEnvelope | RpcErrorEnvelope;
-
-export type EmptyParams = Record<string, never>;
-export type AccountParams = { account_identity: number, };
-export type AssetParams = { asset_identity: string, };
-export type NetworkParams = { network_identity: number, };
-export type AccountAssetParams = { account_identity: number, asset_identity: string, };
-export type AccountAssetBalanceParams = { account_identity: number, asset_identity: string, display_currency: string, };
-export type AccountBalancesParams = { account_identity: number, display_currency: string, fresh?: boolean, };
-export type AccountCreateParams = { input: Account, };
-export type AccountUpdateParams = { account_identity: number, input: AccountUpdate, };
-export type LayoutUpdateParams = { input: AccountLayoutUpdate, };
-export type GroupCreateParams = { input: AccountGroupCreate, };
-export type GroupUpdateParams = { group_identity: number, input: AccountGroupUpdate, };
-export type GroupParams = { group_identity: number, };
-export type DeriveMnemonicInput = { mnemonic: string, paths: Array<string>, };
-export type DeriveMnemonicParams = { input: DeriveMnemonicInput, };
-export type DeriveMnemonicResult = { path: string, address: string, };
-export type DerivePrivateKeyParams = { input: string, };
-export type AssetCreateParams = { input: Asset, };
-export type AssetUpdateParams = { asset_identity: string, input: AssetUpdate, };
-export type AssetQuoteParams = { asset_identity: string, display_asset?: string | null, };
-export type NetworkCreateParams = { input: Network, };
-export type NetworkUpdateParams = { network_identity: number, input: NetworkUpdate, };
-export type EndpointParams = { network_identity: number, endpoint_identity: number, };
-export type EndpointCreateParams = { network_identity: number, input: NetworkEndpoint, };
-export type EndpointUpdateParams = { network_identity: number, endpoint_identity: number, input: NetworkEndpointUpdate, };
-export type SimulateParams = { network_identity: number, input: SimulateTransactionRequest, };
-export type DecodeParams = { network_identity: number, input: DecodeTransactionRequest, };
-export type QuoterParams = { quoter_identity: string, };
-export type QuoterCreateParams = { input: QuoterCreate, };
-export type QuoterUpdateParams = { quoter_identity: string, input: QuoterUpdate, };
-export type QuoterDiscoverParams = { input: QuoterDiscovery, };
-export type VendorParams = { flag: VendorFlag, };
+export type { RpcErrorEnvelope, RpcIdentity, RpcRequestEnvelope, RpcResponseEnvelope, RpcSuccessEnvelope } from "./bindings.gen";
 
 export type RpcMethodMap = {
-    "system.ping": { params: EmptyParams; result: string };
-    "account.list": { params: EmptyParams; result: Account[] };
-    "account.get": { params: AccountParams; result: Account };
-    "account.create": { params: AccountCreateParams; result: Account };
-    "account.nextIdentity": { params: EmptyParams; result: number };
-    "account.update": { params: AccountUpdateParams; result: Account };
-    "account.delete": { params: AccountParams; result: null };
-    "account.asset.list": { params: AccountParams; result: string[] };
-    "account.asset.add": { params: AccountAssetParams; result: null };
-    "account.asset.remove": { params: AccountAssetParams; result: null };
-    "account.asset.balance": { params: AccountAssetBalanceParams; result: AccountBalance };
-    "account.balance.list": { params: AccountBalancesParams; result: AccountBalances };
-    "account.layout.get": { params: EmptyParams; result: AccountLayout };
-    "account.layout.update": { params: LayoutUpdateParams; result: AccountLayout };
-    "account.group.create": { params: GroupCreateParams; result: AccountGroup };
-    "account.group.update": { params: GroupUpdateParams; result: AccountGroup };
-    "account.group.delete": { params: GroupParams; result: null };
-    "account.transaction.list": { params: AccountParams; result: Tx[] };
-    "account.transaction.pending": { params: AccountParams; result: Tx[] };
-    "account.mnemonic.generate": { params: EmptyParams; result: string };
-    "account.derivation.defaultPath": { params: EmptyParams; result: string };
-    "account.derivation.fromMnemonic": { params: DeriveMnemonicParams; result: DeriveMnemonicResult[] };
-    "account.derivation.fromPrivateKey": { params: DerivePrivateKeyParams; result: string };
-    "asset.list": { params: EmptyParams; result: Asset[] };
-    "asset.get": { params: AssetParams; result: Asset };
-    "asset.create": { params: AssetCreateParams; result: Asset };
-    "asset.update": { params: AssetUpdateParams; result: Asset };
-    "asset.delete": { params: AssetParams; result: null };
-    "asset.discoverMetadata": { params: AssetParams; result: AssetMetadataDiscovery };
-    "asset.quote": { params: AssetQuoteParams; result: string };
-    "network.list": { params: EmptyParams; result: Network[] };
-    "network.get": { params: NetworkParams; result: Network };
-    "network.create": { params: NetworkCreateParams; result: Network };
-    "network.update": { params: NetworkUpdateParams; result: Network };
-    "network.delete": { params: NetworkParams; result: null };
-    "network.listPresets": { params: EmptyParams; result: Network[] };
-    "network.discoverMetadata": { params: NetworkParams; result: NetworkMetadataDiscovery };
-    "network.rpcStats": { params: NetworkParams; result: RpcPoolStats };
-    "network.endpoint.list": { params: NetworkParams; result: NetworkEndpoint[] };
-    "network.endpoint.get": { params: EndpointParams; result: NetworkEndpoint };
-    "network.endpoint.create": { params: EndpointCreateParams; result: NetworkEndpoint };
-    "network.endpoint.update": { params: EndpointUpdateParams; result: NetworkEndpoint };
-    "network.endpoint.delete": { params: EndpointParams; result: null };
-    "network.endpoint.nextIdentity": { params: NetworkParams; result: number };
-    "network.endpoint.status": { params: EndpointParams; result: RpcStatus };
-    "transaction.simulate": { params: SimulateParams; result: SimulateTransactionResponse };
-    "transaction.decode": { params: DecodeParams; result: DecodeTransactionResponse };
-    "quoter.list": { params: EmptyParams; result: Quoter[] };
-    "quoter.get": { params: QuoterParams; result: Quoter };
-    "quoter.create": { params: QuoterCreateParams; result: Quoter };
-    "quoter.update": { params: QuoterUpdateParams; result: Quoter };
-    "quoter.discover": { params: QuoterDiscoverParams; result: QuoterDiscoveryResponse };
-    "vendor.listEnabled": { params: EmptyParams; result: VendorFlag[] };
-    "vendor.listAll": { params: EmptyParams; result: VendorFlagInfo[] };
-    "vendor.enable": { params: VendorParams; result: null };
-    "vendor.disable": { params: VendorParams; result: null };
+    "system.ping": { params: RpcBindings.SystemPingRpcParams; result: RpcBindings.SystemPingRpcResult };
+    "account.list": { params: RpcBindings.AccountListRpcParams; result: RpcBindings.AccountListRpcResult };
+    "account.get": { params: RpcBindings.AccountGetRpcParams; result: RpcBindings.AccountGetRpcResult };
+    "account.create": { params: RpcBindings.AccountCreateRpcParams; result: RpcBindings.AccountCreateRpcResult };
+    "account.nextIdentity": { params: RpcBindings.AccountNextIdentityRpcParams; result: RpcBindings.AccountNextIdentityRpcResult };
+    "account.update": { params: RpcBindings.AccountUpdateRpcParams; result: RpcBindings.AccountUpdateRpcResult };
+    "account.delete": { params: RpcBindings.AccountDeleteRpcParams; result: RpcBindings.AccountDeleteRpcResult };
+    "account.asset.list": { params: RpcBindings.AccountAssetListRpcParams; result: RpcBindings.AccountAssetListRpcResult };
+    "account.asset.add": { params: RpcBindings.AccountAssetAddRpcParams; result: RpcBindings.AccountAssetAddRpcResult };
+    "account.asset.remove": { params: RpcBindings.AccountAssetRemoveRpcParams; result: RpcBindings.AccountAssetRemoveRpcResult };
+    "account.asset.balance": { params: RpcBindings.AccountAssetBalanceRpcParams; result: RpcBindings.AccountAssetBalanceRpcResult };
+    "account.balance.list": { params: RpcBindings.AccountBalanceListRpcParams; result: RpcBindings.AccountBalanceListRpcResult };
+    "account.layout.get": { params: RpcBindings.AccountLayoutGetRpcParams; result: RpcBindings.AccountLayoutGetRpcResult };
+    "account.layout.update": { params: RpcBindings.AccountLayoutUpdateRpcParams; result: RpcBindings.AccountLayoutUpdateRpcResult };
+    "account.group.create": { params: RpcBindings.AccountGroupCreateRpcParams; result: RpcBindings.AccountGroupCreateRpcResult };
+    "account.group.update": { params: RpcBindings.AccountGroupUpdateRpcParams; result: RpcBindings.AccountGroupUpdateRpcResult };
+    "account.group.delete": { params: RpcBindings.AccountGroupDeleteRpcParams; result: RpcBindings.AccountGroupDeleteRpcResult };
+    "account.transaction.list": { params: RpcBindings.AccountTransactionListRpcParams; result: RpcBindings.AccountTransactionListRpcResult };
+    "account.transaction.pending": { params: RpcBindings.AccountTransactionPendingRpcParams; result: RpcBindings.AccountTransactionPendingRpcResult };
+    "account.mnemonic.generate": { params: RpcBindings.AccountMnemonicGenerateRpcParams; result: RpcBindings.AccountMnemonicGenerateRpcResult };
+    "account.derivation.defaultPath": { params: RpcBindings.AccountDerivationDefaultPathRpcParams; result: RpcBindings.AccountDerivationDefaultPathRpcResult };
+    "account.derivation.fromMnemonic": { params: RpcBindings.AccountDerivationFromMnemonicRpcParams; result: RpcBindings.AccountDerivationFromMnemonicRpcResult };
+    "account.derivation.fromPrivateKey": { params: RpcBindings.AccountDerivationFromPrivateKeyRpcParams; result: RpcBindings.AccountDerivationFromPrivateKeyRpcResult };
+    "asset.list": { params: RpcBindings.AssetListRpcParams; result: RpcBindings.AssetListRpcResult };
+    "asset.get": { params: RpcBindings.AssetGetRpcParams; result: RpcBindings.AssetGetRpcResult };
+    "asset.create": { params: RpcBindings.AssetCreateRpcParams; result: RpcBindings.AssetCreateRpcResult };
+    "asset.update": { params: RpcBindings.AssetUpdateRpcParams; result: RpcBindings.AssetUpdateRpcResult };
+    "asset.delete": { params: RpcBindings.AssetDeleteRpcParams; result: RpcBindings.AssetDeleteRpcResult };
+    "asset.discoverMetadata": { params: RpcBindings.AssetDiscoverMetadataRpcParams; result: RpcBindings.AssetDiscoverMetadataRpcResult };
+    "asset.quote": { params: RpcBindings.AssetQuoteRpcParams; result: RpcBindings.AssetQuoteRpcResult };
+    "network.list": { params: RpcBindings.NetworkListRpcParams; result: RpcBindings.NetworkListRpcResult };
+    "network.get": { params: RpcBindings.NetworkGetRpcParams; result: RpcBindings.NetworkGetRpcResult };
+    "network.create": { params: RpcBindings.NetworkCreateRpcParams; result: RpcBindings.NetworkCreateRpcResult };
+    "network.update": { params: RpcBindings.NetworkUpdateRpcParams; result: RpcBindings.NetworkUpdateRpcResult };
+    "network.delete": { params: RpcBindings.NetworkDeleteRpcParams; result: RpcBindings.NetworkDeleteRpcResult };
+    "network.listPresets": { params: RpcBindings.NetworkListPresetsRpcParams; result: RpcBindings.NetworkListPresetsRpcResult };
+    "network.discoverMetadata": { params: RpcBindings.NetworkDiscoverMetadataRpcParams; result: RpcBindings.NetworkDiscoverMetadataRpcResult };
+    "network.rpcStats": { params: RpcBindings.NetworkRpcStatsRpcParams; result: RpcBindings.NetworkRpcStatsRpcResult };
+    "network.endpoint.list": { params: RpcBindings.EndpointListRpcParams; result: RpcBindings.EndpointListRpcResult };
+    "network.endpoint.get": { params: RpcBindings.EndpointGetRpcParams; result: RpcBindings.EndpointGetRpcResult };
+    "network.endpoint.create": { params: RpcBindings.EndpointCreateRpcParams; result: RpcBindings.EndpointCreateRpcResult };
+    "network.endpoint.update": { params: RpcBindings.EndpointUpdateRpcParams; result: RpcBindings.EndpointUpdateRpcResult };
+    "network.endpoint.delete": { params: RpcBindings.EndpointDeleteRpcParams; result: RpcBindings.EndpointDeleteRpcResult };
+    "network.endpoint.nextIdentity": { params: RpcBindings.EndpointNextIdentityRpcParams; result: RpcBindings.EndpointNextIdentityRpcResult };
+    "network.endpoint.status": { params: RpcBindings.EndpointStatusRpcParams; result: RpcBindings.EndpointStatusRpcResult };
+    "transaction.simulate": { params: RpcBindings.TransactionSimulateRpcParams; result: RpcBindings.TransactionSimulateRpcResult };
+    "transaction.decode": { params: RpcBindings.TransactionDecodeRpcParams; result: RpcBindings.TransactionDecodeRpcResult };
+    "quoter.list": { params: RpcBindings.QuoterListRpcParams; result: RpcBindings.QuoterListRpcResult };
+    "quoter.get": { params: RpcBindings.QuoterGetRpcParams; result: RpcBindings.QuoterGetRpcResult };
+    "quoter.create": { params: RpcBindings.QuoterCreateRpcParams; result: RpcBindings.QuoterCreateRpcResult };
+    "quoter.update": { params: RpcBindings.QuoterUpdateRpcParams; result: RpcBindings.QuoterUpdateRpcResult };
+    "quoter.discover": { params: RpcBindings.QuoterDiscoverRpcParams; result: RpcBindings.QuoterDiscoverRpcResult };
+    "vendor.listEnabled": { params: RpcBindings.VendorListEnabledRpcParams; result: RpcBindings.VendorListEnabledRpcResult };
+    "vendor.listAll": { params: RpcBindings.VendorListAllRpcParams; result: RpcBindings.VendorListAllRpcResult };
+    "vendor.enable": { params: RpcBindings.VendorEnableRpcParams; result: RpcBindings.VendorEnableRpcResult };
+    "vendor.disable": { params: RpcBindings.VendorDisableRpcParams; result: RpcBindings.VendorDisableRpcResult };
 };
 
 export type RpcMethodName = keyof RpcMethodMap;

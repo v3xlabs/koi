@@ -1,195 +1,235 @@
-use std::{fmt::Write, fs, path::PathBuf};
+use std::{
+    any::{TypeId, type_name},
+    collections::{BTreeMap, HashSet},
+    fmt::Write,
+    fs,
+    path::PathBuf,
+};
 
 use koi_api::rpc::{
-    AccountAssetBalanceParams, AccountAssetParams, AccountBalancesParams, AccountCreateParams,
-    AccountParams, AccountUpdateParams, AssetCreateParams, AssetParams, AssetQuoteParams,
-    AssetUpdateParams, DecodeParams, DeriveMnemonicInput, DeriveMnemonicParams,
-    DeriveMnemonicResult, DerivePrivateKeyParams, EmptyParams, EndpointCreateParams,
-    EndpointParams, EndpointUpdateParams, GroupCreateParams, GroupParams, GroupUpdateParams,
-    LayoutUpdateParams, NetworkCreateParams, NetworkParams, NetworkUpdateParams,
-    QuoterCreateParams, QuoterDiscoverParams, QuoterParams, QuoterUpdateParams, RpcMethod,
-    SimulateParams, VendorParams,
-    methods::{
-        AccountAssetAdd, AccountAssetBalance, AccountAssetList, AccountAssetRemove,
-        AccountBalanceList, AccountCreate, AccountDelete, AccountDerivationDefaultPath,
-        AccountDerivationFromMnemonic, AccountDerivationFromPrivateKey, AccountGet,
-        AccountGroupCreate, AccountGroupDelete, AccountGroupUpdate, AccountLayoutGet,
-        AccountLayoutUpdate, AccountList, AccountMnemonicGenerate, AccountNextIdentity,
-        AccountTransactionList, AccountTransactionPending, AccountUpdate, AssetCreate, AssetDelete,
-        AssetDiscoverMetadata, AssetGet, AssetList, AssetQuote, AssetUpdate, EndpointCreate,
-        EndpointDelete, EndpointGet, EndpointList, EndpointNextIdentity, EndpointStatus,
-        EndpointUpdate, NetworkCreate, NetworkDelete, NetworkDiscoverMetadata, NetworkGet,
-        NetworkList, NetworkListPresets, NetworkRpcStats, NetworkUpdate, QuoterCreate,
-        QuoterDiscover, QuoterGet, QuoterList, QuoterUpdate, SystemPing, TransactionDecode,
-        TransactionSimulate, VendorDisable, VendorEnable, VendorListAll, VendorListEnabled,
-    },
+    RpcErrorData, RpcErrorEnvelope, RpcErrorKind, RpcErrorObject, RpcIdentity, RpcMethod,
+    RpcRequestEnvelope, RpcResponseEnvelope, RpcSuccessEnvelope, methods::*,
 };
-use ts_rs::{Config, TS};
+use ts_rs::{Config, TS, TypeVisitor};
 
-const PREAMBLE: &str = r#"/* Generated from the Rust RpcMethod markers. */
+const GENERATED_HEADER: &str = "/* Generated from the Rust RPC contract. Do not edit. */\n\n";
 
-import type {
-    Account,
-    AccountBalance,
-    AccountBalances,
-    AccountGroup,
-    AccountGroupCreate,
-    AccountGroupUpdate,
-    AccountLayout,
-    AccountLayoutUpdate,
-    AccountUpdate,
-    Asset,
-    AssetMetadataDiscovery,
-    AssetUpdate,
-    DecodeTransactionRequest,
-    DecodeTransactionResponse,
-    Network,
-    NetworkEndpoint,
-    NetworkEndpointUpdate,
-    NetworkMetadataDiscovery,
-    NetworkUpdate,
-    Quoter,
-    QuoterCreate,
-    QuoterDiscovery,
-    QuoterDiscoveryResponse,
-    QuoterUpdate,
-    RpcErrorObject,
-    RpcPoolStats,
-    RpcStatus,
-    SimulateTransactionRequest,
-    SimulateTransactionResponse,
-    Tx,
-    VendorFlag,
-    VendorFlagInfo,
-} from "./bindings.gen";
-
-export type RpcIdentity = number | string | null;
-export type RpcRequestEnvelope = { jsonrpc: "2.0"; id?: RpcIdentity; method: string; params: Record<string, unknown> };
-export type RpcSuccessEnvelope = { jsonrpc: "2.0"; id: RpcIdentity; result: unknown };
-export type RpcErrorEnvelope = { jsonrpc: "2.0"; id: RpcIdentity; error: RpcErrorObject };
-export type RpcResponseEnvelope = RpcSuccessEnvelope | RpcErrorEnvelope;
-
-"#;
-
-fn push_declaration<T: TS>(output: &mut String) {
-    let declaration = T::decl(&Config::default())
-        .replace("Record<symbol, never>", "Record<string, never>")
-        .replace("fresh: boolean", "fresh?: boolean")
-        .replacen("type ", "export type ", 1);
-    writeln!(output, "{declaration}").unwrap();
+struct DeclarationCollector<'a> {
+    config: &'a Config,
+    seen: HashSet<TypeId>,
+    declarations: BTreeMap<String, String>,
 }
 
-fn push_method<M: RpcMethod>(output: &mut String, result: &str)
-where
-    M::Params: TS,
-{
+impl<'a> DeclarationCollector<'a> {
+    fn new(config: &'a Config) -> Self {
+        Self {
+            config,
+            seen: HashSet::new(),
+            declarations: BTreeMap::new(),
+        }
+    }
+
+    fn collect<T: TS + 'static + ?Sized>(&mut self) {
+        self.visit::<T>();
+    }
+
+    fn render(self) -> String {
+        let mut output = GENERATED_HEADER.to_string();
+
+        for declaration in self.declarations.into_values() {
+            writeln!(output, "export {declaration}\n").unwrap();
+        }
+
+        output
+    }
+}
+
+impl TypeVisitor for DeclarationCollector<'_> {
+    fn visit<T: TS + 'static + ?Sized>(&mut self) {
+        if !self.seen.insert(TypeId::of::<T>()) {
+            return;
+        }
+
+        if T::output_path().is_some() {
+            let declaration = normalize_declaration(T::decl(self.config));
+            let previous = self
+                .declarations
+                .insert(T::ident(self.config), declaration.clone());
+
+            assert!(
+                previous.as_ref().is_none_or(|value| value == &declaration),
+                "conflicting TypeScript declarations for {}",
+                T::ident(self.config)
+            );
+        }
+
+        T::visit_dependencies(self);
+        T::visit_generics(self);
+    }
+}
+
+fn normalize_declaration(declaration: String) -> String {
+    let mut declaration = declaration.replace("Record<symbol, never>", "Record<string, never>");
+    let prefix = "{ [key in string]: ";
+
+    while let Some(start) = declaration.find(prefix) {
+        let value_start = start + prefix.len();
+        let end = declaration[value_start..]
+            .find(" }")
+            .map(|offset| value_start + offset)
+            .expect("ts-rs string map declaration should have a closing brace");
+        let value = declaration[value_start..end].to_string();
+
+        declaration.replace_range(start..end + 2, &format!("Record<string, {value}>"));
+    }
+
+    declaration
+        .lines()
+        .map(str::trim_end)
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn marker_name<M: RpcMethod>() -> &'static str {
+    type_name::<M>().rsplit("::").next().unwrap()
+}
+
+fn lower_camel(value: &str) -> String {
+    let mut characters = value.chars();
+    let Some(first) = characters.next() else {
+        return String::new();
+    };
+
+    first.to_lowercase().chain(characters).collect()
+}
+
+fn push_aliases<M: RpcMethod>(output: &mut String, config: &Config) {
+    let marker = marker_name::<M>();
+
     writeln!(
         output,
-        "    \"{}\": {{ params: {}; result: {result} }};",
-        M::NAME,
-        <M::Params as TS>::name(&Config::default())
+        "export type {marker}RpcParams = {};",
+        M::Params::name(config)
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "export type {marker}RpcResult = {};",
+        M::Output::name(config)
     )
     .unwrap();
 }
 
+fn push_contract_method<M: RpcMethod>(output: &mut String) {
+    let marker = marker_name::<M>();
+
+    writeln!(
+        output,
+        "    \"{}\": {{ params: RpcBindings.{marker}RpcParams; result: RpcBindings.{marker}RpcResult }};",
+        M::NAME
+    )
+    .unwrap();
+}
+
+fn push_schema_import<M: RpcMethod>(output: &mut String) {
+    writeln!(
+        output,
+        "    {}RpcResultSchema,",
+        lower_camel(marker_name::<M>())
+    )
+    .unwrap();
+}
+
+fn push_wrapper<M: RpcMethod>(output: &mut String) {
+    let marker = marker_name::<M>();
+    let function = lower_camel(marker);
+    let schema = format!("{function}RpcResultSchema");
+
+    if TypeId::of::<M::Params>() == TypeId::of::<koi_api::rpc::EmptyParams>() {
+        writeln!(
+            output,
+            "    {function}: (): Promise<RpcResult<\"{}\">> => rpcTransport.call(\"{}\", empty, value => {schema}.parse(value)),",
+            M::NAME,
+            M::NAME
+        )
+        .unwrap();
+    } else {
+        writeln!(
+            output,
+            "    {function}: (params: RpcParams<\"{}\">): Promise<RpcResult<\"{}\">> => rpcTransport.call(\"{}\", params, value => {schema}.parse(value)),",
+            M::NAME,
+            M::NAME,
+            M::NAME
+        )
+        .unwrap();
+    }
+}
+
+macro_rules! for_each_method {
+    ($( $marker:ident, $params:ty, $output:ty, $name:literal; )*) => {
+        fn collect_method_declarations(collector: &mut DeclarationCollector<'_>) {
+            $(
+                collector.collect::<<$marker as RpcMethod>::Params>();
+                collector.collect::<<$marker as RpcMethod>::Output>();
+            )*
+        }
+
+        fn push_method_aliases(output: &mut String, config: &Config) {
+            $(push_aliases::<$marker>(output, config);)*
+        }
+
+        fn push_contract_methods(output: &mut String) {
+            $(push_contract_method::<$marker>(output);)*
+        }
+
+        fn push_schema_imports(output: &mut String) {
+            $(push_schema_import::<$marker>(output);)*
+        }
+
+        fn push_wrappers(output: &mut String) {
+            $(push_wrapper::<$marker>(output);)*
+        }
+    };
+}
+
+koi_api::rpc_method_registry!(for_each_method);
+
 fn main() {
-    let mut output = PREAMBLE.to_string();
+    let config = Config::default().with_large_int("number");
+    let mut collector = DeclarationCollector::new(&config);
 
-    push_declaration::<EmptyParams>(&mut output);
-    push_declaration::<AccountParams>(&mut output);
-    push_declaration::<AssetParams>(&mut output);
-    push_declaration::<NetworkParams>(&mut output);
-    push_declaration::<AccountAssetParams>(&mut output);
-    push_declaration::<AccountAssetBalanceParams>(&mut output);
-    push_declaration::<AccountBalancesParams>(&mut output);
-    push_declaration::<AccountCreateParams>(&mut output);
-    push_declaration::<AccountUpdateParams>(&mut output);
-    push_declaration::<LayoutUpdateParams>(&mut output);
-    push_declaration::<GroupCreateParams>(&mut output);
-    push_declaration::<GroupUpdateParams>(&mut output);
-    push_declaration::<GroupParams>(&mut output);
-    push_declaration::<DeriveMnemonicInput>(&mut output);
-    push_declaration::<DeriveMnemonicParams>(&mut output);
-    push_declaration::<DeriveMnemonicResult>(&mut output);
-    push_declaration::<DerivePrivateKeyParams>(&mut output);
-    push_declaration::<AssetCreateParams>(&mut output);
-    push_declaration::<AssetUpdateParams>(&mut output);
-    push_declaration::<AssetQuoteParams>(&mut output);
-    push_declaration::<NetworkCreateParams>(&mut output);
-    push_declaration::<NetworkUpdateParams>(&mut output);
-    push_declaration::<EndpointParams>(&mut output);
-    push_declaration::<EndpointCreateParams>(&mut output);
-    push_declaration::<EndpointUpdateParams>(&mut output);
-    push_declaration::<SimulateParams>(&mut output);
-    push_declaration::<DecodeParams>(&mut output);
-    push_declaration::<QuoterParams>(&mut output);
-    push_declaration::<QuoterCreateParams>(&mut output);
-    push_declaration::<QuoterUpdateParams>(&mut output);
-    push_declaration::<QuoterDiscoverParams>(&mut output);
-    push_declaration::<VendorParams>(&mut output);
+    collector.collect::<RpcErrorKind>();
+    collector.collect::<RpcErrorData>();
+    collector.collect::<RpcErrorObject>();
+    collector.collect::<RpcIdentity>();
+    collector.collect::<RpcRequestEnvelope>();
+    collector.collect::<RpcSuccessEnvelope>();
+    collector.collect::<RpcErrorEnvelope>();
+    collector.collect::<RpcResponseEnvelope>();
+    collect_method_declarations(&mut collector);
 
-    output.push_str("\nexport type RpcMethodMap = {\n");
-    push_method::<SystemPing>(&mut output, "string");
-    push_method::<AccountList>(&mut output, "Account[]");
-    push_method::<AccountGet>(&mut output, "Account");
-    push_method::<AccountCreate>(&mut output, "Account");
-    push_method::<AccountNextIdentity>(&mut output, "number");
-    push_method::<AccountUpdate>(&mut output, "Account");
-    push_method::<AccountDelete>(&mut output, "null");
-    push_method::<AccountAssetList>(&mut output, "string[]");
-    push_method::<AccountAssetAdd>(&mut output, "null");
-    push_method::<AccountAssetRemove>(&mut output, "null");
-    push_method::<AccountAssetBalance>(&mut output, "AccountBalance");
-    push_method::<AccountBalanceList>(&mut output, "AccountBalances");
-    push_method::<AccountLayoutGet>(&mut output, "AccountLayout");
-    push_method::<AccountLayoutUpdate>(&mut output, "AccountLayout");
-    push_method::<AccountGroupCreate>(&mut output, "AccountGroup");
-    push_method::<AccountGroupUpdate>(&mut output, "AccountGroup");
-    push_method::<AccountGroupDelete>(&mut output, "null");
-    push_method::<AccountTransactionList>(&mut output, "Tx[]");
-    push_method::<AccountTransactionPending>(&mut output, "Tx[]");
-    push_method::<AccountMnemonicGenerate>(&mut output, "string");
-    push_method::<AccountDerivationDefaultPath>(&mut output, "string");
-    push_method::<AccountDerivationFromMnemonic>(&mut output, "DeriveMnemonicResult[]");
-    push_method::<AccountDerivationFromPrivateKey>(&mut output, "string");
-    push_method::<AssetList>(&mut output, "Asset[]");
-    push_method::<AssetGet>(&mut output, "Asset");
-    push_method::<AssetCreate>(&mut output, "Asset");
-    push_method::<AssetUpdate>(&mut output, "Asset");
-    push_method::<AssetDelete>(&mut output, "null");
-    push_method::<AssetDiscoverMetadata>(&mut output, "AssetMetadataDiscovery");
-    push_method::<AssetQuote>(&mut output, "string");
-    push_method::<NetworkList>(&mut output, "Network[]");
-    push_method::<NetworkGet>(&mut output, "Network");
-    push_method::<NetworkCreate>(&mut output, "Network");
-    push_method::<NetworkUpdate>(&mut output, "Network");
-    push_method::<NetworkDelete>(&mut output, "null");
-    push_method::<NetworkListPresets>(&mut output, "Network[]");
-    push_method::<NetworkDiscoverMetadata>(&mut output, "NetworkMetadataDiscovery");
-    push_method::<NetworkRpcStats>(&mut output, "RpcPoolStats");
-    push_method::<EndpointList>(&mut output, "NetworkEndpoint[]");
-    push_method::<EndpointGet>(&mut output, "NetworkEndpoint");
-    push_method::<EndpointCreate>(&mut output, "NetworkEndpoint");
-    push_method::<EndpointUpdate>(&mut output, "NetworkEndpoint");
-    push_method::<EndpointDelete>(&mut output, "null");
-    push_method::<EndpointNextIdentity>(&mut output, "number");
-    push_method::<EndpointStatus>(&mut output, "RpcStatus");
-    push_method::<TransactionSimulate>(&mut output, "SimulateTransactionResponse");
-    push_method::<TransactionDecode>(&mut output, "DecodeTransactionResponse");
-    push_method::<QuoterList>(&mut output, "Quoter[]");
-    push_method::<QuoterGet>(&mut output, "Quoter");
-    push_method::<QuoterCreate>(&mut output, "Quoter");
-    push_method::<QuoterUpdate>(&mut output, "Quoter");
-    push_method::<QuoterDiscover>(&mut output, "QuoterDiscoveryResponse");
-    push_method::<VendorListEnabled>(&mut output, "VendorFlag[]");
-    push_method::<VendorListAll>(&mut output, "VendorFlagInfo[]");
-    push_method::<VendorEnable>(&mut output, "null");
-    push_method::<VendorDisable>(&mut output, "null");
-    output.push_str(
+    let mut bindings = collector.render();
+    push_method_aliases(&mut bindings, &config);
+
+    let mut contract = format!(
+        "{GENERATED_HEADER}import type * as RpcBindings from \"./bindings.gen\";\n\nexport type {{ RpcErrorEnvelope, RpcIdentity, RpcRequestEnvelope, RpcResponseEnvelope, RpcSuccessEnvelope }} from \"./bindings.gen\";\n\nexport type RpcMethodMap = {{\n"
+    );
+    push_contract_methods(&mut contract);
+    contract.push_str(
         "};\n\nexport type RpcMethodName = keyof RpcMethodMap;\nexport type RpcParams<TMethod extends RpcMethodName> = RpcMethodMap[TMethod][\"params\"];\nexport type RpcResult<TMethod extends RpcMethodName> = RpcMethodMap[TMethod][\"result\"];\n",
     );
 
-    let output_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../interfaces/web/src/api/rpc-contract.gen.ts");
-    fs::write(output_path, output).unwrap();
+    let mut wrappers = format!("{GENERATED_HEADER}import {{\n");
+    push_schema_imports(&mut wrappers);
+    wrappers.push_str(
+        "} from \"./bindings.zod.gen\";\nimport { createRpcClient } from \"./rpc-transport\";\nimport type { RpcMethodName, RpcParams, RpcResult } from \"./rpc-contract.gen\";\n\nexport const rpcTransport = createRpcClient();\nconst empty = {};\n\nexport type RpcBatchItem<TMethod extends RpcMethodName> = {\n    method: TMethod;\n    params: RpcParams<TMethod>;\n    parse: (value: unknown) => RpcResult<TMethod>;\n};\n\nexport const rpcBatch = async <TMethod extends RpcMethodName>(calls: readonly RpcBatchItem<TMethod>[]): Promise<RpcResult<TMethod>[]> => (\n    await rpcTransport.batch(calls)\n);\n\nexport const rpc = {\n",
+    );
+    push_wrappers(&mut wrappers);
+    wrappers.push_str("};\n");
+
+    let api_directory =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../interfaces/web/src/api");
+    fs::write(api_directory.join("bindings.gen.ts"), bindings).unwrap();
+    fs::write(api_directory.join("rpc-contract.gen.ts"), contract).unwrap();
+    fs::write(api_directory.join("rpc.gen.ts"), wrappers).unwrap();
 }

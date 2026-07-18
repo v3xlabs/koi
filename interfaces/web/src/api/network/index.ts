@@ -29,15 +29,15 @@ const invalidateEndpoint = (endpoint: NetworkEndpoint) => {
 };
 
 export const useNetwork = createRpcQuery<NetworkPath, Network>(
-    options => rpc.networkGet(requireOptions(options).path.network_identity),
+    options => rpc.networkGet({ network_identity: requireOptions(options).path.network_identity }),
     options => networkKeys.detail(requireOptions(options).path.network_identity),
 );
 export const useNetworkMetadataDiscovery = createRpcQuery<NetworkPath, NetworkMetadataDiscovery>(
-    options => rpc.networkDiscoverMetadata(requireOptions(options).path.network_identity),
+    options => rpc.networkDiscoverMetadata({ network_identity: requireOptions(options).path.network_identity }),
     options => networkKeys.discovery(requireOptions(options).path.network_identity),
 );
 export const useNetworkRpcStats = createRpcQuery<NetworkPath, RpcPoolStats>(
-    options => rpc.networkRpcStats(requireOptions(options).path.network_identity),
+    options => rpc.networkRpcStats({ network_identity: requireOptions(options).path.network_identity }),
     options => networkKeys.rpc(requireOptions(options).path.network_identity),
 );
 export const useNetworks = createRpcQuery<void, { networks: Network[]; }>(
@@ -52,15 +52,15 @@ export const useNetworkPresets = createRpcQuery<void, Network[]>(
     () => networkKeys.presets,
 );
 export const useCreateNetwork = createRpcMutation<{ data: Network; }, Network>(
-    options => rpc.networkCreate(options.data),
+    options => rpc.networkCreate({ input: options.data }),
     { onSuccess: invalidateNetwork },
 );
 export const useUpdateNetwork = createRpcMutation<NetworkPath & { data: NetworkUpdate; }, Network>(
-    options => rpc.networkUpdate(options.path.network_identity, options.data),
+    options => rpc.networkUpdate({ network_identity: options.path.network_identity, input: options.data }),
     { onSuccess: invalidateNetwork },
 );
 export const useDeleteNetwork = createRpcMutation<NetworkPath, null>(
-    options => rpc.networkDelete(options.path.network_identity),
+    options => rpc.networkDelete({ network_identity: options.path.network_identity }),
     {
         onSuccess: (_, options) => {
             void queryClient.invalidateQueries({ queryKey: networkKeys.all });
@@ -70,18 +70,18 @@ export const useDeleteNetwork = createRpcMutation<NetworkPath, null>(
     },
 );
 export const useNetworkEndpointNextId = createRpcQuery<NetworkPath, number>(
-    options => rpc.endpointNextIdentity(requireOptions(options).path.network_identity),
+    options => rpc.endpointNextIdentity({ network_identity: requireOptions(options).path.network_identity }),
     options => networkKeys.endpointNextId(requireOptions(options).path.network_identity),
 );
 export const useNetworkEndpoints = createRpcQuery<NetworkPath, NetworkEndpoint[]>(
-    options => rpc.endpointList(requireOptions(options).path.network_identity),
+    options => rpc.endpointList({ network_identity: requireOptions(options).path.network_identity }),
     options => networkKeys.endpoints(requireOptions(options).path.network_identity),
     {
         onData: endpoints => endpoints.forEach(endpoint => queryClient.setQueryData(networkKeys.endpoint(endpoint.network_identity, endpoint.endpoint_identity), endpoint)),
     },
 );
 export const useCreateNetworkEndpoint = createRpcMutation<NetworkPath & { data: NetworkEndpoint; }, NetworkEndpoint>(
-    options => rpc.endpointCreate(options.path.network_identity, options.data),
+    options => rpc.endpointCreate({ network_identity: options.path.network_identity, input: options.data }),
     {
         onSuccess: (endpoint) => {
             invalidateEndpoint(endpoint);
@@ -93,7 +93,7 @@ export const useNetworkEndpoint = createRpcQuery<EndpointPath, NetworkEndpoint>(
     (options) => {
         const value = requireOptions(options);
 
-        return rpc.endpointGet(value.path.network_identity, value.path.endpoint_identity);
+        return rpc.endpointGet({ network_identity: value.path.network_identity, endpoint_identity: value.path.endpoint_identity });
     },
     (options) => {
         const value = requireOptions(options);
@@ -102,7 +102,7 @@ export const useNetworkEndpoint = createRpcQuery<EndpointPath, NetworkEndpoint>(
     },
 );
 export const useUpdateNetworkEndpoint = createRpcMutation<EndpointPath & { data: NetworkEndpointUpdate; }, NetworkEndpoint>(
-    options => rpc.endpointUpdate(options.path.network_identity, options.path.endpoint_identity, options.data),
+    options => rpc.endpointUpdate({ network_identity: options.path.network_identity, endpoint_identity: options.path.endpoint_identity, input: options.data }),
     {
         onSuccess: (endpoint) => {
             invalidateEndpoint(endpoint);
@@ -112,7 +112,7 @@ export const useUpdateNetworkEndpoint = createRpcMutation<EndpointPath & { data:
     },
 );
 export const useDeleteNetworkEndpoint = createRpcMutation<EndpointPath, null>(
-    options => rpc.endpointDelete(options.path.network_identity, options.path.endpoint_identity),
+    options => rpc.endpointDelete({ network_identity: options.path.network_identity, endpoint_identity: options.path.endpoint_identity }),
     {
         onSuccess: (_, options) => {
             const { endpoint_identity, network_identity } = options.path;
@@ -129,7 +129,7 @@ export const useNetworkEndpointStatus = createRpcQuery<EndpointPath, RpcStatus>(
     (options) => {
         const value = requireOptions(options);
 
-        return rpc.endpointStatus(value.path.network_identity, value.path.endpoint_identity);
+        return rpc.endpointStatus({ network_identity: value.path.network_identity, endpoint_identity: value.path.endpoint_identity });
     },
     (options) => {
         const value = requireOptions(options);

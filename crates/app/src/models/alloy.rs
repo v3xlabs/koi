@@ -2,6 +2,7 @@ use std::{fmt::Display, ops::Deref, str::FromStr};
 
 use alloy::primitives::{Address, Bytes, U256};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
+use ts_rs::TS;
 
 macro_rules! api_string_type {
     (
@@ -73,7 +74,8 @@ macro_rules! api_string_type {
 }
 
 api_string_type! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, TS)]
+    #[ts(type = "string")]
     pub struct ApiAddress(Address);
     type_name: "Address";
     format: "address";
@@ -83,7 +85,8 @@ api_string_type! {
 }
 
 api_string_type! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, TS)]
+    #[ts(type = "string")]
     pub struct ApiU256(U256);
     type_name: "U256";
     format: "uint256";
@@ -93,7 +96,8 @@ api_string_type! {
 }
 
 api_string_type! {
-    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, PartialEq, Eq, Hash, TS)]
+    #[ts(type = "string")]
     pub struct ApiBytes(Bytes);
     type_name: "Bytes";
     format: "bytes";

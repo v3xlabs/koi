@@ -18,7 +18,7 @@ export const useAllVendors = createRpcQuery<void, { vendors: VendorFlagInfo[]; }
     () => vendorKeys.all,
 );
 export const useVendorFlagEnable = createRpcMutation<Path, null>(
-    options => rpc.vendorEnable(options.path.flag),
+    options => rpc.vendorEnable({ flag: options.path.flag }),
     {
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: vendorKeys.enabled });
@@ -26,7 +26,7 @@ export const useVendorFlagEnable = createRpcMutation<Path, null>(
     },
 );
 export const useVendorFlagDisable = createRpcMutation<Path, null>(
-    options => rpc.vendorDisable(options.path.flag),
+    options => rpc.vendorDisable({ flag: options.path.flag }),
     {
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: vendorKeys.enabled });

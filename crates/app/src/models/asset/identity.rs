@@ -7,12 +7,14 @@ use sqlx::{
     Decode, Encode, Sqlite,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
 };
+use ts_rs::TS;
 
 use crate::{error::KoiError, models::network::identity::NetworkIdentity};
 
 use sqlx::{FromRow, Row, sqlite::SqliteRow};
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, PartialEq, Hash, Eq, TS)]
+#[ts(type = "string")]
 pub enum AssetIdentity {
     Native(NetworkIdentity),
     ERC20(NetworkIdentity, Address),

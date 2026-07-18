@@ -28,7 +28,7 @@ const invalidateAccountLists = () => {
 };
 
 export const useAccount = createRpcQuery<AccountPath, Account>(
-    options => rpc.accountGet(requireOptions(options).path.account_identity),
+    options => rpc.accountGet({ account_identity: requireOptions(options).path.account_identity }),
     options => accountKeys.detail(requireOptions(options).path.account_identity),
 );
 export const useAccounts = createRpcQuery<void, { accounts: Account[]; }>(
@@ -48,7 +48,7 @@ export const useAccountLayout = createRpcQuery<void, AccountLayout>(
 export const useNextAccountId = createRpcQuery<void, number>(() => rpc.accountNextIdentity(), () => accountKeys.nextId);
 
 export const useCreateAccount = createRpcMutation<{ data: Account; }, Account>(
-    options => rpc.accountCreate(options.data),
+    options => rpc.accountCreate({ input: options.data }),
     {
         onSuccess: () => {
             invalidateAccountLists();
@@ -57,7 +57,7 @@ export const useCreateAccount = createRpcMutation<{ data: Account; }, Account>(
     },
 );
 export const useDeleteAccount = createRpcMutation<AccountPath, null>(
-    options => rpc.accountDelete(options.path.account_identity),
+    options => rpc.accountDelete({ account_identity: options.path.account_identity }),
     {
         onSuccess: (_, options) => {
             invalidateAccountLists();
@@ -67,7 +67,7 @@ export const useDeleteAccount = createRpcMutation<AccountPath, null>(
     },
 );
 export const useUpdateAccount = createRpcMutation<AccountPath & { data: AccountUpdate; }, Account>(
-    options => rpc.accountUpdate(options.path.account_identity, options.data),
+    options => rpc.accountUpdate({ account_identity: options.path.account_identity, input: options.data }),
     {
         onSuccess: (account) => {
             invalidateAccountLists();
@@ -76,7 +76,7 @@ export const useUpdateAccount = createRpcMutation<AccountPath & { data: AccountU
     },
 );
 export const useUpdateAccountLayout = createRpcMutation<{ data: AccountLayoutUpdate; }, AccountLayout>(
-    options => rpc.accountLayoutUpdate(options.data),
+    options => rpc.accountLayoutUpdate({ input: options.data }),
     {
         onSuccess: (layout) => {
             queryClient.setQueryData(accountKeys.layout, layout);
@@ -85,15 +85,15 @@ export const useUpdateAccountLayout = createRpcMutation<{ data: AccountLayoutUpd
     },
 );
 export const useCreateAccountGroup = createRpcMutation<{ data: AccountGroupCreate; }, AccountGroup>(
-    options => rpc.accountGroupCreate(options.data),
+    options => rpc.accountGroupCreate({ input: options.data }),
     { onSuccess: invalidateAccountLists },
 );
 export const useUpdateAccountGroup = createRpcMutation<{ path: { group_identity: number; }; data: AccountGroupUpdate; }, AccountGroup>(
-    options => rpc.accountGroupUpdate(options.path.group_identity, options.data),
+    options => rpc.accountGroupUpdate({ group_identity: options.path.group_identity, input: options.data }),
     { onSuccess: invalidateAccountLists },
 );
 export const useDeleteAccountGroup = createRpcMutation<{ path: { group_identity: number; }; }, null>(
-    options => rpc.accountGroupDelete(options.path.group_identity),
+    options => rpc.accountGroupDelete({ group_identity: options.path.group_identity }),
     { onSuccess: invalidateAccountLists },
 );
 
@@ -108,21 +108,21 @@ export const useDefaultDerivationPath = createRpcQuery<void, { path: string; }>(
 export const useDeriveFromMnemonic = createRpcMutation<
     { data: { mnemonic: string; paths: string[]; }; },
     { results: { path: string; address: string; }[]; }
->(async options => ({ results: await rpc.accountDerivationFromMnemonic(options.data) }));
+>(async options => ({ results: await rpc.accountDerivationFromMnemonic({ input: options.data }) }));
 export const useDeriveFromPrivateKey = createRpcMutation<
     { data: { private_key: string; }; },
     { address: string; }
->(async options => ({ address: await rpc.accountDerivationFromPrivateKey(options.data.private_key) }));
+>(async options => ({ address: await rpc.accountDerivationFromPrivateKey({ input: options.data.private_key }) }));
 
 export const useAccountAssets = createRpcQuery<AccountPath, string[]>(
-    options => rpc.accountAssetList(requireOptions(options).path.account_identity),
+    options => rpc.accountAssetList({ account_identity: requireOptions(options).path.account_identity }),
     options => accountKeys.assets(requireOptions(options).path.account_identity),
 );
 export const useAccountAssetBalance = createRpcQuery<AssetPath & { query: { display_currency: string; }; }, Awaited<ReturnType<typeof rpc.accountAssetBalance>>>(
     (options) => {
         const value = requireOptions(options);
 
-        return rpc.accountAssetBalance(value.path.account_identity, value.path.asset_identity, value.query.display_currency);
+        return rpc.accountAssetBalance({ account_identity: value.path.account_identity, asset_identity: value.path.asset_identity, display_currency: value.query.display_currency });
     },
     (options) => {
         const value = requireOptions(options);
@@ -131,7 +131,7 @@ export const useAccountAssetBalance = createRpcQuery<AssetPath & { query: { disp
     },
 );
 export const useAddAccountAsset = createRpcMutation<AssetPath, null>(
-    options => rpc.accountAssetAdd(options.path.account_identity, options.path.asset_identity),
+    options => rpc.accountAssetAdd({ account_identity: options.path.account_identity, asset_identity: options.path.asset_identity }),
     {
         onSuccess: (_, options) => {
             void queryClient.invalidateQueries({ queryKey: accountKeys.assets(options.path.account_identity) });
@@ -139,7 +139,7 @@ export const useAddAccountAsset = createRpcMutation<AssetPath, null>(
     },
 );
 export const useRemoveAccountAsset = createRpcMutation<AssetPath, null>(
-    options => rpc.accountAssetRemove(options.path.account_identity, options.path.asset_identity),
+    options => rpc.accountAssetRemove({ account_identity: options.path.account_identity, asset_identity: options.path.asset_identity }),
     {
         onSuccess: (_, options) => {
             void queryClient.invalidateQueries({ queryKey: accountKeys.assets(options.path.account_identity) });
@@ -150,7 +150,7 @@ export const useAccountBalances = createRpcQuery<AccountBalanceOptions, Awaited<
     (options) => {
         const value = requireOptions(options);
 
-        return rpc.accountBalanceList(value.path.account_identity, value.query.display_currency, value.query.fresh ?? false);
+        return rpc.accountBalanceList({ account_identity: value.path.account_identity, display_currency: value.query.display_currency, fresh: value.query.fresh ?? false });
     },
     (options) => {
         const value = requireOptions(options);
@@ -160,7 +160,7 @@ export const useAccountBalances = createRpcQuery<AccountBalanceOptions, Awaited<
 );
 
 export const refreshAccountBalances = async (options: AccountBalanceOptions) => {
-    const data = await rpc.accountBalanceList(options.path.account_identity, options.query.display_currency, true);
+    const data = await rpc.accountBalanceList({ account_identity: options.path.account_identity, display_currency: options.query.display_currency, fresh: true });
 
     queryClient.setQueryData(accountKeys.balances(options.path.account_identity, options.query.display_currency), data);
 

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as, query_scalar};
+use ts_rs::TS;
 
 use crate::{
     error::KoiError,
@@ -10,7 +11,8 @@ use crate::{
 pub mod metrics;
 pub mod provider;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, TS)]
+#[ts(optional_fields)]
 pub struct NetworkEndpoint {
     pub endpoint_identity: i32,
     pub endpoint_label: Option<String>,
@@ -20,7 +22,8 @@ pub struct NetworkEndpoint {
     pub network_identity: NetworkIdentity,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct NetworkEndpointUpdate {
     pub endpoint_label: Option<String>,
     pub endpoint_type: Option<String>,

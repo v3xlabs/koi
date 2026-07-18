@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row, query, query_as, query_scalar, sqlite::SqliteRow};
+use ts_rs::TS;
 
 use crate::{
     error::KoiError,
@@ -19,7 +20,8 @@ pub mod identity;
 pub mod layout;
 pub mod metadata;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(optional_fields)]
 pub struct Account {
     pub account_identity: AccountIdentity,
     pub name: String,
@@ -31,7 +33,8 @@ pub struct Account {
     pub display_order: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(optional_fields)]
 pub struct AccountUpdate {
     pub name: Option<String>,
     pub networks: Option<Vec<NetworkIdentity>>,

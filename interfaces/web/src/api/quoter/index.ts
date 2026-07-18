@@ -19,11 +19,11 @@ export const useQuoters = createRpcQuery<void, { quoters: Quoter[]; }>(
     },
 );
 export const useQuoter = createRpcQuery<Path, Quoter>(
-    options => rpc.quoterGet(requireOptions(options).path.quoter_identity),
+    options => rpc.quoterGet({ quoter_identity: requireOptions(options).path.quoter_identity }),
     options => quoterKeys.detail(requireOptions(options).path.quoter_identity),
 );
 export const useCreateQuoter = createRpcMutation<{ data: QuoterCreate; }, Quoter>(
-    options => rpc.quoterCreate(options.data),
+    options => rpc.quoterCreate({ input: options.data }),
     {
         onSuccess: (quoter) => {
             void queryClient.invalidateQueries({ queryKey: quoterKeys.all });
@@ -32,7 +32,7 @@ export const useCreateQuoter = createRpcMutation<{ data: QuoterCreate; }, Quoter
     },
 );
 export const useUpdateQuoter = createRpcMutation<Path & { data: QuoterUpdate; }, Quoter>(
-    options => rpc.quoterUpdate(options.path.quoter_identity, options.data),
+    options => rpc.quoterUpdate({ quoter_identity: options.path.quoter_identity, input: options.data }),
     {
         onSuccess: (quoter) => {
             void queryClient.invalidateQueries({ queryKey: quoterKeys.all });
@@ -41,7 +41,7 @@ export const useUpdateQuoter = createRpcMutation<Path & { data: QuoterUpdate; },
     },
 );
 export const useDiscoverQuoter = createRpcQuery<{ data: QuoterDiscovery; }, QuoterDiscoveryResponse>(
-    options => rpc.quoterDiscover(requireOptions(options).data),
+    options => rpc.quoterDiscover({ input: requireOptions(options).data }),
     (options) => {
         const value = requireOptions(options).data;
 

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, query, query_as};
+use ts_rs::TS;
 
 use crate::{error::KoiError, models::network::identity::NetworkIdentity, state::DB};
 
@@ -9,7 +10,8 @@ pub mod manager;
 pub mod metadata;
 pub mod pool;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, TS)]
+#[ts(optional_fields)]
 pub struct Network {
     /// evm chain id
     pub network_identity: NetworkIdentity,
@@ -19,7 +21,8 @@ pub struct Network {
     pub network_icon_url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct NetworkUpdate {
     pub network_name: Option<String>,
     pub network_icon_url: Option<String>,

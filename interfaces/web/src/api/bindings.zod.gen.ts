@@ -2,82 +2,21 @@
 import { z } from "zod";
 import { type DecodedCall } from "./bindings.gen";
 
-export const rpcErrorKindSchema = z.union([z.literal("invalid_input"), z.literal("not_found"), z.literal("conflict"), z.literal("unavailable"), z.literal("internal")]);
+export const accountIdentitySchema = z.number();
 
-export const rpcErrorDataSchema = z.object({
-    kind: rpcErrorKindSchema,
-    message: z.string()
-});
+export const networkIdentitySchema = z.number();
 
-export const rpcErrorObjectSchema = z.object({
-    code: z.number(),
-    message: z.string(),
-    data: rpcErrorDataSchema.nullish().transform(value => value ?? undefined)
-});
+export const groupIdentitySchema = z.number();
 
-export const walletTypeSchema = z.union([z.object({
-        type: z.literal("safe"),
-        evm_address: z.string()
-    }), z.object({
-        type: z.literal("eoa"),
-        evm_address: z.string()
-    }), z.object({
-        type: z.literal("view"),
-        evm_address: z.string()
-    }), z.object({
-        type: z.literal("railgun"),
-        railgun_address: z.string()
-    })]);
+export const assetIdentitySchema = z.string();
 
-export const accountSchema = z.object({
-    account_identity: z.number(),
-    name: z.string(),
-    networks: z.array(z.number()),
-    metadata: walletTypeSchema,
-    group_id: z.number().nullish().transform(value => value ?? undefined),
-    display_order: z.number()
-});
-
-export const accountUpdateSchema = z.object({
-    name: z.string().nullish().transform(value => value ?? undefined),
-    networks: z.array(z.number()).nullish().transform(value => value ?? undefined),
-    metadata: walletTypeSchema.nullish().transform(value => value ?? undefined)
-});
-
-export const accountGroupSchema = z.object({
-    group_identity: z.number(),
-    name: z.string(),
-    display_order: z.number()
-});
-
-export const accountGroupCreateSchema = z.object({
-    name: z.string()
-});
-
-export const accountGroupUpdateSchema = z.object({
-    name: z.string().nullish().transform(value => value ?? undefined)
-});
-
-export const accountLayoutSchema = z.object({
-    groups: z.array(accountGroupSchema),
-    accounts: z.array(accountSchema)
-});
-
-export const accountLayoutUpdateSchema = z.object({
-    groups: z.array(z.object({
-        group_identity: z.number(),
-        name: z.string(),
-        display_order: z.number()
-    })),
-    accounts: z.array(z.object({
-        account_identity: z.number(),
-        group_id: z.number().nullish().transform(value => value ?? undefined),
-        display_order: z.number()
-    }))
+export const accountAssetParamsSchema = z.object({
+    account_identity: accountIdentitySchema,
+    asset_identity: assetIdentitySchema
 });
 
 export const accountBalanceSchema = z.object({
-    asset_identity: z.string(),
+    asset_identity: assetIdentitySchema,
     balance: z.string().nullish().transform(value => value ?? undefined),
     balance_error: z.string().nullish().transform(value => value ?? undefined),
     asset_quote: z.string().nullish().transform(value => value ?? undefined),
@@ -93,23 +32,67 @@ export const accountBalancesSchema = z.object({
     balances: z.array(accountBalanceSchema),
     total_quote: z.string().nullish().transform(value => value ?? undefined),
     updated_at: z.string(),
-    asset: z.string(),
+    asset: assetIdentitySchema,
     errors: z.array(z.string())
 });
 
+export const accountBalancesParamsSchema = z.object({
+    account_identity: accountIdentitySchema,
+    display_currency: assetIdentitySchema,
+    fresh: z.boolean().nullish().transform(value => value ?? undefined)
+});
+
+export const accountGroupSchema = z.object({
+    group_identity: groupIdentitySchema,
+    name: z.string(),
+    display_order: z.number()
+});
+
+export const accountGroupCreateSchema = z.object({
+    name: z.string()
+});
+
+export const accountGroupUpdateSchema = z.object({
+    name: z.string().nullish().transform(value => value ?? undefined)
+});
+
+export const accountLayoutAccountEntrySchema = z.object({
+    account_identity: accountIdentitySchema,
+    group_id: groupIdentitySchema.nullish().transform(value => value ?? undefined),
+    display_order: z.number()
+});
+
+export const accountLayoutGroupEntrySchema = z.object({
+    group_identity: groupIdentitySchema,
+    name: z.string(),
+    display_order: z.number()
+});
+
+export const accountLayoutUpdateSchema = z.object({
+    groups: z.array(accountLayoutGroupEntrySchema),
+    accounts: z.array(accountLayoutAccountEntrySchema)
+});
+
+export const accountParamsSchema = z.object({
+    account_identity: accountIdentitySchema
+});
+
+export const apiAddressSchema = z.string();
+
+export const apiBytesSchema = z.string();
+
+export const apiU256Schema = z.string();
+
 export const assetSchema = z.object({
-    asset_identity: z.string(),
+    asset_identity: assetIdentitySchema,
     asset_name: z.string(),
     asset_symbol: z.string(),
     asset_decimals: z.number(),
     asset_icon_url: z.string().nullish().transform(value => value ?? undefined)
 });
 
-export const assetUpdateSchema = z.object({
-    asset_name: z.string().nullish().transform(value => value ?? undefined),
-    asset_symbol: z.string().nullish().transform(value => value ?? undefined),
-    asset_decimals: z.number().nullish().transform(value => value ?? undefined),
-    asset_icon_url: z.string().nullish().transform(value => value ?? undefined)
+export const assetCreateParamsSchema = z.object({
+    input: assetSchema
 });
 
 export const assetMetadataOptionSchema = z.object({
@@ -119,21 +102,79 @@ export const assetMetadataOptionSchema = z.object({
     icon_url: z.string().nullish().transform(value => value ?? undefined)
 });
 
-export const assetMetadataDiscoverySchema = z.object({
-    asset_identity: z.string(),
-    options: z.record(z.string(), assetMetadataOptionSchema)
+export const assetParamsSchema = z.object({
+    asset_identity: assetIdentitySchema
 });
 
-export const networkSchema = z.object({
-    network_identity: z.number(),
-    network_name: z.string(),
-    network_icon_url: z.string().nullish().transform(value => value ?? undefined)
+export const assetQuoteParamsSchema = z.object({
+    asset_identity: assetIdentitySchema,
+    display_asset: assetIdentitySchema.nullish().transform(value => value ?? undefined)
 });
 
-export const networkUpdateSchema = z.object({
-    network_name: z.string().nullish().transform(value => value ?? undefined),
-    network_icon_url: z.string().nullish().transform(value => value ?? undefined)
+export const assetUpdateSchema = z.object({
+    asset_name: z.string().nullish().transform(value => value ?? undefined),
+    asset_symbol: z.string().nullish().transform(value => value ?? undefined),
+    asset_decimals: z.number().nullish().transform(value => value ?? undefined),
+    asset_icon_url: z.string().nullish().transform(value => value ?? undefined)
 });
+
+export const assetUpdateParamsSchema = z.object({
+    asset_identity: assetIdentitySchema,
+    input: assetUpdateSchema
+});
+
+export const decodeTransactionRequestSchema = z.object({
+    from: apiAddressSchema.nullish().transform(value => value ?? undefined),
+    to: apiAddressSchema,
+    value: apiU256Schema.nullish().transform(value => value ?? undefined),
+    data: apiBytesSchema.nullish().transform(value => value ?? undefined)
+});
+
+export const rawCallSchema = z.object({
+    data: apiBytesSchema
+});
+
+export const decodedProxySchema = z.object({
+    proxy_type: z.string().nullish().transform(value => value ?? undefined),
+    implementation: apiAddressSchema,
+    implementation_name: z.string().nullish().transform(value => value ?? undefined)
+});
+
+export const decodedContractSchema = z.object({
+    address: apiAddressSchema,
+    verified_name: z.string().nullish().transform(value => value ?? undefined),
+    proxy: decodedProxySchema.nullish().transform(value => value ?? undefined)
+});
+
+export const decodedParamSchema = z.object({
+    name: z.string().nullish().transform(value => value ?? undefined),
+    ty: z.string(),
+    value: z.unknown()
+});
+
+export const deriveMnemonicInputSchema = z.object({
+    mnemonic: z.string(),
+    paths: z.array(z.string())
+});
+
+export const deriveMnemonicParamsSchema = z.object({
+    input: deriveMnemonicInputSchema
+});
+
+export const deriveMnemonicResultSchema = z.object({
+    path: z.string(),
+    address: z.string()
+});
+
+export const derivePrivateKeyParamsSchema = z.object({
+    input: z.string()
+});
+
+export const eoaWalletSchema = z.object({
+    evm_address: apiAddressSchema
+});
+
+export const emptyParamsSchema = z.record(z.string(), z.never());
 
 export const networkEndpointSchema = z.object({
     endpoint_identity: z.number(),
@@ -141,7 +182,12 @@ export const networkEndpointSchema = z.object({
     endpoint_type: z.string(),
     endpoint_url: z.string(),
     endpoint_disabled: z.boolean(),
-    network_identity: z.number()
+    network_identity: networkIdentitySchema
+});
+
+export const endpointParamsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    endpoint_identity: z.number()
 });
 
 export const networkEndpointUpdateSchema = z.object({
@@ -151,17 +197,127 @@ export const networkEndpointUpdateSchema = z.object({
     endpoint_disabled: z.boolean().nullish().transform(value => value ?? undefined)
 });
 
-export const networkMetadataDiscoverySchema = z.object({
-    network_identity: z.number(),
-    options: z.record(z.string(), z.object({
-        icon_url: z.string().nullish().transform(value => value ?? undefined)
-    }))
+export const erc4626QuoterConfigSchema = z.record(z.string(), z.never());
+
+export const fixedQuoterConfigSchema = z.object({
+    price: z.string(),
+    decimals: z.number(),
+    token_in_decimals: z.number(),
+    token_out_decimals: z.number()
 });
 
-export const rpcMethodStatsSchema = z.object({
-    method: z.string(),
-    total: z.number(),
-    errors: z.number()
+export const groupCreateParamsSchema = z.object({
+    input: accountGroupCreateSchema
+});
+
+export const groupParamsSchema = z.object({
+    group_identity: groupIdentitySchema
+});
+
+export const groupUpdateParamsSchema = z.object({
+    group_identity: groupIdentitySchema,
+    input: accountGroupUpdateSchema
+});
+
+export const jsonRpcVersionSchema = z.literal("2.0");
+
+export const layoutUpdateParamsSchema = z.object({
+    input: accountLayoutUpdateSchema
+});
+
+export const networkSchema = z.object({
+    network_identity: networkIdentitySchema,
+    network_name: z.string(),
+    network_icon_url: z.string().nullish().transform(value => value ?? undefined)
+});
+
+export const networkCreateParamsSchema = z.object({
+    input: networkSchema
+});
+
+export const networkMetadataOptionSchema = z.object({
+    icon_url: z.string().nullish().transform(value => value ?? undefined)
+});
+
+export const networkParamsSchema = z.object({
+    network_identity: networkIdentitySchema
+});
+
+export const networkUpdateSchema = z.object({
+    network_name: z.string().nullish().transform(value => value ?? undefined),
+    network_icon_url: z.string().nullish().transform(value => value ?? undefined)
+});
+
+export const networkUpdateParamsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    input: networkUpdateSchema
+});
+
+export const uniswapV2QuoterConfigSchema = z.object({
+    pair_address: z.string()
+});
+
+export const uniswapV3QuoterConfigSchema = z.object({
+    pool_address: z.string()
+});
+
+export const quoterConfigSchema = z.union([z.object({
+        "type": z.literal("fixed")
+    }).and(fixedQuoterConfigSchema), z.object({
+        "type": z.literal("erc4626")
+    }).and(erc4626QuoterConfigSchema), z.object({
+        "type": z.literal("uniswap_v2")
+    }).and(uniswapV2QuoterConfigSchema), z.object({
+        "type": z.literal("uniswap_v3")
+    }).and(uniswapV3QuoterConfigSchema)]);
+
+export const quoterCreateSchema = z.object({
+    quoter_name: z.string(),
+    token_a: assetIdentitySchema,
+    token_b: assetIdentitySchema,
+    config: quoterConfigSchema,
+    enabled: z.boolean(),
+    watch: z.boolean()
+});
+
+export const quoterDiscoverySchema = z.object({
+    token_a: assetIdentitySchema,
+    token_b: assetIdentitySchema.nullish().transform(value => value ?? undefined)
+});
+
+export const uniswapV2PairSchema = z.object({
+    pair_address: z.string(),
+    reserve_0: z.string().nullish().transform(value => value ?? undefined),
+    reserve_1: z.string().nullish().transform(value => value ?? undefined)
+});
+
+export const uniswapV3PoolSchema = z.object({
+    pool_address: z.string(),
+    fee: z.number(),
+    reserve_0: z.string().nullish().transform(value => value ?? undefined),
+    reserve_1: z.string().nullish().transform(value => value ?? undefined)
+});
+
+export const quoterParamsSchema = z.object({
+    quoter_identity: z.string()
+});
+
+export const quoterUpdateSchema = z.object({
+    quoter_name: z.string().nullish().transform(value => value ?? undefined),
+    token_a: assetIdentitySchema.nullish().transform(value => value ?? undefined),
+    token_b: assetIdentitySchema.nullish().transform(value => value ?? undefined),
+    config: quoterConfigSchema.nullish().transform(value => value ?? undefined),
+    enabled: z.boolean().nullish().transform(value => value ?? undefined),
+    watch: z.boolean().nullish().transform(value => value ?? undefined)
+});
+
+export const quoterUpdateParamsSchema = z.object({
+    quoter_identity: z.string(),
+    input: quoterUpdateSchema
+});
+
+export const railgunWalletSchema = z.object({
+    railgun_address: z.string()
 });
 
 export const rpcCallSampleSchema = z.object({
@@ -171,6 +327,56 @@ export const rpcCallSampleSchema = z.object({
     duration_ms: z.number(),
     success: z.boolean(),
     error: z.string().nullish().transform(value => value ?? undefined)
+});
+
+export const rpcMethodStatsSchema = z.object({
+    method: z.string(),
+    total: z.number(),
+    errors: z.number()
+});
+
+export const rpcErrorKindSchema = z.union([z.literal("invalid_input"), z.literal("not_found"), z.literal("conflict"), z.literal("unavailable"), z.literal("internal")]);
+
+export const rpcIdentitySchema = z.union([z.number(), z.string()]).nullable();
+
+export const rpcErrorDataSchema = z.object({
+    kind: rpcErrorKindSchema,
+    message: z.string()
+});
+
+export const rpcPoolEndpointStatsSchema = z.object({
+    endpoint_identity: z.number(),
+    status: z.string(),
+    in_flight: z.number(),
+    queued: z.number(),
+    total_requests: z.number(),
+    total_errors: z.number()
+});
+
+export const rpcPoolStatsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    endpoint_count: z.number(),
+    alive_count: z.number(),
+    dead_count: z.number(),
+    disabled_count: z.number(),
+    in_flight: z.number(),
+    queued: z.number(),
+    total_requests: z.number(),
+    total_errors: z.number(),
+    endpoints: z.array(rpcPoolEndpointStatsSchema)
+});
+
+export const rpcRequestEnvelopeSchema = z.object({
+    jsonrpc: jsonRpcVersionSchema,
+    id: rpcIdentitySchema.nullish().transform(value => value ?? undefined),
+    method: z.string(),
+    params: z.record(z.string(), z.unknown())
+});
+
+export const rpcSuccessEnvelopeSchema = z.object({
+    jsonrpc: jsonRpcVersionSchema,
+    id: rpcIdentitySchema,
+    result: z.unknown()
 });
 
 export const rpcEndpointStatsSchema = z.object({
@@ -192,93 +398,46 @@ export const rpcEndpointStatsSchema = z.object({
     recent: z.array(rpcCallSampleSchema)
 });
 
-export const rpcPoolStatsSchema = z.object({
-    network_identity: z.number(),
-    endpoint_count: z.number(),
-    alive_count: z.number(),
-    dead_count: z.number(),
-    disabled_count: z.number(),
-    in_flight: z.number(),
-    queued: z.number(),
-    total_requests: z.number(),
-    total_errors: z.number(),
-    endpoints: z.array(z.object({
-        endpoint_identity: z.number(),
-        status: z.string(),
-        in_flight: z.number(),
-        queued: z.number(),
-        total_requests: z.number(),
-        total_errors: z.number()
-    }))
+export const rpcStatusDeadSchema = z.object({
+    error: z.string(),
+    rpc: rpcEndpointStatsSchema
 });
 
-export const rpcStatusSchema = z.union([z.object({
-        status: z.literal("Alive"),
-        block_number: z.number(),
-        network_identity: z.number(),
-        timestamp: z.number(),
-        rpc: rpcEndpointStatsSchema
-    }), z.object({
-        status: z.literal("Dead"),
-        error: z.string(),
-        rpc: rpcEndpointStatsSchema
-    }), z.object({
-        status: z.literal("Disabled"),
-        rpc: rpcEndpointStatsSchema
-    })]);
-
-export const quoterConfigSchema = z.union([z.object({
-        type: z.literal("fixed"),
-        price: z.string(),
-        decimals: z.number(),
-        token_in_decimals: z.number(),
-        token_out_decimals: z.number()
-    }), z.object({
-        type: z.literal("erc4626")
-    }), z.object({
-        type: z.literal("uniswap_v2"),
-        pair_address: z.string()
-    }), z.object({
-        type: z.literal("uniswap_v3"),
-        pool_address: z.string()
-    })]);
-
-export const quoterSchema = z.object({
-    quoter_identity: z.string(),
-    quoter_name: z.string(),
-    token_a: z.string(),
-    token_b: z.string(),
-    config: quoterConfigSchema,
-    enabled: z.boolean(),
-    watch: z.boolean()
+export const rpcStatusDisabledSchema = z.object({
+    rpc: rpcEndpointStatsSchema
 });
 
-export const quoterCreateSchema = quoterSchema.omit({ "quoter_identity": true });
-
-export const quoterUpdateSchema = quoterCreateSchema.partial();
-
-export const uniswapV2PairSchema = z.object({
-    pair_address: z.string(),
-    reserve_0: z.string().nullish().transform(value => value ?? undefined),
-    reserve_1: z.string().nullish().transform(value => value ?? undefined)
+export const safeWalletSchema = z.object({
+    evm_address: apiAddressSchema
 });
 
-export const uniswapV3PoolSchema = z.object({
-    pool_address: z.string(),
-    fee: z.number(),
-    reserve_0: z.string().nullish().transform(value => value ?? undefined),
-    reserve_1: z.string().nullish().transform(value => value ?? undefined)
+export const safeWalletTxExtraSchema = z.object({
+    nonce: z.number().nullish().transform(value => value ?? undefined),
+    execution_date: z.string().nullish().transform(value => value ?? undefined),
+    safe_tx_hash: apiBytesSchema.nullish().transform(value => value ?? undefined),
+    proposer: apiAddressSchema.nullish().transform(value => value ?? undefined),
+    executor: apiAddressSchema.nullish().transform(value => value ?? undefined),
+    is_successful: z.boolean().nullish().transform(value => value ?? undefined),
+    is_executed: z.boolean().nullish().transform(value => value ?? undefined),
+    origin: z.string().nullish().transform(value => value ?? undefined),
+    extra: z.unknown()
 });
 
-export const quoterDiscoverySchema = z.object({
-    token_a: z.string(),
-    token_b: z.string().nullish().transform(value => value ?? undefined)
+export const signatureFallbackSchema = z.object({
+    contract: decodedContractSchema.nullish().transform(value => value ?? undefined),
+    selector: apiBytesSchema,
+    candidates: z.array(z.string())
 });
 
-export const quoterDiscoveryResponseSchema = z.object({
-    erc4626: z.string().nullish().transform(value => value ?? undefined),
-    uniswap_v2: uniswapV2PairSchema.nullish().transform(value => value ?? undefined),
-    uniswap_v3: z.array(uniswapV3PoolSchema).nullish().transform(value => value ?? undefined)
+export const simulateTransactionRequestSchema = z.object({
+    from: apiAddressSchema.nullish().transform(value => value ?? undefined),
+    to: apiAddressSchema,
+    value: apiU256Schema.nullish().transform(value => value ?? undefined),
+    data: apiBytesSchema.nullish().transform(value => value ?? undefined)
+});
+
+export const txExtraSchema = z.object({
+    safe_wallet: safeWalletTxExtraSchema.nullish().transform(value => value ?? undefined)
 });
 
 export const vendorFlagSchema = z.union([z.literal("avara_asset_icons"), z.literal("zerion_asset_icons"), z.literal("smoldapp_asset_icons"), z.literal("smoldapp_network_icons"), z.literal("safewallet_network_icons"), z.literal("safewallet_asset_icons"), z.literal("safewallet_transactions_api"), z.literal("etherscan_asset_icons"), z.literal("etherscan_link_tx_hash"), z.literal("etherscan_link_address"), z.literal("etherscan_link_block"), z.literal("etherscan_link_contracts"), z.literal("blockscout_asset_icons"), z.literal("blockscout_link_tx_hash"), z.literal("blockscout_link_address"), z.literal("blockscout_link_block"), z.literal("blockscout_link_contracts")]);
@@ -289,89 +448,409 @@ export const vendorFlagInfoSchema = z.object({
     unfinished: z.boolean()
 });
 
-export const decodedContractSchema = z.object({
-    address: z.string(),
-    verified_name: z.string().nullish().transform(value => value ?? undefined),
-    proxy: z.object({
-        proxy_type: z.string().nullish().transform(value => value ?? undefined),
-        implementation: z.string(),
-        implementation_name: z.string().nullish().transform(value => value ?? undefined)
-    }).nullish().transform(value => value ?? undefined)
+export const vendorParamsSchema = z.object({
+    flag: vendorFlagSchema
 });
 
-export const decodedParamSchema = z.object({
+export const viewWalletSchema = z.object({
+    evm_address: apiAddressSchema
+});
+
+export const walletTypeSchema = z.union([z.object({
+        "type": z.literal("safe")
+    }).and(safeWalletSchema), z.object({
+        "type": z.literal("eoa")
+    }).and(eoaWalletSchema), z.object({
+        "type": z.literal("view")
+    }).and(viewWalletSchema), z.object({
+        "type": z.literal("railgun")
+    }).and(railgunWalletSchema)]);
+
+export const systemPingRpcParamsSchema = emptyParamsSchema;
+
+export const systemPingRpcResultSchema = z.string();
+
+export const accountListRpcParamsSchema = emptyParamsSchema;
+
+export const accountSchema = z.object({
+    account_identity: accountIdentitySchema,
+    name: z.string(),
+    networks: z.array(networkIdentitySchema),
+    metadata: walletTypeSchema,
+    group_id: groupIdentitySchema.nullish().transform(value => value ?? undefined),
+    display_order: z.number()
+});
+
+export const accountGetRpcParamsSchema = accountParamsSchema;
+
+export const accountGetRpcResultSchema = accountSchema;
+
+export const accountCreateParamsSchema = z.object({
+    input: accountSchema
+});
+
+export const accountCreateRpcResultSchema = accountSchema;
+
+export const accountNextIdentityRpcParamsSchema = emptyParamsSchema;
+
+export const accountNextIdentityRpcResultSchema = accountIdentitySchema;
+
+export const accountUpdateRpcResultSchema = accountSchema;
+
+export const accountDeleteRpcParamsSchema = accountParamsSchema;
+
+export const accountDeleteRpcResultSchema = z.null();
+
+export const accountAssetListRpcParamsSchema = accountParamsSchema;
+
+export const accountAssetListRpcResultSchema = z.array(assetIdentitySchema);
+
+export const accountAssetAddRpcParamsSchema = accountAssetParamsSchema;
+
+export const accountAssetAddRpcResultSchema = z.null();
+
+export const accountAssetRemoveRpcParamsSchema = accountAssetParamsSchema;
+
+export const accountAssetRemoveRpcResultSchema = z.null();
+
+export const accountAssetBalanceParamsSchema = z.object({
+    account_identity: accountIdentitySchema,
+    asset_identity: assetIdentitySchema,
+    display_currency: assetIdentitySchema
+});
+
+export const accountAssetBalanceRpcResultSchema = accountBalanceSchema;
+
+export const accountBalanceListRpcParamsSchema = accountBalancesParamsSchema;
+
+export const accountBalanceListRpcResultSchema = accountBalancesSchema;
+
+export const accountLayoutGetRpcParamsSchema = emptyParamsSchema;
+
+export const accountLayoutSchema = z.object({
+    groups: z.array(accountGroupSchema),
+    accounts: z.array(accountSchema)
+});
+
+export const accountLayoutUpdateRpcParamsSchema = layoutUpdateParamsSchema;
+
+export const accountLayoutUpdateRpcResultSchema = accountLayoutSchema;
+
+export const accountGroupCreateRpcParamsSchema = groupCreateParamsSchema;
+
+export const accountGroupCreateRpcResultSchema = accountGroupSchema;
+
+export const accountGroupUpdateRpcParamsSchema = groupUpdateParamsSchema;
+
+export const accountGroupUpdateRpcResultSchema = accountGroupSchema;
+
+export const accountGroupDeleteRpcParamsSchema = groupParamsSchema;
+
+export const accountGroupDeleteRpcResultSchema = z.null();
+
+export const accountTransactionListRpcParamsSchema = accountParamsSchema;
+
+export const accountTransactionPendingRpcParamsSchema = accountParamsSchema;
+
+export const accountMnemonicGenerateRpcParamsSchema = emptyParamsSchema;
+
+export const accountMnemonicGenerateRpcResultSchema = z.string();
+
+export const accountDerivationDefaultPathRpcParamsSchema = emptyParamsSchema;
+
+export const accountDerivationDefaultPathRpcResultSchema = z.string();
+
+export const accountDerivationFromMnemonicRpcParamsSchema = deriveMnemonicParamsSchema;
+
+export const accountDerivationFromMnemonicRpcResultSchema = z.array(deriveMnemonicResultSchema);
+
+export const accountDerivationFromPrivateKeyRpcParamsSchema = derivePrivateKeyParamsSchema;
+
+export const accountDerivationFromPrivateKeyRpcResultSchema = z.string();
+
+export const assetListRpcParamsSchema = emptyParamsSchema;
+
+export const assetListRpcResultSchema = z.array(assetSchema);
+
+export const assetGetRpcParamsSchema = assetParamsSchema;
+
+export const assetGetRpcResultSchema = assetSchema;
+
+export const assetCreateRpcParamsSchema = assetCreateParamsSchema;
+
+export const assetCreateRpcResultSchema = assetSchema;
+
+export const assetUpdateRpcParamsSchema = assetUpdateParamsSchema;
+
+export const assetUpdateRpcResultSchema = assetSchema;
+
+export const assetDeleteRpcParamsSchema = assetParamsSchema;
+
+export const assetDeleteRpcResultSchema = z.null();
+
+export const assetDiscoverMetadataRpcParamsSchema = assetParamsSchema;
+
+export const assetMetadataDiscoverySchema = z.object({
+    asset_identity: assetIdentitySchema,
+    options: z.record(z.string(), assetMetadataOptionSchema)
+});
+
+export const assetQuoteRpcParamsSchema = assetQuoteParamsSchema;
+
+export const assetQuoteRpcResultSchema = z.string();
+
+export const networkListRpcParamsSchema = emptyParamsSchema;
+
+export const networkListRpcResultSchema = z.array(networkSchema);
+
+export const networkGetRpcParamsSchema = networkParamsSchema;
+
+export const networkGetRpcResultSchema = networkSchema;
+
+export const networkCreateRpcParamsSchema = networkCreateParamsSchema;
+
+export const networkCreateRpcResultSchema = networkSchema;
+
+export const networkUpdateRpcParamsSchema = networkUpdateParamsSchema;
+
+export const networkUpdateRpcResultSchema = networkSchema;
+
+export const networkDeleteRpcParamsSchema = networkParamsSchema;
+
+export const networkDeleteRpcResultSchema = z.null();
+
+export const networkListPresetsRpcParamsSchema = emptyParamsSchema;
+
+export const networkListPresetsRpcResultSchema = z.array(networkSchema);
+
+export const networkDiscoverMetadataRpcParamsSchema = networkParamsSchema;
+
+export const networkMetadataDiscoverySchema = z.object({
+    network_identity: networkIdentitySchema,
+    options: z.record(z.string(), networkMetadataOptionSchema)
+});
+
+export const networkRpcStatsRpcParamsSchema = networkParamsSchema;
+
+export const networkRpcStatsRpcResultSchema = rpcPoolStatsSchema;
+
+export const endpointListRpcParamsSchema = networkParamsSchema;
+
+export const endpointListRpcResultSchema = z.array(networkEndpointSchema);
+
+export const endpointGetRpcParamsSchema = endpointParamsSchema;
+
+export const endpointGetRpcResultSchema = networkEndpointSchema;
+
+export const endpointCreateParamsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    input: networkEndpointSchema
+});
+
+export const endpointCreateRpcResultSchema = networkEndpointSchema;
+
+export const endpointUpdateParamsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    endpoint_identity: z.number(),
+    input: networkEndpointUpdateSchema
+});
+
+export const endpointUpdateRpcResultSchema = networkEndpointSchema;
+
+export const endpointDeleteRpcParamsSchema = endpointParamsSchema;
+
+export const endpointDeleteRpcResultSchema = z.null();
+
+export const endpointNextIdentityRpcParamsSchema = networkParamsSchema;
+
+export const endpointNextIdentityRpcResultSchema = z.number();
+
+export const endpointStatusRpcParamsSchema = endpointParamsSchema;
+
+export const simulateParamsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    input: simulateTransactionRequestSchema
+});
+
+export const decodeParamsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    input: decodeTransactionRequestSchema
+});
+
+export const quoterListRpcParamsSchema = emptyParamsSchema;
+
+export const quoterSchema = z.object({
+    quoter_identity: z.string(),
+    quoter_name: z.string(),
+    token_a: assetIdentitySchema,
+    token_b: assetIdentitySchema,
+    config: quoterConfigSchema,
+    enabled: z.boolean(),
+    watch: z.boolean()
+});
+
+export const quoterGetRpcParamsSchema = quoterParamsSchema;
+
+export const quoterGetRpcResultSchema = quoterSchema;
+
+export const quoterCreateParamsSchema = z.object({
+    input: quoterCreateSchema
+});
+
+export const quoterCreateRpcResultSchema = quoterSchema;
+
+export const quoterUpdateRpcParamsSchema = quoterUpdateParamsSchema;
+
+export const quoterUpdateRpcResultSchema = quoterSchema;
+
+export const quoterDiscoverParamsSchema = z.object({
+    input: quoterDiscoverySchema
+});
+
+export const quoterDiscoveryResponseSchema = z.object({
+    erc4626: assetIdentitySchema.nullish().transform(value => value ?? undefined),
+    uniswap_v2: uniswapV2PairSchema.nullish().transform(value => value ?? undefined),
+    uniswap_v3: z.array(uniswapV3PoolSchema).nullish().transform(value => value ?? undefined)
+});
+
+export const vendorListEnabledRpcParamsSchema = emptyParamsSchema;
+
+export const vendorListEnabledRpcResultSchema = z.array(vendorFlagSchema);
+
+export const vendorListAllRpcParamsSchema = emptyParamsSchema;
+
+export const vendorListAllRpcResultSchema = z.array(vendorFlagInfoSchema);
+
+export const vendorEnableRpcParamsSchema = vendorParamsSchema;
+
+export const vendorEnableRpcResultSchema = z.null();
+
+export const vendorDisableRpcParamsSchema = vendorParamsSchema;
+
+export const vendorDisableRpcResultSchema = z.null();
+
+export const accountUpdateSchema = z.object({
     name: z.string().nullish().transform(value => value ?? undefined),
-    ty: z.string(),
-    value: z.unknown()
+    networks: z.array(networkIdentitySchema).nullish().transform(value => value ?? undefined),
+    metadata: walletTypeSchema.nullish().transform(value => value ?? undefined)
+});
+
+export const accountUpdateParamsSchema = z.object({
+    account_identity: accountIdentitySchema,
+    input: accountUpdateSchema
+});
+
+export const decodedFunctionSchema = z.object({
+    contract: decodedContractSchema,
+    selector: apiBytesSchema,
+    function: z.string(),
+    signature: z.string(),
+    params: z.array(decodedParamSchema)
 });
 
 export const decodedSchema = z.union([z.object({
-        kind: z.literal("verified"),
-        contract: decodedContractSchema,
-        selector: z.string(),
-        function: z.string(),
-        signature: z.string(),
-        params: z.array(decodedParamSchema)
-    }), z.object({
-        kind: z.literal("signature_fallback"),
-        contract: decodedContractSchema.nullish().transform(value => value ?? undefined),
-        selector: z.string(),
-        candidates: z.array(z.string())
-    }), z.object({
-        kind: z.literal("raw"),
-        data: z.string()
-    })]);
+        "kind": z.literal("verified")
+    }).and(decodedFunctionSchema), z.object({
+        "kind": z.literal("signature_fallback")
+    }).and(signatureFallbackSchema), z.object({
+        "kind": z.literal("raw")
+    }).and(rawCallSchema)]);
 
 export const decodedCallSchema: z.ZodSchema<DecodedCall> = z.lazy(() => z.object({
-    from: z.string().nullish().transform(value => value ?? undefined),
-    to: z.string(),
-    value: z.string(),
+    from: apiAddressSchema.nullish().transform(value => value ?? undefined),
+    to: apiAddressSchema,
+    value: apiU256Schema,
     operation: z.string().nullish().transform(value => value ?? undefined),
-    data: z.string(),
-    selector: z.string().nullish().transform(value => value ?? undefined),
+    data: apiBytesSchema,
+    selector: apiBytesSchema.nullish().transform(value => value ?? undefined),
     decoded: decodedSchema,
-    subcalls: z.array(decodedCallSchema)
+    subcalls: z.array(decodedCallSchema).nullish().transform(value => value ?? undefined)
 }));
 
-export const txSchema = z.object({
-    network_identity: z.number(),
-    tx_hash: z.string().nullish().transform(value => value ?? undefined),
-    from: z.string().nullish().transform(value => value ?? undefined),
-    to: z.string().nullish().transform(value => value ?? undefined),
-    data: z.string().nullish().transform(value => value ?? undefined),
-    value: z.string(),
-    decoded: decodedCallSchema.nullish().transform(value => value ?? undefined),
-    extra: z.object({
-        safe_wallet: z.object({
-            nonce: z.number().nullish().transform(value => value ?? undefined),
-            execution_date: z.string().nullish().transform(value => value ?? undefined),
-            safe_tx_hash: z.string().nullish().transform(value => value ?? undefined),
-            proposer: z.string().nullish().transform(value => value ?? undefined),
-            executor: z.string().nullish().transform(value => value ?? undefined),
-            is_successful: z.boolean().nullish().transform(value => value ?? undefined),
-            is_executed: z.boolean().nullish().transform(value => value ?? undefined),
-            origin: z.string().nullish().transform(value => value ?? undefined),
-            extra: z.unknown()
-        }).nullish().transform(value => value ?? undefined)
-    })
+export const rpcErrorObjectSchema = z.object({
+    code: z.number(),
+    message: z.string(),
+    data: rpcErrorDataSchema.nullish().transform(value => value ?? undefined)
 });
 
-export const decodeTransactionRequestSchema = z.object({
-    from: z.string().nullish().transform(value => value ?? undefined),
-    to: z.string(),
-    value: z.string().nullish().transform(value => value ?? undefined),
-    data: z.string().nullish().transform(value => value ?? undefined)
+export const rpcErrorEnvelopeSchema = z.object({
+    jsonrpc: jsonRpcVersionSchema,
+    id: rpcIdentitySchema,
+    error: rpcErrorObjectSchema
 });
+
+export const rpcStatusAliveSchema = z.object({
+    block_number: z.number(),
+    network_identity: networkIdentitySchema,
+    timestamp: z.number(),
+    rpc: rpcEndpointStatsSchema
+});
+
+export const simulateTransactionResponseSchema = z.object({
+    call: decodedCallSchema
+});
+
+export const txSchema = z.object({
+    network_identity: networkIdentitySchema,
+    tx_hash: apiBytesSchema.nullish().transform(value => value ?? undefined),
+    from: apiAddressSchema.nullish().transform(value => value ?? undefined),
+    to: apiAddressSchema.nullish().transform(value => value ?? undefined),
+    data: apiBytesSchema.nullish().transform(value => value ?? undefined),
+    value: apiU256Schema,
+    decoded: decodedCallSchema.nullish().transform(value => value ?? undefined),
+    extra: txExtraSchema
+});
+
+export const accountListRpcResultSchema = z.array(accountSchema);
+
+export const accountCreateRpcParamsSchema = accountCreateParamsSchema;
+
+export const accountUpdateRpcParamsSchema = accountUpdateParamsSchema;
+
+export const accountAssetBalanceRpcParamsSchema = accountAssetBalanceParamsSchema;
+
+export const accountLayoutGetRpcResultSchema = accountLayoutSchema;
+
+export const accountTransactionListRpcResultSchema = z.array(txSchema);
+
+export const accountTransactionPendingRpcResultSchema = z.array(txSchema);
+
+export const assetDiscoverMetadataRpcResultSchema = assetMetadataDiscoverySchema;
+
+export const networkDiscoverMetadataRpcResultSchema = networkMetadataDiscoverySchema;
+
+export const endpointCreateRpcParamsSchema = endpointCreateParamsSchema;
+
+export const endpointUpdateRpcParamsSchema = endpointUpdateParamsSchema;
+
+export const rpcStatusSchema = z.union([z.object({
+        "status": z.literal("Alive")
+    }).and(rpcStatusAliveSchema), z.object({
+        "status": z.literal("Dead")
+    }).and(rpcStatusDeadSchema), z.object({
+        "status": z.literal("Disabled")
+    }).and(rpcStatusDisabledSchema)]);
+
+export const transactionSimulateRpcParamsSchema = simulateParamsSchema;
+
+export const transactionSimulateRpcResultSchema = simulateTransactionResponseSchema;
+
+export const transactionDecodeRpcParamsSchema = decodeParamsSchema;
 
 export const decodeTransactionResponseSchema = z.object({
     call: decodedCallSchema
 });
 
-export const simulateTransactionRequestSchema = decodeTransactionRequestSchema;
+export const quoterListRpcResultSchema = z.array(quoterSchema);
 
-export const simulateTransactionResponseSchema = decodeTransactionResponseSchema;
+export const quoterCreateRpcParamsSchema = quoterCreateParamsSchema;
 
-export const deriveMnemonicResultSchema = z.object({
-    path: z.string(),
-    address: z.string()
-});
+export const quoterDiscoverRpcParamsSchema = quoterDiscoverParamsSchema;
+
+export const quoterDiscoverRpcResultSchema = quoterDiscoveryResponseSchema;
+
+export const rpcResponseEnvelopeSchema = z.union([rpcSuccessEnvelopeSchema, rpcErrorEnvelopeSchema]);
+
+export const endpointStatusRpcResultSchema = rpcStatusSchema;
+
+export const transactionDecodeRpcResultSchema = decodeTransactionResponseSchema;

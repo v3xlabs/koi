@@ -10,7 +10,7 @@
     "build": "vite build",
     "serve": "vite preview",
     "rpc-bindings": "cargo run --manifest-path ../../Cargo.toml -p koi-api --bin rpc-bindings && ts-to-zod src/api/bindings.gen.ts src/api/bindings.zod.gen.ts --skipValidation && node scripts/normalize-rpc-zod.mjs",
-    "rpc-bindings-check": "pnpm rpc-bindings && git diff --exit-code -- src/api/rpc-contract.gen.ts src/api/bindings.zod.gen.ts",
+    "rpc-bindings-check": "pnpm rpc-bindings && git diff --exit-code -- src/api/bindings.gen.ts src/api/bindings.zod.gen.ts src/api/rpc-contract.gen.ts src/api/rpc.gen.ts",
     "rpc-typecheck": "tsc -p tsconfig.rpc.json",
     "lint": "eslint ."
   },

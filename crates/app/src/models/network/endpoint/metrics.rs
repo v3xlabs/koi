@@ -16,6 +16,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Semaphore;
 use tower::{Layer, Service};
+use ts_rs::TS;
 
 #[derive(Clone, Debug)]
 pub struct RpcMetrics {
@@ -49,7 +50,8 @@ struct RpcMethodCounter {
     errors: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(optional_fields)]
 pub struct RpcEndpointStats {
     pub in_flight: u64,
     pub queued: u64,
@@ -69,14 +71,15 @@ pub struct RpcEndpointStats {
     pub recent: Vec<RpcCallSample>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct RpcMethodStats {
     pub method: String,
     pub total: u64,
     pub errors: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(optional_fields)]
 pub struct RpcCallSample {
     pub timestamp: u64,
     pub methods: Vec<String>,

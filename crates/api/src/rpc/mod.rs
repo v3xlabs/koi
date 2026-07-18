@@ -50,8 +50,21 @@ pub const MAX_BATCH_ENTRIES: usize = 128;
 pub const MAX_IN_FLIGHT_CALLS: usize = 64;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, TS, PartialEq, Eq)]
+pub enum JsonRpcVersion {
+    #[serde(rename = "2.0")]
+    V2,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq)]
+#[serde(untagged)]
+pub enum RpcIdentity {
+    Number(f64),
+    String(String),
+    Null(()),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, TS, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-#[ts(export)]
 pub enum RpcErrorKind {
     InvalidInput,
     NotFound,
@@ -61,14 +74,13 @@ pub enum RpcErrorKind {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq, Eq)]
-#[ts(export)]
 pub struct RpcErrorData {
     pub kind: RpcErrorKind,
     pub message: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq, Eq)]
-#[ts(export)]
+#[ts(optional_fields)]
 pub struct RpcErrorObject {
     pub code: i32,
     pub message: String,
@@ -76,14 +88,46 @@ pub struct RpcErrorObject {
     pub data: Option<RpcErrorData>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq)]
+#[ts(optional_fields)]
+pub struct RpcRequestEnvelope {
+    pub jsonrpc: JsonRpcVersion,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<RpcIdentity>,
+    pub method: String,
+    #[ts(type = "Record<string, unknown>")]
+    pub params: Map<String, Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq)]
+pub struct RpcSuccessEnvelope {
+    pub jsonrpc: JsonRpcVersion,
+    pub id: RpcIdentity,
+    #[ts(type = "unknown")]
+    pub result: Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq)]
+pub struct RpcErrorEnvelope {
+    pub jsonrpc: JsonRpcVersion,
+    pub id: RpcIdentity,
+    pub error: RpcErrorObject,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq)]
+#[serde(untagged)]
+pub enum RpcResponseEnvelope {
+    Success(RpcSuccessEnvelope),
+    Error(RpcErrorEnvelope),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, TS, Default)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct EmptyParams {}
 
 pub trait RpcMethod {
-    type Params: Serialize + DeserializeOwned;
-    type Output: Serialize + DeserializeOwned;
+    type Params: Serialize + DeserializeOwned + TS + 'static;
+    type Output: Serialize + DeserializeOwned + TS + 'static;
     const NAME: &'static str;
 }
 
@@ -101,117 +145,87 @@ macro_rules! method {
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct AccountParams {
-    #[ts(type = "number")]
     pub account_identity: AccountIdentity,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct AssetParams {
-    #[ts(type = "string")]
     pub asset_identity: AssetIdentity,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct NetworkParams {
-    #[ts(type = "number")]
     pub network_identity: NetworkIdentity,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct AccountAssetParams {
-    #[ts(type = "number")]
     pub account_identity: AccountIdentity,
-    #[ts(type = "string")]
     pub asset_identity: AssetIdentity,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct AccountAssetBalanceParams {
-    #[ts(type = "number")]
     pub account_identity: AccountIdentity,
-    #[ts(type = "string")]
     pub asset_identity: AssetIdentity,
-    #[ts(type = "string")]
     pub display_currency: AssetIdentity,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
+#[ts(optional_fields)]
 pub struct AccountBalancesParams {
-    #[ts(type = "number")]
     pub account_identity: AccountIdentity,
-    #[ts(type = "string")]
     pub display_currency: AssetIdentity,
     #[serde(default)]
-    pub fresh: bool,
+    pub fresh: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct AccountCreateParams {
-    #[ts(type = "Account")]
     pub input: Account,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct AccountUpdateParams {
-    #[ts(type = "number")]
     pub account_identity: AccountIdentity,
-    #[ts(type = "AccountUpdate")]
     pub input: AccountUpdate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct LayoutUpdateParams {
-    #[ts(type = "AccountLayoutUpdate")]
     pub input: AccountLayoutUpdate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct GroupCreateParams {
-    #[ts(type = "AccountGroupCreate")]
     pub input: AccountGroupCreate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct GroupUpdateParams {
-    #[ts(type = "number")]
     pub group_identity: GroupIdentity,
-    #[ts(type = "AccountGroupUpdate")]
     pub input: AccountGroupUpdate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct GroupParams {
-    #[ts(type = "number")]
     pub group_identity: GroupIdentity,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct DeriveMnemonicInput {
     pub mnemonic: String,
     pub paths: Vec<String>,
@@ -219,14 +233,12 @@ pub struct DeriveMnemonicInput {
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct DeriveMnemonicParams {
     pub input: DeriveMnemonicInput,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct DeriveMnemonicResult {
     pub path: String,
     pub address: String,
@@ -234,383 +246,186 @@ pub struct DeriveMnemonicResult {
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct DerivePrivateKeyParams {
     pub input: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct AssetCreateParams {
-    #[ts(type = "Asset")]
     pub input: Asset,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct AssetUpdateParams {
-    #[ts(type = "string")]
     pub asset_identity: AssetIdentity,
-    #[ts(type = "AssetUpdate")]
     pub input: AssetUpdate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
+#[ts(optional_fields)]
 pub struct AssetQuoteParams {
-    #[ts(type = "string")]
     pub asset_identity: AssetIdentity,
     #[serde(default)]
-    #[ts(optional)]
-    #[ts(type = "string | null")]
     pub display_asset: Option<AssetIdentity>,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct NetworkCreateParams {
-    #[ts(type = "Network")]
     pub input: Network,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct NetworkUpdateParams {
-    #[ts(type = "number")]
     pub network_identity: NetworkIdentity,
-    #[ts(type = "NetworkUpdate")]
     pub input: NetworkUpdate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct EndpointParams {
-    #[ts(type = "number")]
     pub network_identity: NetworkIdentity,
     pub endpoint_identity: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct EndpointCreateParams {
-    #[ts(type = "number")]
     pub network_identity: NetworkIdentity,
-    #[ts(type = "NetworkEndpoint")]
     pub input: NetworkEndpoint,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct EndpointUpdateParams {
-    #[ts(type = "number")]
     pub network_identity: NetworkIdentity,
     pub endpoint_identity: i32,
-    #[ts(type = "NetworkEndpointUpdate")]
     pub input: NetworkEndpointUpdate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct SimulateParams {
-    #[ts(type = "number")]
     pub network_identity: NetworkIdentity,
-    #[ts(type = "SimulateTransactionRequest")]
     pub input: SimulateTransactionRequest,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct DecodeParams {
-    #[ts(type = "number")]
     pub network_identity: NetworkIdentity,
-    #[ts(type = "DecodeTransactionRequest")]
     pub input: DecodeTransactionRequest,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct QuoterParams {
     pub quoter_identity: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct QuoterCreateParams {
-    #[ts(type = "QuoterCreate")]
     pub input: QuoterCreate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct QuoterUpdateParams {
     pub quoter_identity: String,
-    #[ts(type = "QuoterUpdate")]
     pub input: QuoterUpdate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct QuoterDiscoverParams {
-    #[ts(type = "QuoterDiscovery")]
     pub input: QuoterDiscovery,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
-#[ts(export)]
 pub struct VendorParams {
-    #[ts(type = "VendorFlag")]
     pub flag: VendorFlag,
+}
+
+#[macro_export]
+macro_rules! rpc_method_registry {
+    ($callback:ident) => {
+        $callback! {
+            SystemPing, EmptyParams, String, "system.ping";
+            AccountList, EmptyParams, Vec<Account>, "account.list";
+            AccountGet, AccountParams, Account, "account.get";
+            AccountCreate, AccountCreateParams, Account, "account.create";
+            AccountNextIdentity, EmptyParams, AccountIdentity, "account.nextIdentity";
+            AccountUpdate, AccountUpdateParams, Account, "account.update";
+            AccountDelete, AccountParams, (), "account.delete";
+            AccountAssetList, AccountParams, Vec<AssetIdentity>, "account.asset.list";
+            AccountAssetAdd, AccountAssetParams, (), "account.asset.add";
+            AccountAssetRemove, AccountAssetParams, (), "account.asset.remove";
+            AccountAssetBalance, AccountAssetBalanceParams, AccountBalance, "account.asset.balance";
+            AccountBalanceList, AccountBalancesParams, AccountBalances, "account.balance.list";
+            AccountLayoutGet, EmptyParams, AccountLayout, "account.layout.get";
+            AccountLayoutUpdate, LayoutUpdateParams, AccountLayout, "account.layout.update";
+            AccountGroupCreate, GroupCreateParams, AccountGroup, "account.group.create";
+            AccountGroupUpdate, GroupUpdateParams, AccountGroup, "account.group.update";
+            AccountGroupDelete, GroupParams, (), "account.group.delete";
+            AccountTransactionList, AccountParams, Vec<Tx>, "account.transaction.list";
+            AccountTransactionPending, AccountParams, Vec<Tx>, "account.transaction.pending";
+            AccountMnemonicGenerate, EmptyParams, String, "account.mnemonic.generate";
+            AccountDerivationDefaultPath, EmptyParams, String, "account.derivation.defaultPath";
+            AccountDerivationFromMnemonic, DeriveMnemonicParams, Vec<DeriveMnemonicResult>, "account.derivation.fromMnemonic";
+            AccountDerivationFromPrivateKey, DerivePrivateKeyParams, String, "account.derivation.fromPrivateKey";
+            AssetList, EmptyParams, Vec<Asset>, "asset.list";
+            AssetGet, AssetParams, Asset, "asset.get";
+            AssetCreate, AssetCreateParams, Asset, "asset.create";
+            AssetUpdate, AssetUpdateParams, Asset, "asset.update";
+            AssetDelete, AssetParams, (), "asset.delete";
+            AssetDiscoverMetadata, AssetParams, AssetMetadataDiscovery, "asset.discoverMetadata";
+            AssetQuote, AssetQuoteParams, String, "asset.quote";
+            NetworkList, EmptyParams, Vec<Network>, "network.list";
+            NetworkGet, NetworkParams, Network, "network.get";
+            NetworkCreate, NetworkCreateParams, Network, "network.create";
+            NetworkUpdate, NetworkUpdateParams, Network, "network.update";
+            NetworkDelete, NetworkParams, (), "network.delete";
+            NetworkListPresets, EmptyParams, Vec<Network>, "network.listPresets";
+            NetworkDiscoverMetadata, NetworkParams, NetworkMetadataDiscovery, "network.discoverMetadata";
+            NetworkRpcStats, NetworkParams, RpcPoolStats, "network.rpcStats";
+            EndpointList, NetworkParams, Vec<NetworkEndpoint>, "network.endpoint.list";
+            EndpointGet, EndpointParams, NetworkEndpoint, "network.endpoint.get";
+            EndpointCreate, EndpointCreateParams, NetworkEndpoint, "network.endpoint.create";
+            EndpointUpdate, EndpointUpdateParams, NetworkEndpoint, "network.endpoint.update";
+            EndpointDelete, EndpointParams, (), "network.endpoint.delete";
+            EndpointNextIdentity, NetworkParams, i32, "network.endpoint.nextIdentity";
+            EndpointStatus, EndpointParams, RpcStatus, "network.endpoint.status";
+            TransactionSimulate, SimulateParams, SimulateTransactionResponse, "transaction.simulate";
+            TransactionDecode, DecodeParams, DecodeTransactionResponse, "transaction.decode";
+            QuoterList, EmptyParams, Vec<Quoter>, "quoter.list";
+            QuoterGet, QuoterParams, Quoter, "quoter.get";
+            QuoterCreate, QuoterCreateParams, Quoter, "quoter.create";
+            QuoterUpdate, QuoterUpdateParams, Quoter, "quoter.update";
+            QuoterDiscover, QuoterDiscoverParams, QuoterDiscoveryResponse, "quoter.discover";
+            VendorListEnabled, EmptyParams, Vec<VendorFlag>, "vendor.listEnabled";
+            VendorListAll, EmptyParams, Vec<VendorFlagInfo>, "vendor.listAll";
+            VendorEnable, VendorParams, (), "vendor.enable";
+            VendorDisable, VendorParams, (), "vendor.disable";
+        }
+    };
 }
 
 pub mod methods {
     use super::*;
 
-    method!(SystemPing, EmptyParams, String, "system.ping");
-    method!(AccountList, EmptyParams, Vec<Account>, "account.list");
-    method!(AccountGet, AccountParams, Account, "account.get");
-    method!(
-        AccountCreate,
-        AccountCreateParams,
-        Account,
-        "account.create"
-    );
-    method!(
-        AccountNextIdentity,
-        EmptyParams,
-        AccountIdentity,
-        "account.nextIdentity"
-    );
-    method!(
-        AccountUpdate,
-        AccountUpdateParams,
-        Account,
-        "account.update"
-    );
-    method!(AccountDelete, AccountParams, (), "account.delete");
-    method!(
-        AccountAssetList,
-        AccountParams,
-        Vec<AssetIdentity>,
-        "account.asset.list"
-    );
-    method!(AccountAssetAdd, AccountAssetParams, (), "account.asset.add");
-    method!(
-        AccountAssetRemove,
-        AccountAssetParams,
-        (),
-        "account.asset.remove"
-    );
-    method!(
-        AccountAssetBalance,
-        AccountAssetBalanceParams,
-        AccountBalance,
-        "account.asset.balance"
-    );
-    method!(
-        AccountBalanceList,
-        AccountBalancesParams,
-        AccountBalances,
-        "account.balance.list"
-    );
-    method!(
-        AccountLayoutGet,
-        EmptyParams,
-        AccountLayout,
-        "account.layout.get"
-    );
-    method!(
-        AccountLayoutUpdate,
-        LayoutUpdateParams,
-        AccountLayout,
-        "account.layout.update"
-    );
-    method!(
-        AccountGroupCreate,
-        GroupCreateParams,
-        AccountGroup,
-        "account.group.create"
-    );
-    method!(
-        AccountGroupUpdate,
-        GroupUpdateParams,
-        AccountGroup,
-        "account.group.update"
-    );
-    method!(AccountGroupDelete, GroupParams, (), "account.group.delete");
-    method!(
-        AccountTransactionList,
-        AccountParams,
-        Vec<Tx>,
-        "account.transaction.list"
-    );
-    method!(
-        AccountTransactionPending,
-        AccountParams,
-        Vec<Tx>,
-        "account.transaction.pending"
-    );
-    method!(
-        AccountMnemonicGenerate,
-        EmptyParams,
-        String,
-        "account.mnemonic.generate"
-    );
-    method!(
-        AccountDerivationDefaultPath,
-        EmptyParams,
-        String,
-        "account.derivation.defaultPath"
-    );
-    method!(
-        AccountDerivationFromMnemonic,
-        DeriveMnemonicParams,
-        Vec<DeriveMnemonicResult>,
-        "account.derivation.fromMnemonic"
-    );
-    method!(
-        AccountDerivationFromPrivateKey,
-        DerivePrivateKeyParams,
-        String,
-        "account.derivation.fromPrivateKey"
-    );
-    method!(AssetList, EmptyParams, Vec<Asset>, "asset.list");
-    method!(AssetGet, AssetParams, Asset, "asset.get");
-    method!(AssetCreate, AssetCreateParams, Asset, "asset.create");
-    method!(AssetUpdate, AssetUpdateParams, Asset, "asset.update");
-    method!(AssetDelete, AssetParams, (), "asset.delete");
-    method!(
-        AssetDiscoverMetadata,
-        AssetParams,
-        AssetMetadataDiscovery,
-        "asset.discoverMetadata"
-    );
-    method!(AssetQuote, AssetQuoteParams, String, "asset.quote");
-    method!(NetworkList, EmptyParams, Vec<Network>, "network.list");
-    method!(NetworkGet, NetworkParams, Network, "network.get");
-    method!(
-        NetworkCreate,
-        NetworkCreateParams,
-        Network,
-        "network.create"
-    );
-    method!(
-        NetworkUpdate,
-        NetworkUpdateParams,
-        Network,
-        "network.update"
-    );
-    method!(NetworkDelete, NetworkParams, (), "network.delete");
-    method!(
-        NetworkListPresets,
-        EmptyParams,
-        Vec<Network>,
-        "network.listPresets"
-    );
-    method!(
-        NetworkDiscoverMetadata,
-        NetworkParams,
-        NetworkMetadataDiscovery,
-        "network.discoverMetadata"
-    );
-    method!(
-        NetworkRpcStats,
-        NetworkParams,
-        RpcPoolStats,
-        "network.rpcStats"
-    );
-    method!(
-        EndpointList,
-        NetworkParams,
-        Vec<NetworkEndpoint>,
-        "network.endpoint.list"
-    );
-    method!(
-        EndpointGet,
-        EndpointParams,
-        NetworkEndpoint,
-        "network.endpoint.get"
-    );
-    method!(
-        EndpointCreate,
-        EndpointCreateParams,
-        NetworkEndpoint,
-        "network.endpoint.create"
-    );
-    method!(
-        EndpointUpdate,
-        EndpointUpdateParams,
-        NetworkEndpoint,
-        "network.endpoint.update"
-    );
-    method!(
-        EndpointDelete,
-        EndpointParams,
-        (),
-        "network.endpoint.delete"
-    );
-    method!(
-        EndpointNextIdentity,
-        NetworkParams,
-        i32,
-        "network.endpoint.nextIdentity"
-    );
-    method!(
-        EndpointStatus,
-        EndpointParams,
-        RpcStatus,
-        "network.endpoint.status"
-    );
-    method!(
-        TransactionSimulate,
-        SimulateParams,
-        SimulateTransactionResponse,
-        "transaction.simulate"
-    );
-    method!(
-        TransactionDecode,
-        DecodeParams,
-        DecodeTransactionResponse,
-        "transaction.decode"
-    );
-    method!(QuoterList, EmptyParams, Vec<Quoter>, "quoter.list");
-    method!(QuoterGet, QuoterParams, Quoter, "quoter.get");
-    method!(QuoterCreate, QuoterCreateParams, Quoter, "quoter.create");
-    method!(QuoterUpdate, QuoterUpdateParams, Quoter, "quoter.update");
-    method!(
-        QuoterDiscover,
-        QuoterDiscoverParams,
-        QuoterDiscoveryResponse,
-        "quoter.discover"
-    );
-    method!(
-        VendorListEnabled,
-        EmptyParams,
-        Vec<VendorFlag>,
-        "vendor.listEnabled"
-    );
-    method!(
-        VendorListAll,
-        EmptyParams,
-        Vec<VendorFlagInfo>,
-        "vendor.listAll"
-    );
-    method!(VendorEnable, VendorParams, (), "vendor.enable");
-    method!(VendorDisable, VendorParams, (), "vendor.disable");
+    macro_rules! define_rpc_methods {
+        ($( $marker:ident, $params:ty, $output:ty, $name:literal; )*) => {
+            $(method!($marker, $params, $output, $name);)*
+        };
+    }
+
+    rpc_method_registry!(define_rpc_methods);
 }
 
 #[derive(Clone)]
@@ -761,7 +576,12 @@ impl Dispatcher {
                 let account = Account::get_by_id(&self.state.database, p.account_identity).await?;
                 self.state
                     .balances
-                    .get_balances(&self.state, &account, &p.display_currency, p.fresh)
+                    .get_balances(
+                        &self.state,
+                        &account,
+                        &p.display_currency,
+                        p.fresh.unwrap_or(false),
+                    )
                     .await
             }),
             "account.layout.get" => run!(EmptyParams, |_| async {
@@ -1357,6 +1177,6 @@ mod tests {
         }))
         .unwrap();
 
-        assert!(!params.fresh);
+        assert_eq!(params.fresh, None);
     }
 }

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tracing::warn;
+use ts_rs::TS;
 
 use crate::{
     error::KoiError,
@@ -18,13 +19,15 @@ pub mod erc4626;
 pub mod uniswap_v2;
 pub mod uniswap_v3;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct QuoterDiscovery {
     pub token_a: AssetIdentity,
     pub token_b: Option<AssetIdentity>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct QuoterDiscoveryResponse {
     pub erc4626: Option<AssetIdentity>,
     pub uniswap_v2: Option<UniswapV2Pair>,

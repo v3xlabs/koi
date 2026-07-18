@@ -20,11 +20,11 @@ export const useAssets = createRpcQuery<void, { assets: Asset[]; }>(
     },
 );
 export const useAsset = createRpcQuery<Path, Asset>(
-    options => rpc.assetGet(requireOptions(options).path.asset_identity),
+    options => rpc.assetGet({ asset_identity: requireOptions(options).path.asset_identity }),
     options => assetKeys.detail(requireOptions(options).path.asset_identity),
 );
 export const useCreateAsset = createRpcMutation<{ data: Asset; }, Asset>(
-    options => rpc.assetCreate(options.data),
+    options => rpc.assetCreate({ input: options.data }),
     {
         onSuccess: (asset) => {
             void queryClient.invalidateQueries({ queryKey: assetKeys.all });
@@ -33,7 +33,7 @@ export const useCreateAsset = createRpcMutation<{ data: Asset; }, Asset>(
     },
 );
 export const useUpdateAsset = createRpcMutation<Path & { data: AssetUpdate; }, Asset>(
-    options => rpc.assetUpdate(options.path.asset_identity, options.data),
+    options => rpc.assetUpdate({ asset_identity: options.path.asset_identity, input: options.data }),
     {
         onSuccess: (asset) => {
             void queryClient.invalidateQueries({ queryKey: assetKeys.all });
@@ -42,7 +42,7 @@ export const useUpdateAsset = createRpcMutation<Path & { data: AssetUpdate; }, A
     },
 );
 export const useDeleteAsset = createRpcMutation<Path, null>(
-    options => rpc.assetDelete(options.path.asset_identity),
+    options => rpc.assetDelete({ asset_identity: options.path.asset_identity }),
     {
         onSuccess: (_, options) => {
             void queryClient.invalidateQueries({ queryKey: assetKeys.all });
@@ -51,14 +51,14 @@ export const useDeleteAsset = createRpcMutation<Path, null>(
     },
 );
 export const useAssetMetadataDiscovery = createRpcQuery<Path, AssetMetadataDiscovery>(
-    options => rpc.assetDiscoverMetadata(requireOptions(options).path.asset_identity),
+    options => rpc.assetDiscoverMetadata({ asset_identity: requireOptions(options).path.asset_identity }),
     options => assetKeys.discovery(requireOptions(options).path.asset_identity),
 );
 export const useAssetQuote = createRpcQuery<Path & { query?: { display_asset?: string; }; }, string>(
     (options) => {
         const value = requireOptions(options);
 
-        return rpc.assetQuote(value.path.asset_identity, value.query?.display_asset);
+        return rpc.assetQuote({ asset_identity: value.path.asset_identity, display_asset: value.query?.display_asset });
     },
     options => assetKeys.quote(requireOptions(options).path.asset_identity),
 );
