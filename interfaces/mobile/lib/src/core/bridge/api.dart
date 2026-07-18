@@ -6,8 +6,8 @@
 import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-Future<InProcessClient> createClient() =>
-    RustLib.instance.api.crateApiCreateClient();
+Future<InProcessClient> createClient({required String dataDir}) =>
+    RustLib.instance.api.crateApiCreateClient(dataDir: dataDir);
 
 Future<String> systemPing({required InProcessClient client}) =>
     RustLib.instance.api.crateApiSystemPing(client: client);

@@ -47,6 +47,13 @@ impl Configuration {
 
         Ok(config)
     }
+
+    pub fn for_data_dir(data_dir: &Path) -> Configuration {
+        let mut config = Configuration::default();
+        config.database_url = sqlite_url_for_path(&data_dir.join(LOCAL_DB_NAME));
+        config.abi_cache_dir = data_dir.join("cache").join("abis").display().to_string();
+        config
+    }
 }
 
 pub fn resolve_database_url() -> Result<String, KoiError> {

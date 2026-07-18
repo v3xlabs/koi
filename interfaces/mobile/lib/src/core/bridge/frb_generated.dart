@@ -75,7 +75,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
-  Future<InProcessClient> crateApiCreateClient();
+  Future<InProcessClient> crateApiCreateClient({required String dataDir});
 
   Future<void> crateApiInitApp();
 
@@ -100,11 +100,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
-  Future<InProcessClient> crateApiCreateClient() {
+  Future<InProcessClient> crateApiCreateClient({required String dataDir}) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(dataDir, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -118,14 +119,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiCreateClientConstMeta,
-        argValues: [],
+        argValues: [dataDir],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiCreateClientConstMeta =>
-      const TaskConstMeta(debugName: "create_client", argNames: []);
+      const TaskConstMeta(debugName: "create_client", argNames: ["dataDir"]);
 
   @override
   Future<void> crateApiInitApp() {

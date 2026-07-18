@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'src/core/bridge/api.dart';
 import 'src/core/bridge/frb_generated.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final dataDirectory = await getApplicationSupportDirectory();
   await RustLib.init();
-  runApp(const KoiApp());
+  runApp(KoiApp(dataDirectory: dataDirectory.path));
 }
 
 class KoiApp extends StatelessWidget {
-  const KoiApp({super.key});
+  const KoiApp({required this.dataDirectory, super.key});
+
+  final String dataDirectory;
 
   @override
   Widget build(BuildContext context) {
@@ -19,13 +23,15 @@ class KoiApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
       ),
-      home: const PingPage(),
+      home: PingPage(dataDirectory: dataDirectory),
     );
   }
 }
 
 class PingPage extends StatefulWidget {
-  const PingPage({super.key});
+  const PingPage({required this.dataDirectory, super.key});
+
+  final String dataDirectory;
 
   @override
   State<PingPage> createState() => _PingPageState();
@@ -35,7 +41,7 @@ class _PingPageState extends State<PingPage> {
   late final Future<String> _ping = _loadPing();
 
   Future<String> _loadPing() async {
-    final client = await createClient();
+    final client = await createClient(dataDir: widget.dataDirectory);
     return systemPing(client: client);
   }
 

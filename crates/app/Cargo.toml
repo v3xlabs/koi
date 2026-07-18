@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 sqlx = { git = "https://github.com/launchbadge/sqlx.git", features = [
-    "runtime-async-std",
+    "runtime-tokio",
     "tls-rustls",
     "sqlite",
     "migrate",

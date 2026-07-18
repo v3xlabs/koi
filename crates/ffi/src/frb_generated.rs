@@ -68,11 +68,12 @@ fn wire__crate__api__create_client_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_data_dir = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| async move {
                 transform_result_sse::<_, String>(
                     (move || async move {
-                        let output_ok = crate::api::create_client().await?;
+                        let output_ok = crate::api::create_client(api_data_dir).await?;
                         Ok(output_ok)
                     })()
                     .await,

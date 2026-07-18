@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:koi/src/core/bridge/api.dart';
@@ -11,9 +13,13 @@ void main() {
   });
 
   test('pings through the in-process rust dispatcher', () async {
-    final client = await createClient();
+    final dataDirectory = await Directory.systemTemp.createTemp('koi-mobile-');
+    addTearDown(() => dataDirectory.delete(recursive: true));
+
+    final client = await createClient(dataDir: dataDirectory.path);
     final response = await systemPing(client: client);
 
     expect(response, 'OK');
+    expect(File('${dataDirectory.path}/koi.db').existsSync(), isTrue);
   });
 }

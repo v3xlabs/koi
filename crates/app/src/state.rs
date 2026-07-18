@@ -31,6 +31,12 @@ impl State {
     pub async fn new() -> Result<AppState, KoiError> {
         let config = Configuration::load()?;
 
+        Self::new_with(config).await
+    }
+
+    pub async fn new_with(config: Configuration) -> Result<AppState, KoiError> {
+        let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+
         info!("Configuration: {:?}", config);
 
         let database = connect(&config.database_url, None).await?;
