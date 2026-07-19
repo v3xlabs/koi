@@ -6,7 +6,7 @@ use sqlx::{
     sqlite::{SqliteTypeInfo, SqliteValueRef},
 };
 use strum::{EnumProperty, IntoEnumIterator};
-use strum_macros::{EnumIter, EnumProperty};
+use strum_macros::EnumIter;
 use tracing::info;
 use ts_rs::TS;
 

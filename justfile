@@ -25,6 +25,7 @@ build-web:
     cd interfaces/web && pnpm build
 
 dev: (run "daemon")
+tui: (run "tui")
 gui: (build-web) (run "gui")
 migrate: (run "migrate")
 migrate-skip: (run "migrate" "--skip")

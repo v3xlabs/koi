@@ -2,9 +2,11 @@
 members = [
     "crates/app",
     "crates/api",
+    "crates/client",
     "crates/daemon",
     "crates/bin",
     "crates/ffi",
     "interfaces/gui",
+    "interfaces/cli",
 ]
 resolver = "2"
