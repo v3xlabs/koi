@@ -22,6 +22,7 @@ const callTitle = (call: DecodedCall) => {
 };
 
 const operationLabel = (operation: string | undefined) => operation ?? "call";
+const subcalls = (call: DecodedCall) => call.subcalls ?? [];
 
 const paramValue = (params: DecodedParam[], name: string) => params.find(param => param.name === name)?.value;
 const paramAddress = (params: DecodedParam[], name: string) => {
@@ -128,7 +129,7 @@ const handledPreview = (call: DecodedCall, networkIdentity: number) => {
   }
 };
 
-const shouldShowParams = (call: DecodedCall) => call.decoded.kind === "verified" && call.subcalls.length === 0 && !handledPreview(call, 1);
+const shouldShowParams = (call: DecodedCall) => call.decoded.kind === "verified" && subcalls(call).length === 0 && !handledPreview(call, 1);
 
 const TargetPreview: Component<{ decoded: Decoded; to: string; network_identity: number; }> = props => (
   <div class="flex min-w-0 flex-wrap items-center justify-end gap-1.5 text-right">
@@ -276,7 +277,7 @@ const DecodedKind: Component<{ call: DecodedCall; network_identity: number; }> =
   <Switch>
     <Match when={props.call.decoded.kind === "verified"}>
       <div class="space-y-2">
-        <div class="grid gap-2 md:grid-cols-2" classList={{ hidden: props.call.decoded.kind !== "verified" || !props.call.decoded.signature || Boolean(handledPreview(props.call, props.network_identity)) || props.call.subcalls.length > 0 }}>
+        <div class="grid gap-2 md:grid-cols-2" classList={{ hidden: props.call.decoded.kind !== "verified" || !props.call.decoded.signature || Boolean(handledPreview(props.call, props.network_identity)) || subcalls(props.call).length > 0 }}>
           <TxField label="Signature" value={props.call.decoded.kind === "verified" ? props.call.decoded.signature : undefined} />
         </div>
         <Show when={shouldShowParams(props.call) && props.call.decoded.kind === "verified" ? props.call.decoded.params : undefined}>
@@ -331,11 +332,11 @@ export const TxDecodedCall: Component<{ call: DecodedCall; network_identity: num
       </Show>
     </div>
     <DecodedKind call={props.call} network_identity={props.network_identity} />
-    <Show when={props.call.subcalls.length > 0}>
+    <Show when={subcalls(props.call).length > 0}>
       <div class="space-y-1.5">
         <div class="text-xs font-medium uppercase tracking-wide text-muted">Calls</div>
         <div class="space-y-1.5">
-          <For each={props.call.subcalls}>
+          <For each={subcalls(props.call)}>
             {subcall => <TxDecodedCall call={subcall} network_identity={props.network_identity} nested />}
           </For>
         </div>
