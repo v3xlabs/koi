@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { makePersisted } from "@solid-primitives/storage";
 import { useNavigate } from "@tanstack/solid-router";
 import { FaSolidGripVertical } from "solid-icons/fa";
