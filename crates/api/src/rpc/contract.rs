@@ -1,49 +1,29 @@
 //! JSON-RPC protocol envelopes and the typed method catalogue.
 
-use alloy::primitives::U256;
-use futures::{StreamExt, future::join_all, stream};
-use koi::{
-    error::KoiError,
-    models::{
-        account::{
-            Account, AccountUpdate,
-            balances::{AccountBalance, AccountBalances},
-            derive::{
-                default_derivation_path, derive_address_from_private_key,
-                derive_addresses_from_mnemonic, generate_mnemonic,
-            },
-            group::{AccountGroup, AccountGroupCreate, AccountGroupUpdate, GroupIdentity},
-            identity::AccountIdentity,
-            layout::{AccountLayout, AccountLayoutUpdate},
-            metadata::WalletType,
-        },
-        asset::{Asset, AssetUpdate, identity::AssetIdentity, metadata::AssetMetadataDiscovery},
-        network::{
-            Network, NetworkUpdate,
-            endpoint::{NetworkEndpoint, NetworkEndpointUpdate, provider::RpcStatus},
-            identity::NetworkIdentity,
-            metadata::NetworkMetadataDiscovery,
-            pool::RpcPoolStats,
-        },
-        quoter::{
-            Quoter, QuoterCreate, QuoterUpdate,
-            discover::{QuoterDiscovery, QuoterDiscoveryResponse},
-        },
-        tx::{
-            Tx, TxBase,
-            decode::{
-                DecodeTransactionRequest, DecodeTransactionResponse, SimulateTransactionRequest,
-                SimulateTransactionResponse, decode_transaction,
-            },
-            simulate::simulate_transaction,
-        },
-        vendor::flags::{VendorFlag, VendorFlagInfo},
+use koi::models::{
+    account::{
+        Account,
+        balances::{AccountBalance, AccountBalances},
+        group::AccountGroup,
+        identity::AccountIdentity,
+        layout::AccountLayout,
     },
-    state::AppState,
-    vendor::safe_wallet::tx::fetch_safewallet_tx,
+    asset::{Asset, identity::AssetIdentity, metadata::AssetMetadataDiscovery},
+    network::{
+        Network,
+        endpoint::{NetworkEndpoint, provider::RpcStatus},
+        metadata::NetworkMetadataDiscovery,
+        pool::RpcPoolStats,
+    },
+    quoter::{Quoter, discover::QuoterDiscoveryResponse},
+    tx::{
+        Tx,
+        decode::{DecodeTransactionResponse, SimulateTransactionResponse},
+    },
+    vendor::flags::{VendorFlag, VendorFlagInfo},
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use serde_json::{Map, Value, json};
+use serde_json::{Map, Value};
 use ts_rs::TS;
 
 use super::*;

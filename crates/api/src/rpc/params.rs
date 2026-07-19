@@ -1,49 +1,23 @@
 //! Method-specific JSON-RPC parameter and result types.
 
-use alloy::primitives::U256;
-use futures::{StreamExt, future::join_all, stream};
-use koi::{
-    error::KoiError,
-    models::{
-        account::{
-            Account, AccountUpdate,
-            balances::{AccountBalance, AccountBalances},
-            derive::{
-                default_derivation_path, derive_address_from_private_key,
-                derive_addresses_from_mnemonic, generate_mnemonic,
-            },
-            group::{AccountGroup, AccountGroupCreate, AccountGroupUpdate, GroupIdentity},
-            identity::AccountIdentity,
-            layout::{AccountLayout, AccountLayoutUpdate},
-            metadata::WalletType,
-        },
-        asset::{Asset, AssetUpdate, identity::AssetIdentity, metadata::AssetMetadataDiscovery},
-        network::{
-            Network, NetworkUpdate,
-            endpoint::{NetworkEndpoint, NetworkEndpointUpdate, provider::RpcStatus},
-            identity::NetworkIdentity,
-            metadata::NetworkMetadataDiscovery,
-            pool::RpcPoolStats,
-        },
-        quoter::{
-            Quoter, QuoterCreate, QuoterUpdate,
-            discover::{QuoterDiscovery, QuoterDiscoveryResponse},
-        },
-        tx::{
-            Tx, TxBase,
-            decode::{
-                DecodeTransactionRequest, DecodeTransactionResponse, SimulateTransactionRequest,
-                SimulateTransactionResponse, decode_transaction,
-            },
-            simulate::simulate_transaction,
-        },
-        vendor::flags::{VendorFlag, VendorFlagInfo},
+use koi::models::{
+    account::{
+        Account, AccountUpdate,
+        group::{AccountGroupCreate, AccountGroupUpdate, GroupIdentity},
+        identity::AccountIdentity,
+        layout::AccountLayoutUpdate,
     },
-    state::AppState,
-    vendor::safe_wallet::tx::fetch_safewallet_tx,
+    asset::{Asset, AssetUpdate, identity::AssetIdentity},
+    network::{
+        Network, NetworkUpdate,
+        endpoint::{NetworkEndpoint, NetworkEndpointUpdate},
+        identity::NetworkIdentity,
+    },
+    quoter::{QuoterCreate, QuoterUpdate, discover::QuoterDiscovery},
+    tx::decode::{DecodeTransactionRequest, SimulateTransactionRequest},
+    vendor::flags::VendorFlag,
 };
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use serde_json::{Map, Value, json};
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Serialize, Deserialize, TS)]

@@ -156,11 +156,21 @@ async fn process_message(
 }
 
 fn valid_origin(request: &Request) -> bool {
-    request
-        .headers()
+    let headers = request.headers();
+    let Some(origin) = headers
         .get(header::ORIGIN)
         .and_then(|value| value.to_str().ok())
-        .is_some_and(|origin| origin == DAEMON_ORIGIN)
+    else {
+        return false;
+    };
+    let Some(host) = headers
+        .get(header::HOST)
+        .and_then(|value| value.to_str().ok())
+    else {
+        return false;
+    };
+
+    origin == format!("http://{host}")
 }
 
 #[cfg(test)]
@@ -168,9 +178,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn websocket_requires_matching_origin() {
+    fn websocket_requires_matching_request_host() {
         let request = Request::builder()
             .header(header::ORIGIN, DAEMON_ORIGIN)
+            .header(header::HOST, LISTEN_ADDRESS)
+            .finish();
+
+        assert!(valid_origin(&request));
+    }
+
+    #[test]
+    fn websocket_accepts_alternate_loopback_origin() {
+        let request = Request::builder()
+            .header(header::ORIGIN, "http://127.0.0.1:7777")
+            .header(header::HOST, "127.0.0.1:7777")
             .finish();
 
         assert!(valid_origin(&request));
@@ -181,9 +202,15 @@ mod tests {
         let missing = Request::builder().finish();
         let disallowed = Request::builder()
             .header(header::ORIGIN, "https://example.com")
+            .header(header::HOST, LISTEN_ADDRESS)
+            .finish();
+        let mismatched = Request::builder()
+            .header(header::ORIGIN, "http://example.com:7777")
+            .header(header::HOST, LISTEN_ADDRESS)
             .finish();
 
         assert!(!valid_origin(&missing));
         assert!(!valid_origin(&disallowed));
+        assert!(!valid_origin(&mismatched));
     }
 }
