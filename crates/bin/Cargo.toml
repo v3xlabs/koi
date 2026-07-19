@@ -14,6 +14,12 @@ clap = { version = "4", features = ["derive"] }
 koi-gui = { path = "../../interfaces/gui", optional = true }
 anyhow = "1"
 dotenvy = "0.15.7"
+reqwest = { version = "0.12.5", features = [
+    "rustls-tls",
+    "charset",
+    "http2",
+    "json",
+], default-features = false }
 tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "time"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "ansi"] }

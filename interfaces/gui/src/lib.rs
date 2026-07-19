@@ -14,12 +14,16 @@ use wry::{PageLoadEvent, WebView, WebViewBuilder};
 
 const KOI_ICON_PNG: &[u8] = include_bytes!("../../web/public/favicon_x64.png");
 
+pub struct GuiOptions {
+    pub url: String,
+}
+
 enum UserEvent {
     Tray(TrayIconEvent),
     Menu(MenuEvent),
 }
 
-pub fn run(url: &str) -> Result<()> {
+pub fn run(options: GuiOptions) -> Result<()> {
     configure_linux_backend();
 
     let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();
@@ -31,7 +35,7 @@ pub fn run(url: &str) -> Result<()> {
         .with_window_icon(Some(koi_window_icon()?))
         .build(&event_loop)?;
 
-    let _webview = build_webview(&window, url)?;
+    let _webview = build_webview(&window, &options.url)?;
     let tray = Tray::new()?;
 
     event_loop.run(move |event, _, control_flow| {

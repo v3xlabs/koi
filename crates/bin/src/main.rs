@@ -1,8 +1,8 @@
+use std::ffi::OsString;
+
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
-use koi::state::State;
-#[cfg(feature = "gui")]
-use koi_daemon::DAEMON_ORIGIN;
+use koi::{DEFAULT_API_URL, state::State};
 use tracing::info;
 #[cfg(feature = "gui")]
 use tracing::warn;
@@ -18,7 +18,11 @@ struct Cli {
 enum Commands {
     /// Launch the desktop UI (default)
     #[cfg(feature = "gui")]
-    Gui,
+    Gui {
+        /// Base URL of the koi server (without /api)
+        #[arg(long, default_value = DEFAULT_API_URL)]
+        api: String,
+    },
     /// Start the daemon
     Daemon,
     /// Create the database (if needed) and apply pending migrations
@@ -38,7 +42,9 @@ impl Cli {
 
 #[cfg(feature = "gui")]
 fn default_command() -> Commands {
-    Commands::Gui
+    Commands::Gui {
+        api: DEFAULT_API_URL.to_string(),
+    }
 }
 
 #[cfg(not(feature = "gui"))]
@@ -50,11 +56,14 @@ fn default_command() -> Commands {
 async fn main() {
     dotenv().ok();
 
-    match Cli::parse().command() {
+    let args = std::env::args_os().collect::<Vec<_>>();
+    let explicit_api = api_was_explicit(&args);
+
+    match Cli::parse_from(args).command() {
         #[cfg(feature = "gui")]
-        Commands::Gui => {
+        Commands::Gui { api } => {
             init_logging(false);
-            let _server_handle = match prepare_daemon().await {
+            let (api, _server_handle) = match prepare_client_api(api, explicit_api).await {
                 Ok(result) => result,
                 Err(error) => {
                     eprintln!("GUI startup error: {error:#}");
@@ -62,7 +71,7 @@ async fn main() {
                 }
             };
 
-            if let Err(error) = koi_gui::run(DAEMON_ORIGIN) {
+            if let Err(error) = koi_gui::run(koi_gui::GuiOptions { url: api }) {
                 eprintln!("GUI error: {error:#}");
                 std::process::exit(1);
             }
@@ -105,12 +114,19 @@ fn init_logging(silent: bool) {
 }
 
 #[cfg(feature = "gui")]
-async fn prepare_daemon() -> anyhow::Result<Option<tokio::task::JoinHandle<()>>> {
-    if daemon_is_healthy().await {
-        return Ok(None);
+async fn prepare_client_api(
+    api: String,
+    explicit_api: bool,
+) -> anyhow::Result<(String, Option<tokio::task::JoinHandle<()>>)> {
+    if explicit_api || api.trim_end_matches('/') != DEFAULT_API_URL {
+        return Ok((api, None));
     }
 
-    warn!("No Koi daemon found at {DAEMON_ORIGIN}; starting one in this process");
+    if daemon_is_healthy(&api).await {
+        return Ok((api, None));
+    }
+
+    warn!("No Koi daemon found at {api}; starting one in this process");
     let state = State::new().await?;
     let handle = tokio::spawn(async move {
         if let Err(error) = koi_daemon::serve(state).await {
@@ -118,37 +134,44 @@ async fn prepare_daemon() -> anyhow::Result<Option<tokio::task::JoinHandle<()>>>
         }
     });
 
-    wait_for_daemon(&handle).await?;
-    Ok(Some(handle))
+    wait_for_daemon(&api, &handle).await?;
+    Ok((api, Some(handle)))
 }
 
 #[cfg(feature = "gui")]
-async fn daemon_is_healthy() -> bool {
-    tokio::net::TcpStream::connect(koi_daemon::LISTEN_ADDRESS)
+fn api_was_explicit(args: &[OsString]) -> bool {
+    args.iter().any(|arg| {
+        let value = arg.to_string_lossy();
+        value == "--api" || value.starts_with("--api=")
+    })
+}
+
+#[cfg(feature = "gui")]
+async fn daemon_is_healthy(api: &str) -> bool {
+    reqwest::get(api)
         .await
-        .is_ok()
+        .map(|response| response.status().is_success())
+        .unwrap_or(false)
 }
 
 #[cfg(feature = "gui")]
-async fn wait_for_daemon(handle: &tokio::task::JoinHandle<()>) -> anyhow::Result<()> {
+async fn wait_for_daemon(api: &str, handle: &tokio::task::JoinHandle<()>) -> anyhow::Result<()> {
     let mut last_error = None;
     for _ in 0..50 {
         if handle.is_finished() {
             anyhow::bail!("daemon task exited before becoming healthy");
         }
 
-        if daemon_is_healthy().await {
+        if daemon_is_healthy(api).await {
             return Ok(());
         }
 
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        last_error = Some(format!(
-            "daemon at {DAEMON_ORIGIN} did not become healthy yet"
-        ));
+        last_error = Some(format!("daemon at {api} did not become healthy yet"));
     }
 
     anyhow::bail!(
         "{}",
-        last_error.unwrap_or_else(|| format!("daemon at {DAEMON_ORIGIN} did not become healthy"))
+        last_error.unwrap_or_else(|| format!("daemon at {api} did not become healthy"))
     )
 }
