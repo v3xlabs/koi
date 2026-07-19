@@ -51,7 +51,7 @@ async fn response(dispatcher: &Dispatcher, request: &str) -> Value {
 fn protocol_constants_match_limits() {
     assert_eq!(MAX_MESSAGE_BYTES, 8_388_608);
     assert_eq!(MAX_BATCH_ENTRIES, 128);
-    assert_eq!(MAX_IN_FLIGHT_CALLS, 64);
+    assert_eq!(MAX_IN_FLIGHT_CALLS, 128);
 }
 
 #[tokio::test]

@@ -51,7 +51,7 @@ use super::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 pub const MAX_MESSAGE_BYTES: usize = 8 * 1024 * 1024;
 pub const MAX_BATCH_ENTRIES: usize = 128;
-pub const MAX_IN_FLIGHT_CALLS: usize = 64;
+pub const MAX_IN_FLIGHT_CALLS: usize = 128;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, TS, PartialEq, Eq)]
 pub enum JsonRpcVersion {
