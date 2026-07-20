@@ -1,3 +1,5 @@
+mod daemon;
+
 use std::ffi::OsString;
 
 use anyhow::Context;
@@ -94,7 +96,7 @@ async fn main() {
                     std::process::exit(1);
                 }
             };
-            if let Err(error) = koi_daemon::serve(state).await {
+            if let Err(error) = daemon::serve(state).await {
                 eprintln!("Daemon error: {error}");
                 std::process::exit(1);
             }
@@ -150,7 +152,7 @@ async fn prepare_client_api(
 
     warn!("No Koi daemon found at {api}; starting one in this process");
     let state = State::new().await?;
-    let mut handle = tokio::spawn(async move { koi_daemon::serve(state).await });
+    let mut handle = tokio::spawn(async move { daemon::serve(state).await });
 
     wait_for_daemon(&api, &mut handle).await?;
     Ok((api, Some(handle)))

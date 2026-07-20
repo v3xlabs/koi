@@ -4162,11 +4162,15 @@ dependencies = [
  "anyhow",
  "clap",
  "dotenvy",
+ "futures",
+ "koi-api",
  "koi-app",
  "koi-cli",
  "koi-client",
- "koi-daemon",
  "koi-gui",
+ "poem",
+ "rust-embed",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -4255,20 +4259,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio-tungstenite",
-]
-
-[[package]]
-name = "koi-daemon"
-version = "0.0.1"
-dependencies = [
- "futures",
- "koi-api",
- "koi-app",
- "poem",
- "rust-embed",
- "serde_json",
- "tokio",
- "tracing",
 ]
 
 [[package]]
