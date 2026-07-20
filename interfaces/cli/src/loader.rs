@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use tokio::sync::mpsc;
 
 use koi::models::{
-    account::{Account, balances::AccountBalances},
+    account::{Account, balances::AccountBalances, group::AccountGroup},
     asset::{Asset, metadata::AssetMetadataDiscovery},
     network::{Network, pool::RpcPoolStats},
     tx::Tx,
@@ -30,10 +30,16 @@ pub enum BackgroundUpdate {
         connected: bool,
         notice: Option<String>,
     },
-    AccountsLoaded {
+    LayoutLoaded {
         generation: u64,
+        groups: Vec<AccountGroup>,
         accounts: Vec<Account>,
         notice: Option<String>,
+    },
+    LayoutCommitted {
+        generation: u64,
+        groups: Vec<AccountGroup>,
+        accounts: Vec<Account>,
     },
     NetworksLoaded {
         generation: u64,
@@ -79,6 +85,15 @@ pub enum BackgroundUpdate {
         identity: String,
         result: Result<AssetMetadataDiscovery, String>,
     },
+    AssetQuote {
+        generation: u64,
+        identity: String,
+        state: ResourceState<String>,
+    },
+    NetworkPresets {
+        generation: u64,
+        presets: Vec<Network>,
+    },
     Notice {
         generation: u64,
         notice: String,
@@ -94,7 +109,12 @@ impl Loader {
         }
     }
 
-    pub fn spawn_refresh_all(&self, generation: u64, fresh_balances: bool) {
+    pub fn spawn_refresh_all(
+        &self,
+        generation: u64,
+        fresh_balances: bool,
+        display_currency: String,
+    ) {
         let client = self.client.clone();
         let tx = self.tx.clone();
 
@@ -117,24 +137,30 @@ impl Loader {
                 }
             }
 
-            let accounts = match client.accounts().await {
-                Ok(accounts) => accounts,
+            let layout = match client.account_layout().await {
+                Ok(layout) => layout,
                 Err(error) => {
-                    let _ = tx.send(BackgroundUpdate::AccountsLoaded {
+                    let _ = tx.send(BackgroundUpdate::LayoutLoaded {
                         generation,
+                        groups: Vec::new(),
                         accounts: Vec::new(),
                         notice: Some(format!("Accounts: {error:#}")),
                     });
-                    Vec::new()
+                    koi::models::account::layout::AccountLayout {
+                        groups: Vec::new(),
+                        accounts: Vec::new(),
+                    }
                 }
             };
-            let account_ids: Vec<u64> = accounts
+            let account_ids: Vec<u64> = layout
+                .accounts
                 .iter()
                 .map(|account| account.account_identity.0)
                 .collect();
-            let _ = tx.send(BackgroundUpdate::AccountsLoaded {
+            let _ = tx.send(BackgroundUpdate::LayoutLoaded {
                 generation,
-                accounts,
+                groups: layout.groups,
+                accounts: layout.accounts,
                 notice: None,
             });
 
@@ -186,6 +212,7 @@ impl Loader {
                     tx.clone(),
                     generation,
                     account_id,
+                    display_currency.clone(),
                     fresh_balances,
                 );
             }
@@ -194,12 +221,13 @@ impl Loader {
         });
     }
 
-    pub fn spawn_balance(&self, generation: u64, account_id: u64) {
+    pub fn spawn_balance(&self, generation: u64, account_id: u64, display_currency: String) {
         spawn_balance_fetch(
             self.client.clone(),
             self.tx.clone(),
             generation,
             account_id,
+            display_currency,
             true,
         );
     }
@@ -275,6 +303,117 @@ impl Loader {
             };
             let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
             spawn_settings_fetch(client, tx, generation, network_ids);
+        });
+    }
+
+    pub fn commit_layout(
+        &self,
+        generation: u64,
+        update: koi::models::account::layout::AccountLayoutUpdate,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            match client.update_account_layout(&update).await {
+                Ok(layout) => {
+                    let _ = tx.send(BackgroundUpdate::LayoutCommitted {
+                        generation,
+                        groups: layout.groups,
+                        accounts: layout.accounts,
+                    });
+                }
+                Err(error) => {
+                    let _ = tx.send(BackgroundUpdate::Notice {
+                        generation,
+                        notice: format!("Save layout failed: {error:#}"),
+                    });
+                    spawn_layout_fetch(client, tx, generation);
+                }
+            }
+        });
+    }
+
+    pub fn create_group(&self, generation: u64, name: String) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client.create_account_group(&name).await {
+                Ok(group) => format!("Created group {}", group.name),
+                Err(error) => format!("Create group failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_layout_fetch(client, tx, generation);
+        });
+    }
+
+    pub fn rename_group(&self, generation: u64, group_id: u64, name: String) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client.rename_account_group(group_id, &name).await {
+                Ok(group) => format!("Renamed group to {}", group.name),
+                Err(error) => format!("Rename group failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_layout_fetch(client, tx, generation);
+        });
+    }
+
+    pub fn delete_group(&self, generation: u64, group_id: u64) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client.delete_account_group(group_id).await {
+                Ok(()) => "Deleted group; its accounts are now ungrouped".to_string(),
+                Err(error) => format!("Delete group failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_layout_fetch(client, tx, generation);
+        });
+    }
+
+    pub fn spawn_asset_quotes(
+        &self,
+        generation: u64,
+        identities: Vec<String>,
+        display_currency: String,
+    ) {
+        for identity in identities {
+            let client = self.client.clone();
+            let tx = self.tx.clone();
+            let display_currency = display_currency.clone();
+            tokio::spawn(async move {
+                let state = match client.asset_quote(&identity, &display_currency).await {
+                    Ok(quote) => ResourceState::Ready(quote),
+                    Err(error) => ResourceState::Error(error.to_string()),
+                };
+                let _ = tx.send(BackgroundUpdate::AssetQuote {
+                    generation,
+                    identity,
+                    state,
+                });
+            });
+        }
+    }
+
+    pub fn fetch_network_presets(&self, generation: u64) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            match client.network_presets().await {
+                Ok(presets) => {
+                    let _ = tx.send(BackgroundUpdate::NetworkPresets {
+                        generation,
+                        presets,
+                    });
+                }
+                Err(error) => {
+                    let _ = tx.send(BackgroundUpdate::Notice {
+                        generation,
+                        notice: format!("Network presets: {error:#}"),
+                    });
+                }
+            }
         });
     }
 
@@ -426,10 +565,14 @@ fn spawn_balance_fetch(
     tx: mpsc::UnboundedSender<BackgroundUpdate>,
     generation: u64,
     account_id: u64,
+    display_currency: String,
     fresh: bool,
 ) {
     tokio::spawn(async move {
-        let state = match client.account_balances(account_id, fresh).await {
+        let state = match client
+            .account_balances(account_id, &display_currency, fresh)
+            .await
+        {
             Ok(balances) => ResourceState::Ready(balances),
             Err(error) => ResourceState::Error(error.to_string()),
         };
@@ -438,6 +581,31 @@ fn spawn_balance_fetch(
             account_id,
             state,
         });
+    });
+}
+
+fn spawn_layout_fetch(
+    client: ApiClient,
+    tx: mpsc::UnboundedSender<BackgroundUpdate>,
+    generation: u64,
+) {
+    tokio::spawn(async move {
+        match client.account_layout().await {
+            Ok(layout) => {
+                let _ = tx.send(BackgroundUpdate::LayoutLoaded {
+                    generation,
+                    groups: layout.groups,
+                    accounts: layout.accounts,
+                    notice: None,
+                });
+            }
+            Err(error) => {
+                let _ = tx.send(BackgroundUpdate::Notice {
+                    generation,
+                    notice: format!("Accounts: {error:#}"),
+                });
+            }
+        }
     });
 }
 

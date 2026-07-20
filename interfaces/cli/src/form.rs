@@ -182,6 +182,18 @@ pub enum ActiveForm {
         next_id: i32,
         form: TextForm,
     },
+    GroupName {
+        group_id: Option<u64>,
+        form: TextForm,
+    },
+    PickCurrency {
+        options: Vec<Asset>,
+        selected: usize,
+    },
+    ConfirmDeleteGroup {
+        group_id: u64,
+        name: String,
+    },
 }
 
 #[derive(Debug)]
@@ -193,6 +205,9 @@ pub enum FormAction {
     SubmitCreateAsset(Asset),
     SubmitCreateNetwork(Network),
     SubmitCreateEndpoint(NetworkEndpoint),
+    SubmitGroupName { group_id: Option<u64>, name: String },
+    ConfirmDeleteGroup(u64),
+    SubmitDisplayCurrency(String),
 }
 
 impl ActiveForm {
@@ -202,6 +217,23 @@ impl ActiveForm {
 
     pub fn open_add_network() -> Self {
         Self::AddNetworkMode { selected: 0 }
+    }
+
+    pub fn open_group_name(group_id: Option<u64>, current_name: &str) -> Self {
+        let title = if group_id.is_some() {
+            "Rename group"
+        } else {
+            "New group"
+        };
+        let mut form = TextForm::new(title, vec![("Name", true)]);
+        if let Some(field) = form.fields.get_mut(0) {
+            field.value = current_name.to_string();
+        }
+        Self::GroupName { group_id, form }
+    }
+
+    pub fn open_confirm_delete_group(group_id: u64, name: String) -> Self {
+        Self::ConfirmDeleteGroup { group_id, name }
     }
 
     pub fn open_add_endpoint(network_id: u64) -> Self {
@@ -235,6 +267,9 @@ impl ActiveForm {
             Self::AddNetwork(form) => &form.title,
             Self::AddNetworkPreset { .. } => "Add network · choose preset",
             Self::AddEndpoint { form, .. } => &form.title,
+            Self::GroupName { form, .. } => &form.title,
+            Self::PickCurrency { .. } => "Display currency",
+            Self::ConfirmDeleteGroup { .. } => "Delete group",
         }
     }
 
@@ -251,6 +286,9 @@ impl ActiveForm {
             Self::AddNetworkPreset { presets, .. } => (74, (presets.len() + 5).min(20) as u16),
             Self::AddNetwork(form) => (58, (form.fields.len() + 5) as u16),
             Self::AddEndpoint { form, .. } => (62, (form.fields.len() + 5) as u16),
+            Self::GroupName { form, .. } => (48, (form.fields.len() + 5) as u16),
+            Self::PickCurrency { options, .. } => (48, (options.len() + 5).min(20) as u16),
+            Self::ConfirmDeleteGroup { .. } => (56, 7),
         }
     }
 
@@ -353,6 +391,39 @@ impl ActiveForm {
             } => handle_text_form(code, form, |form| {
                 build_endpoint(*network_id, *next_id, form).map(FormAction::SubmitCreateEndpoint)
             }),
+            Self::GroupName { group_id, form } => {
+                let group_id = *group_id;
+                handle_text_form(code, form, |form| {
+                    let name = form.field(0)?.trim().to_string();
+                    if name.is_empty() {
+                        return None;
+                    }
+                    Some(FormAction::SubmitGroupName { group_id, name })
+                })
+            }
+            Self::ConfirmDeleteGroup { group_id, .. } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Enter => FormAction::ConfirmDeleteGroup(*group_id),
+                _ => FormAction::None,
+            },
+            Self::PickCurrency { options, selected } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    *selected = selected.saturating_sub(1);
+                    FormAction::None
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *selected = (*selected + 1).min(options.len().saturating_sub(1));
+                    FormAction::None
+                }
+                KeyCode::Enter => options
+                    .get(*selected)
+                    .map(|asset| {
+                        FormAction::SubmitDisplayCurrency(asset.asset_identity.to_string())
+                    })
+                    .unwrap_or(FormAction::None),
+                _ => FormAction::None,
+            },
         }
     }
 
@@ -748,15 +819,4 @@ fn optional_field(form: &TextForm, index: usize) -> Option<String> {
     } else {
         Some(value.to_string())
     }
-}
-
-pub fn available_presets(existing_network_ids: &[u64]) -> Vec<Network> {
-    let existing = existing_network_ids
-        .iter()
-        .copied()
-        .collect::<std::collections::HashSet<_>>();
-    Network::presets()
-        .into_iter()
-        .filter(|preset| !existing.contains(&preset.network_identity.0))
-        .collect()
 }

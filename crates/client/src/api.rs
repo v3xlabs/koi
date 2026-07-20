@@ -3,7 +3,12 @@ use std::{collections::HashMap, sync::Arc};
 use anyhow::{Context, Result};
 use futures_util::{Sink, SinkExt, Stream, StreamExt, lock::Mutex};
 use koi::models::{
-    account::{Account, balances::AccountBalances},
+    account::{
+        Account,
+        balances::AccountBalances,
+        group::AccountGroup,
+        layout::{AccountLayout, AccountLayoutUpdate},
+    },
     asset::{Asset, metadata::AssetMetadataDiscovery},
     network::{Network, endpoint::NetworkEndpoint, pool::RpcPoolStats},
     quoter::Quoter,
@@ -20,8 +25,6 @@ use tokio_tungstenite::{
         http::{Request, header::ORIGIN},
     },
 };
-
-const DISPLAY_CURRENCY: &str = "fiat:usd";
 
 #[derive(Clone)]
 pub struct ApiClient {
@@ -62,16 +65,54 @@ impl ApiClient {
         self.call("account.list", json!({})).await
     }
 
+    pub async fn account_layout(&self) -> Result<AccountLayout> {
+        self.call("account.layout.get", json!({})).await
+    }
+
+    pub async fn update_account_layout(
+        &self,
+        update: &AccountLayoutUpdate,
+    ) -> Result<AccountLayout> {
+        self.call("account.layout.update", json!({ "input": update }))
+            .await
+    }
+
+    pub async fn create_account_group(&self, name: &str) -> Result<AccountGroup> {
+        self.call("account.group.create", json!({ "input": { "name": name } }))
+            .await
+    }
+
+    pub async fn rename_account_group(
+        &self,
+        group_identity: u64,
+        name: &str,
+    ) -> Result<AccountGroup> {
+        self.call(
+            "account.group.update",
+            json!({ "group_identity": group_identity, "input": { "name": name } }),
+        )
+        .await
+    }
+
+    pub async fn delete_account_group(&self, group_identity: u64) -> Result<()> {
+        self.call(
+            "account.group.delete",
+            json!({ "group_identity": group_identity }),
+        )
+        .await
+    }
+
     pub async fn account_balances(
         &self,
         account_identity: u64,
+        display_currency: &str,
         fresh: bool,
     ) -> Result<AccountBalances> {
         self.call(
             "account.balance.list",
             json!({
                 "account_identity": account_identity,
-                "display_currency": DISPLAY_CURRENCY,
+                "display_currency": display_currency,
                 "fresh": fresh,
             }),
         )
@@ -161,6 +202,18 @@ impl ApiClient {
 
     pub async fn create_asset(&self, asset: &Asset) -> Result<Asset> {
         self.call("asset.create", json!({ "input": asset })).await
+    }
+
+    pub async fn asset_quote(&self, asset_identity: &str, display_asset: &str) -> Result<String> {
+        self.call(
+            "asset.quote",
+            json!({ "asset_identity": asset_identity, "display_asset": display_asset }),
+        )
+        .await
+    }
+
+    pub async fn network_presets(&self) -> Result<Vec<Network>> {
+        self.call("network.listPresets", json!({})).await
     }
 
     pub async fn asset_metadata_discovery(

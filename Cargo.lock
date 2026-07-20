@@ -4240,6 +4240,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "crossterm 0.28.1",
+ "dirs",
  "image",
  "koi-app",
  "koi-client",

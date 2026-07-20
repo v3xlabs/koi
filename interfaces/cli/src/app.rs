@@ -6,14 +6,14 @@ use std::{
 use crossterm::event::{KeyCode, MouseButton, MouseEvent, MouseEventKind};
 
 use koi::models::{
-    account::{Account, balances::AccountBalances, metadata::WalletType},
+    account::{Account, balances::AccountBalances, group::AccountGroup, metadata::WalletType},
     asset::Asset,
     network::{Network, pool::RpcPoolStats},
     tx::Tx,
 };
 
 use super::defi::DefiResult;
-use super::form::{ActiveForm, FormAction, available_presets};
+use super::form::{ActiveForm, FormAction};
 use super::icon::IconRenderer;
 use super::layout::{UiLayout, table_body_height};
 use super::settings::{SettingsSection, SettingsSnapshot, SettingsState};
@@ -60,14 +60,65 @@ pub enum AccountFocus {
     Content,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum GrabbedItem {
+    Account(u64),
+    Group(u64),
+}
+
+pub struct MoveMode {
+    pub groups: Vec<AccountGroup>,
+    pub accounts: Vec<Account>,
+    pub grabbed: Option<GrabbedItem>,
+    pub dirty: bool,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub enum AccountListRow {
+    GroupHeader {
+        group_id: Option<u64>,
+        name: String,
+        collapsed: bool,
+        count: usize,
+    },
+    Account {
+        account_id: u64,
+    },
+    EmptyGroup,
+}
+
+pub fn normalized_group_id(account: &Account) -> Option<u64> {
+    account.group_id.map(|group| group.0).filter(|id| *id > 0)
+}
+
+fn sorted_group_refs(groups: &[AccountGroup]) -> Vec<&AccountGroup> {
+    let mut sorted: Vec<&AccountGroup> = groups.iter().collect();
+    sorted.sort_by_key(|group| (group.display_order, group.group_identity.0));
+    sorted
+}
+
+fn bucket_refs<'a>(accounts: &'a [Account], group_id: Option<u64>) -> Vec<&'a Account> {
+    let mut bucket: Vec<&Account> = accounts
+        .iter()
+        .filter(|account| normalized_group_id(account) == group_id)
+        .collect();
+    bucket.sort_by_key(|account| (account.display_order, account.account_identity.0));
+    bucket
+}
+
 pub struct App {
     pub tab: Tab,
     pub account_panel: AccountPanel,
     pub account_focus: AccountFocus,
     pub accounts: Vec<Account>,
+    pub groups: Vec<AccountGroup>,
+    pub collapsed_groups: HashSet<Option<u64>>,
+    pub move_mode: Option<MoveMode>,
+    pub display_currency: String,
     pub networks: Vec<Network>,
     pub assets: HashMap<String, Asset>,
     pub rpc_states: HashMap<u64, ResourceState<RpcPoolStats>>,
+    pub asset_quotes: HashMap<String, ResourceState<String>>,
     pub balance_states: HashMap<u64, ResourceState<AccountBalances>>,
     balance_refreshing: HashSet<u64>,
     pub defi_states: HashMap<u64, ResourceState<DefiResult>>,
@@ -97,9 +148,14 @@ impl App {
             account_panel: AccountPanel::Overview,
             account_focus: AccountFocus::Sidebar,
             accounts: Vec::new(),
+            groups: Vec::new(),
+            collapsed_groups: HashSet::new(),
+            move_mode: None,
+            display_currency: "fiat:usd".to_string(),
             networks: Vec::new(),
             assets: HashMap::new(),
             rpc_states: HashMap::new(),
+            asset_quotes: HashMap::new(),
             balance_states: HashMap::new(),
             balance_refreshing: HashSet::new(),
             defi_states: HashMap::new(),
@@ -127,8 +183,403 @@ impl App {
         self.icon_renderer = Some(IconRenderer::new());
     }
 
+    pub fn layout_view(&self) -> (&[AccountGroup], &[Account]) {
+        match &self.move_mode {
+            Some(mode) => (&mode.groups, &mode.accounts),
+            None => (&self.groups, &self.accounts),
+        }
+    }
+
+    pub fn account_rows(&self) -> Vec<AccountListRow> {
+        let editing = self.move_mode.is_some();
+        let (groups, accounts) = self.layout_view();
+        let mut rows = Vec::new();
+
+        for group in sorted_group_refs(groups) {
+            let group_id = Some(group.group_identity.0);
+            let members = bucket_refs(accounts, group_id);
+            let collapsed = !editing && self.collapsed_groups.contains(&group_id);
+            rows.push(AccountListRow::GroupHeader {
+                group_id,
+                name: group.name.clone(),
+                collapsed,
+                count: members.len(),
+            });
+            if collapsed {
+                continue;
+            }
+            if members.is_empty() {
+                rows.push(AccountListRow::EmptyGroup);
+            }
+            rows.extend(members.into_iter().map(|account| AccountListRow::Account {
+                account_id: account.account_identity.0,
+            }));
+        }
+
+        let ungrouped = bucket_refs(accounts, None);
+        if groups.is_empty() {
+            rows.extend(
+                ungrouped
+                    .into_iter()
+                    .map(|account| AccountListRow::Account {
+                        account_id: account.account_identity.0,
+                    }),
+            );
+        } else if editing || !ungrouped.is_empty() {
+            let collapsed = !editing && self.collapsed_groups.contains(&None);
+            rows.push(AccountListRow::GroupHeader {
+                group_id: None,
+                name: "Ungrouped".to_string(),
+                collapsed,
+                count: ungrouped.len(),
+            });
+            if !collapsed {
+                if editing && ungrouped.is_empty() {
+                    rows.push(AccountListRow::EmptyGroup);
+                }
+                rows.extend(
+                    ungrouped
+                        .into_iter()
+                        .map(|account| AccountListRow::Account {
+                            account_id: account.account_identity.0,
+                        }),
+                );
+            }
+        }
+
+        rows
+    }
+
+    pub fn is_grabbed_row(&self, row: &AccountListRow) -> bool {
+        let Some(mode) = &self.move_mode else {
+            return false;
+        };
+        match (mode.grabbed, row) {
+            (Some(GrabbedItem::Account(id)), AccountListRow::Account { account_id }) => {
+                id == *account_id
+            }
+            (
+                Some(GrabbedItem::Group(id)),
+                AccountListRow::GroupHeader {
+                    group_id: Some(group_id),
+                    ..
+                },
+            ) => id == *group_id,
+            _ => false,
+        }
+    }
+
+    pub fn selected_list_row(&self) -> Option<AccountListRow> {
+        self.account_rows().get(self.list_index).cloned()
+    }
+
+    pub fn account_by_id(&self, account_id: u64) -> Option<&Account> {
+        self.accounts
+            .iter()
+            .find(|account| account.account_identity.0 == account_id)
+    }
+
+    pub fn toggle_group_collapsed(&mut self, group_id: Option<u64>) {
+        if !self.collapsed_groups.remove(&group_id) {
+            self.collapsed_groups.insert(group_id);
+        }
+        self.clamp_list_index();
+    }
+
+    fn enter_move_mode(&mut self) {
+        if self.move_mode.is_none() {
+            self.move_mode = Some(MoveMode {
+                groups: self.groups.clone(),
+                accounts: self.accounts.clone(),
+                grabbed: None,
+                dirty: false,
+            });
+            self.clamp_list_index();
+        }
+    }
+
+    fn cancel_move_mode(&mut self) {
+        self.move_mode = None;
+        self.clamp_list_index();
+    }
+
+    fn handle_move_mode_key(&mut self, code: KeyCode) -> KeyAction {
+        match code {
+            KeyCode::Char('q') => KeyAction::Quit,
+            KeyCode::Esc => {
+                let grabbed = self
+                    .move_mode
+                    .as_ref()
+                    .is_some_and(|mode| mode.grabbed.is_some());
+                if grabbed {
+                    if let Some(mode) = &mut self.move_mode {
+                        mode.grabbed = None;
+                    }
+                } else {
+                    self.cancel_move_mode();
+                }
+                KeyAction::None
+            }
+            KeyCode::Char('m') => {
+                self.cancel_move_mode();
+                KeyAction::None
+            }
+            KeyCode::Char('s') => {
+                let Some(mode) = &self.move_mode else {
+                    return KeyAction::None;
+                };
+                if mode.dirty {
+                    let update =
+                        super::layout_edit::build_layout_update(&mode.groups, &mode.accounts);
+                    self.notice = Some("Saving layout…".to_string());
+                    KeyAction::CommitLayout(update)
+                } else {
+                    self.cancel_move_mode();
+                    KeyAction::None
+                }
+            }
+            KeyCode::Up | KeyCode::Char('k') => {
+                self.move_or_select(-1);
+                KeyAction::None
+            }
+            KeyCode::Down | KeyCode::Char('j') => {
+                self.move_or_select(1);
+                KeyAction::None
+            }
+            KeyCode::PageUp => {
+                self.move_selection(-10);
+                KeyAction::None
+            }
+            KeyCode::PageDown => {
+                self.move_selection(10);
+                KeyAction::None
+            }
+            KeyCode::Char(' ') | KeyCode::Enter => {
+                self.toggle_grab();
+                KeyAction::None
+            }
+            KeyCode::Char('g') => self.open_group_create(),
+            KeyCode::Char('e') => self.open_group_rename_selected(),
+            KeyCode::Char('x') => self.open_group_delete_selected(),
+            _ => KeyAction::None,
+        }
+    }
+
+    fn move_or_select(&mut self, delta: i32) {
+        let grabbed = self.move_mode.as_ref().and_then(|mode| mode.grabbed);
+        match grabbed {
+            Some(GrabbedItem::Group(group_id)) => {
+                if let Some(mode) = &mut self.move_mode {
+                    if super::layout_edit::move_group(&mut mode.groups, group_id, delta) {
+                        mode.dirty = true;
+                    }
+                }
+                self.follow_grabbed();
+            }
+            Some(GrabbedItem::Account(account_id)) => {
+                self.move_grabbed_account(account_id, delta);
+                self.follow_grabbed();
+            }
+            None => self.move_selection(delta),
+        }
+        let height = table_body_height(self.layout.body);
+        self.reconcile_scroll(height);
+    }
+
+    fn move_grabbed_account(&mut self, account_id: u64, delta: i32) {
+        let Some(mode) = &mut self.move_mode else {
+            return;
+        };
+        if super::layout_edit::move_account_within(&mut mode.accounts, account_id, delta) {
+            mode.dirty = true;
+            return;
+        }
+
+        let current = mode
+            .accounts
+            .iter()
+            .find(|account| account.account_identity.0 == account_id)
+            .map(normalized_group_id);
+        let Some(current) = current else {
+            return;
+        };
+        let mut sequence: Vec<Option<u64>> = sorted_group_refs(&mode.groups)
+            .iter()
+            .map(|group| Some(group.group_identity.0))
+            .collect();
+        sequence.push(None);
+        let Some(position) = sequence.iter().position(|bucket| *bucket == current) else {
+            return;
+        };
+
+        let target = if delta > 0 {
+            let Some(bucket) = sequence.get(position + 1) else {
+                return;
+            };
+            *bucket
+        } else {
+            let Some(previous) = position.checked_sub(1) else {
+                return;
+            };
+            sequence[previous]
+        };
+        let index = if delta > 0 {
+            0
+        } else {
+            super::layout_edit::bucket_ids(&mode.accounts, target).len()
+        };
+        if super::layout_edit::move_account_to_group(&mut mode.accounts, account_id, target, index)
+        {
+            mode.dirty = true;
+        }
+    }
+
+    fn follow_grabbed(&mut self) {
+        let Some(grabbed) = self.move_mode.as_ref().and_then(|mode| mode.grabbed) else {
+            return;
+        };
+        let rows = self.account_rows();
+        let target = rows.iter().position(|row| match (grabbed, row) {
+            (GrabbedItem::Account(id), AccountListRow::Account { account_id }) => id == *account_id,
+            (
+                GrabbedItem::Group(id),
+                AccountListRow::GroupHeader {
+                    group_id: Some(group_id),
+                    ..
+                },
+            ) => id == *group_id,
+            _ => false,
+        });
+        if let Some(index) = target {
+            self.list_index = index;
+        }
+    }
+
+    fn toggle_grab(&mut self) {
+        let selected = self.selected_list_row();
+        let Some(mode) = &mut self.move_mode else {
+            return;
+        };
+        if mode.grabbed.is_some() {
+            mode.grabbed = None;
+            return;
+        }
+        mode.grabbed = match selected {
+            Some(AccountListRow::Account { account_id }) => Some(GrabbedItem::Account(account_id)),
+            Some(AccountListRow::GroupHeader {
+                group_id: Some(group_id),
+                ..
+            }) => Some(GrabbedItem::Group(group_id)),
+            _ => None,
+        };
+    }
+
+    fn sync_move_mode_draft(&mut self) {
+        let Some(mode) = self.move_mode.as_mut() else {
+            return;
+        };
+
+        let canonical_groups: HashSet<u64> = self
+            .groups
+            .iter()
+            .map(|group| group.group_identity.0)
+            .collect();
+        mode.groups
+            .retain(|group| canonical_groups.contains(&group.group_identity.0));
+        for group in &self.groups {
+            if let Some(draft) = mode
+                .groups
+                .iter_mut()
+                .find(|draft| draft.group_identity.0 == group.group_identity.0)
+            {
+                draft.name = group.name.clone();
+            } else {
+                let next_order = mode
+                    .groups
+                    .iter()
+                    .map(|draft| draft.display_order + 1)
+                    .max()
+                    .unwrap_or(0);
+                let mut added = group.clone();
+                added.display_order = next_order;
+                mode.groups.push(added);
+            }
+        }
+
+        let draft_groups: HashSet<u64> = mode
+            .groups
+            .iter()
+            .map(|group| group.group_identity.0)
+            .collect();
+        let canonical_accounts: HashSet<u64> = self
+            .accounts
+            .iter()
+            .map(|account| account.account_identity.0)
+            .collect();
+        mode.accounts
+            .retain(|account| canonical_accounts.contains(&account.account_identity.0));
+        for account in &mut mode.accounts {
+            if let Some(group_id) = normalized_group_id(account) {
+                if !draft_groups.contains(&group_id) {
+                    account.group_id = None;
+                }
+            }
+        }
+        for account in &self.accounts {
+            if !mode
+                .accounts
+                .iter()
+                .any(|draft| draft.account_identity.0 == account.account_identity.0)
+            {
+                mode.accounts.push(account.clone());
+            }
+        }
+
+        if let Some(grabbed) = mode.grabbed {
+            let still_present = match grabbed {
+                GrabbedItem::Account(id) => canonical_accounts.contains(&id),
+                GrabbedItem::Group(id) => draft_groups.contains(&id),
+            };
+            if !still_present {
+                mode.grabbed = None;
+            }
+        }
+    }
+
+    fn open_group_create(&mut self) -> KeyAction {
+        self.form = Some(ActiveForm::open_group_name(None, ""));
+        KeyAction::None
+    }
+
+    fn open_group_rename_selected(&mut self) -> KeyAction {
+        if let Some(AccountListRow::GroupHeader {
+            group_id: Some(group_id),
+            name,
+            ..
+        }) = self.selected_list_row()
+        {
+            self.form = Some(ActiveForm::open_group_name(Some(group_id), &name));
+        }
+        KeyAction::None
+    }
+
+    fn open_group_delete_selected(&mut self) -> KeyAction {
+        if let Some(AccountListRow::GroupHeader {
+            group_id: Some(group_id),
+            name,
+            ..
+        }) = self.selected_list_row()
+        {
+            self.form = Some(ActiveForm::open_confirm_delete_group(group_id, name));
+        }
+        KeyAction::None
+    }
+
     pub fn needs_refresh(&self) -> bool {
-        !self.refresh_in_flight && (self.dirty || self.last_refresh.elapsed() >= REFRESH_INTERVAL)
+        !self.refresh_in_flight
+            && self.form.is_none()
+            && self.move_mode.is_none()
+            && (self.dirty || self.last_refresh.elapsed() >= REFRESH_INTERVAL)
     }
 
     pub fn is_loading(&self) -> bool {
@@ -195,8 +646,9 @@ impl App {
                     self.status = "Disconnected".to_string();
                 }
             }
-            BackgroundUpdate::AccountsLoaded {
+            BackgroundUpdate::LayoutLoaded {
                 generation,
+                groups,
                 accounts,
                 notice,
             } => {
@@ -204,6 +656,7 @@ impl App {
                     return;
                 }
                 self.accounts = accounts;
+                self.groups = groups;
                 if notice.is_some() {
                     self.notice = notice;
                 }
@@ -231,6 +684,22 @@ impl App {
                 for account_id in account_ids {
                     self.prepare_balance_fetch(account_id);
                 }
+                self.sync_move_mode_draft();
+                self.update_status();
+            }
+            BackgroundUpdate::LayoutCommitted {
+                generation,
+                groups,
+                accounts,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                self.groups = groups;
+                self.accounts = accounts;
+                self.move_mode = None;
+                self.notice = Some("Layout saved".to_string());
+                self.clamp_list_index();
                 self.update_status();
             }
             BackgroundUpdate::NetworksLoaded {
@@ -370,6 +839,45 @@ impl App {
                     form.apply_asset_metadata(&identity, result);
                 }
             }
+            BackgroundUpdate::AssetQuote {
+                generation,
+                identity,
+                state,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                self.asset_quotes.insert(identity, state);
+            }
+            BackgroundUpdate::NetworkPresets {
+                generation,
+                presets,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                let existing: HashSet<u64> = self
+                    .networks
+                    .iter()
+                    .map(|network| network.network_identity.0)
+                    .collect();
+                let available: Vec<Network> = presets
+                    .into_iter()
+                    .filter(|preset| !existing.contains(&preset.network_identity.0))
+                    .collect();
+
+                if matches!(self.form, Some(ActiveForm::AddNetworkMode { .. })) {
+                    if available.is_empty() {
+                        self.settings.notice = Some("No network presets available".to_string());
+                        self.form = None;
+                    } else {
+                        self.form = Some(ActiveForm::AddNetworkPreset {
+                            presets: available,
+                            selected: 0,
+                        });
+                    }
+                }
+            }
         }
     }
 
@@ -416,6 +924,27 @@ impl App {
 
     pub fn handle_mouse(&mut self, event: MouseEvent) -> KeyAction {
         if self.form.is_some() {
+            return KeyAction::None;
+        }
+
+        if let Some(mode) = &self.move_mode {
+            let grabbed = mode.grabbed.is_some();
+            match event.kind {
+                MouseEventKind::Moved if !grabbed => {
+                    if let Some(index) = self.layout.list_row_at(event.column, event.row) {
+                        self.list_index = index;
+                    }
+                }
+                MouseEventKind::Down(MouseButton::Left) => {
+                    if let Some(index) = self.layout.list_row_at(event.column, event.row) {
+                        self.list_index = index;
+                        self.toggle_grab();
+                    }
+                }
+                MouseEventKind::ScrollUp if !grabbed => self.move_or_select(-3),
+                MouseEventKind::ScrollDown if !grabbed => self.move_or_select(3),
+                _ => {}
+            }
             return KeyAction::None;
         }
 
@@ -541,6 +1070,10 @@ impl App {
             return self.handle_form_key(code);
         }
 
+        if self.move_mode.is_some() {
+            return self.handle_move_mode_key(code);
+        }
+
         match code {
             KeyCode::Char('q') => KeyAction::Quit,
             KeyCode::Esc | KeyCode::Char('b') => {
@@ -561,12 +1094,12 @@ impl App {
             }
             KeyCode::Char('2') => {
                 self.switch_tab(Tab::Assets);
-                KeyAction::None
+                KeyAction::RefreshQuotes
             }
             KeyCode::Char('3') => {
                 self.switch_tab(Tab::Prices);
                 if matches!(self.settings_state, ResourceState::Ready(_)) {
-                    KeyAction::None
+                    KeyAction::RefreshQuotes
                 } else {
                     KeyAction::RefreshSettings
                 }
@@ -674,6 +1207,20 @@ impl App {
                 KeyAction::None
             }
             KeyCode::Enter => self.activate(),
+            KeyCode::Char('g') if self.tab == Tab::Accounts && self.selected_account.is_none() => {
+                self.open_group_create()
+            }
+            KeyCode::Char('e') if self.tab == Tab::Accounts && self.selected_account.is_none() => {
+                self.open_group_rename_selected()
+            }
+            KeyCode::Char('x') if self.tab == Tab::Accounts && self.selected_account.is_none() => {
+                self.open_group_delete_selected()
+            }
+            KeyCode::Char('m') if self.tab == Tab::Accounts && self.selected_account.is_none() => {
+                self.enter_move_mode();
+                KeyAction::None
+            }
+            KeyCode::Char('$') if self.selected_account.is_none() => self.open_currency_picker(),
             KeyCode::Char('x') if self.uses_resource_rows() && self.selected_account.is_none() => {
                 self.settings_action()
             }
@@ -783,23 +1330,8 @@ impl App {
                 KeyAction::None
             }
             FormAction::OpenNetworkPresets => {
-                let presets = available_presets(
-                    &self
-                        .networks
-                        .iter()
-                        .map(|network| network.network_identity.0)
-                        .collect::<Vec<_>>(),
-                );
-                if presets.is_empty() {
-                    self.settings.notice = Some("No network presets available".to_string());
-                    self.form = None;
-                } else {
-                    self.form = Some(ActiveForm::AddNetworkPreset {
-                        presets,
-                        selected: 0,
-                    });
-                }
-                KeyAction::None
+                self.form = Some(form);
+                KeyAction::FetchNetworkPresets
             }
             FormAction::FetchAssetMetadata(identity) => {
                 self.form = Some(form);
@@ -823,7 +1355,90 @@ impl App {
                 ));
                 KeyAction::CreateNetworkEndpoint(endpoint)
             }
+            FormAction::SubmitGroupName { group_id, name } => {
+                self.form = None;
+                match group_id {
+                    Some(group_id) => KeyAction::RenameGroup(group_id, name),
+                    None => KeyAction::CreateGroup(name),
+                }
+            }
+            FormAction::ConfirmDeleteGroup(group_id) => {
+                self.form = None;
+                KeyAction::DeleteGroup(group_id)
+            }
+            FormAction::SubmitDisplayCurrency(identity) => {
+                self.form = None;
+                if identity == self.display_currency {
+                    KeyAction::None
+                } else {
+                    KeyAction::SetDisplayCurrency(identity)
+                }
+            }
         }
+    }
+
+    pub fn open_currency_picker(&mut self) -> KeyAction {
+        let mut options: Vec<Asset> = self
+            .assets
+            .values()
+            .filter(|asset| asset.asset_identity.to_string().starts_with("fiat:"))
+            .cloned()
+            .collect();
+        options.sort_by_key(|asset| asset.asset_identity.to_string());
+
+        if options.is_empty() {
+            self.settings.notice =
+                Some("No fiat assets configured; add one on the Assets tab first".to_string());
+            return KeyAction::None;
+        }
+
+        let selected = options
+            .iter()
+            .position(|asset| asset.asset_identity.to_string() == self.display_currency)
+            .unwrap_or(0);
+        self.form = Some(ActiveForm::PickCurrency { options, selected });
+        KeyAction::None
+    }
+
+    pub fn display_asset(&self) -> Option<&Asset> {
+        self.assets.get(&self.display_currency)
+    }
+
+    pub fn quote_asset_identities(&self) -> Vec<String> {
+        let mut identities: Vec<String> = self
+            .assets
+            .keys()
+            .filter(|identity| **identity != self.display_currency)
+            .cloned()
+            .collect();
+        identities.sort();
+        identities
+    }
+
+    pub fn prepare_asset_quotes(&mut self, identities: &[String]) {
+        self.asset_quotes
+            .retain(|identity, _| identities.contains(identity));
+        for identity in identities {
+            self.asset_quotes
+                .insert(identity.clone(), ResourceState::Loading);
+        }
+    }
+
+    pub fn asset_24h_change(&self, identity: &str) -> Option<(String, String)> {
+        self.balance_states.values().find_map(|state| {
+            let ResourceState::Ready(balances) = state else {
+                return None;
+            };
+            balances.balances.iter().find_map(|balance| {
+                if balance.asset_identity.to_string() != identity {
+                    return None;
+                }
+                Some((
+                    balance.asset_quote.clone()?,
+                    balance.asset_24h_quote.clone()?,
+                ))
+            })
+        })
     }
 
     pub fn set_endpoint_next_id(&mut self, next_id: i32) {
@@ -867,7 +1482,7 @@ impl App {
 
     fn move_selection(&mut self, delta: i32) {
         let len = match self.tab {
-            Tab::Accounts if self.selected_account.is_none() => self.accounts.len(),
+            Tab::Accounts if self.selected_account.is_none() => self.account_rows().len(),
             Tab::Assets | Tab::Prices | Tab::Networks => self.settings_row_count(),
             Tab::Settings => self.settings_row_count(),
             Tab::Accounts => 0,
@@ -890,11 +1505,15 @@ impl App {
             return KeyAction::None;
         }
 
-        let Some(account) = self.accounts.get(self.list_index) else {
-            return KeyAction::None;
+        let account_id = match self.selected_list_row() {
+            Some(AccountListRow::GroupHeader { group_id, .. }) => {
+                self.toggle_group_collapsed(group_id);
+                return KeyAction::None;
+            }
+            Some(AccountListRow::Account { account_id }) => account_id,
+            Some(AccountListRow::EmptyGroup) | None => return KeyAction::None,
         };
 
-        let account_id = account.account_identity.0;
         self.selected_account = Some(account_id);
         self.account_panel = AccountPanel::Overview;
         self.account_focus = AccountFocus::Sidebar;
@@ -911,7 +1530,7 @@ impl App {
 
     fn clamp_list_index(&mut self) {
         let len = match self.tab {
-            Tab::Accounts if self.selected_account.is_none() => self.accounts.len(),
+            Tab::Accounts if self.selected_account.is_none() => self.account_rows().len(),
             Tab::Assets | Tab::Prices | Tab::Networks => self.settings_row_count(),
             Tab::Settings => self.settings_row_count(),
             Tab::Accounts => 0,
@@ -948,12 +1567,8 @@ impl App {
                 viewport_height,
             );
         } else if self.tab == Tab::Accounts {
-            ensure_visible(
-                &mut self.list_scroll,
-                self.list_index,
-                self.accounts.len(),
-                viewport_height,
-            );
+            let len = self.account_rows().len();
+            ensure_visible(&mut self.list_scroll, self.list_index, len, viewport_height);
         }
     }
 
@@ -1029,6 +1644,10 @@ impl App {
     }
 
     pub fn settings_row_count(&self) -> usize {
+        if self.tab == Tab::Prices {
+            return self.quote_asset_identities().len();
+        }
+
         let section = match self.tab {
             Tab::Assets => SettingsSection::Assets,
             Tab::Prices => SettingsSection::PriceFeeds,
@@ -1187,4 +1806,11 @@ pub enum KeyAction {
     CreateAsset(koi::models::asset::Asset),
     CreateNetwork(koi::models::network::Network),
     CreateNetworkEndpoint(koi::models::network::endpoint::NetworkEndpoint),
+    CreateGroup(String),
+    RenameGroup(u64, String),
+    DeleteGroup(u64),
+    CommitLayout(koi::models::account::layout::AccountLayoutUpdate),
+    SetDisplayCurrency(String),
+    RefreshQuotes,
+    FetchNetworkPresets,
 }
