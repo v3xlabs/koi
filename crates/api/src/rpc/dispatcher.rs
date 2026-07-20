@@ -476,6 +476,9 @@ fn application_error(error: KoiError) -> RpcErrorObject {
         KoiError::Unavailable(_) | KoiError::Rpc(_) => RpcErrorKind::Unavailable,
         _ => RpcErrorKind::Internal,
     };
+    if matches!(kind, RpcErrorKind::Internal) {
+        tracing::error!(%error, "internal error while handling a JSON-RPC request");
+    }
     RpcErrorObject {
         code: -32000,
         message: "Application error".to_string(),
@@ -487,7 +490,7 @@ fn application_error(error: KoiError) -> RpcErrorObject {
 }
 
 fn internal_error(error: impl std::fmt::Display) -> RpcErrorObject {
-    let _ = error;
+    tracing::error!(%error, "failed to encode a JSON-RPC value");
     RpcErrorObject {
         code: -32603,
         message: "Internal error".to_string(),

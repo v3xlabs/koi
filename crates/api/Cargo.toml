@@ -14,6 +14,7 @@ futures = "0.3"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = { version = "1.0.138", features = ["preserve_order"] }
 sqlx = { git = "https://github.com/launchbadge/sqlx.git", features = ["sqlite"] }
+tracing = "0.1.41"
 ts-rs = { version = "=12.0.1", features = ["serde-compat"] }
 
 [dev-dependencies]
