@@ -43,6 +43,11 @@ pub async fn system_ping(client: &InProcessClient) -> Result<String, String> {
         .map_err(|error| error.data.map_or(error.message, |data| data.message))
 }
 
+/// Low-level transport used by the generated Dart RPC client.
+pub async fn process_message(client: &InProcessClient, message: String) -> Option<String> {
+    client.dispatcher.process_message(&message).await
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,5 +71,22 @@ mod tests {
         };
 
         assert_eq!(error, "application data directory must be an absolute path");
+    }
+
+    #[tokio::test]
+    async fn json_rpc_transport_exposes_registered_methods() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let client = create_client(data_dir.path().display().to_string())
+            .await
+            .unwrap();
+
+        let response = process_message(
+            &client,
+            r#"{"jsonrpc":"2.0","id":1,"method":"network.listPresets","params":{}}"#.to_string(),
+        )
+        .await
+        .unwrap();
+
+        assert!(response.contains("network_name"));
     }
 }

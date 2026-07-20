@@ -12,5 +12,14 @@ Future<InProcessClient> createClient({required String dataDir}) =>
 Future<String> systemPing({required InProcessClient client}) =>
     RustLib.instance.api.crateApiSystemPing(client: client);
 
+/// Low-level transport used by the generated Dart RPC client.
+Future<String?> processMessage({
+  required InProcessClient client,
+  required String message,
+}) => RustLib.instance.api.crateApiProcessMessage(
+  client: client,
+  message: message,
+);
+
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<InProcessClient>>
 abstract class InProcessClient implements RustOpaqueInterface {}

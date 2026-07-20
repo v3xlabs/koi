@@ -70,6 +70,66 @@ fn push_wrapper(output: &mut String, record: &MethodRecord) {
     }
 }
 
+fn dart_type(value: &str) -> String {
+    let value = value.trim();
+    match value {
+        "string" => "String".to_string(),
+        "number" => "num".to_string(),
+        "boolean" => "bool".to_string(),
+        "null" => "void".to_string(),
+        _ if value.starts_with("Array<") && value.ends_with('>') => {
+            format!("List<{}>", dart_type(&value[6..value.len() - 1]))
+        }
+        _ => value.to_string(),
+    }
+}
+
+fn dart_decode(value: &str, expression: &str) -> String {
+    let value = value.trim();
+    match value {
+        "string" => format!("{expression} as String"),
+        "number" => format!("{expression} as num"),
+        "boolean" => format!("{expression} as bool"),
+        "null" => "null".to_string(),
+        _ if value.starts_with("Array<") && value.ends_with('>') => {
+            let inner = &value[6..value.len() - 1];
+            format!(
+                "decodeRpcList({expression}, (value) => {})",
+                dart_decode(inner, "value")
+            )
+        }
+        _ => format!("decode{value}({expression})"),
+    }
+}
+
+fn push_dart_wrapper(output: &mut String, record: &MethodRecord, config: &Config) {
+    let function = lower_camel(record.marker);
+    let params = (record.params_ts_name)(config);
+    let result = (record.output_ts_name)(config);
+    let result_type = dart_type(&result);
+    let decoder = if result == "null" {
+        "(_) {}".to_string()
+    } else {
+        format!("(value) => {}", dart_decode(&result, "value"))
+    };
+
+    if (record.takes_params)() {
+        writeln!(
+            output,
+            "  Future<{result_type}> {function}({params} params) => _call('{}', params.toJson(), {decoder});",
+            record.name
+        )
+        .unwrap();
+    } else {
+        writeln!(
+            output,
+            "  Future<{result_type}> {function}() => _call('{}', const <String, Object?>{{}}, {decoder});",
+            record.name
+        )
+        .unwrap();
+    }
+}
+
 fn main() {
     let config = Config::default().with_large_int("number");
     let mut records = RPC_METHODS.iter().collect::<Vec<_>>();
@@ -125,9 +185,23 @@ fn main() {
     }
     wrappers.push_str("};\n");
 
+    let mut dart_wrappers = "// Generated from the Rust RPC contract. Do not edit.\n// ignore_for_file: curly_braces_in_flow_control_structures\n\nimport 'dart:convert';\n\nimport 'bridge/api.dart';\nimport 'rpc_models.gen.dart';\n\nfinal class RpcException implements Exception {\n  const RpcException(this.code, this.message);\n  final int code;\n  final String message;\n  @override\n  String toString() => 'RPC error $code: $message';\n}\n\nfinal class RpcClient {\n  RpcClient(this._client);\n  final InProcessClient _client;\n  var _nextId = 0;\n\n  Future<T> _call<T>(String method, Map<String, Object?> params, T Function(Object?) decode) async {\n    final id = ++_nextId;\n    final response = await processMessage(client: _client, message: jsonEncode(<String, Object?>{'jsonrpc': '2.0', 'id': id, 'method': method, 'params': params}));\n    if (response == null) throw StateError('$method returned no response');\n    final envelope = jsonDecode(response) as Map<String, Object?>;\n    final error = envelope['error'];\n    if (error is Map<String, Object?>) throw RpcException(error['code'] as int, error['message'] as String);\n    return decode(envelope['result']);\n  }\n\n".to_string();
+    dart_wrappers = dart_wrappers
+        .replace("import 'bridge/api.dart';", "import 'bridge/api.dart' as bridge;")
+        .replace("final InProcessClient _client;", "final bridge.InProcessClient _client;")
+        .replace("await processMessage(", "await bridge.processMessage(");
+    for record in &records {
+        push_dart_wrapper(&mut dart_wrappers, record, &config);
+    }
+    dart_wrappers.push_str("}\n");
+
     let api_directory =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../interfaces/web/src/api");
     fs::write(api_directory.join("bindings.gen.ts"), bindings).unwrap();
     fs::write(api_directory.join("rpc-contract.gen.ts"), contract).unwrap();
     fs::write(api_directory.join("rpc.gen.ts"), wrappers).unwrap();
+
+    let mobile_directory =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../interfaces/mobile/lib/src/core");
+    fs::write(mobile_directory.join("rpc.gen.dart"), dart_wrappers).unwrap();
 }

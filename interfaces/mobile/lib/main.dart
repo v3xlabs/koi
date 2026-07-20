@@ -3,6 +3,8 @@ import 'package:path_provider/path_provider.dart';
 
 import 'src/core/bridge/api.dart';
 import 'src/core/bridge/frb_generated.dart';
+import 'src/core/rpc.gen.dart';
+import 'src/core/rpc_models.gen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,11 +40,11 @@ class PingPage extends StatefulWidget {
 }
 
 class _PingPageState extends State<PingPage> {
-  late final Future<String> _ping = _loadPing();
+  late final Future<List<Network>> _networks = _loadNetworks();
 
-  Future<String> _loadPing() async {
+  Future<List<Network>> _loadNetworks() async {
     final client = await createClient(dataDir: widget.dataDirectory);
-    return systemPing(client: client);
+    return RpcClient(client).networkListPresets();
   }
 
   @override
@@ -50,8 +52,8 @@ class _PingPageState extends State<PingPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('koi')),
       body: Center(
-        child: FutureBuilder<String>(
-          future: _ping,
+        child: FutureBuilder<List<Network>>(
+          future: _networks,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return const Text('Rust core unavailable');
@@ -59,9 +61,14 @@ class _PingPageState extends State<PingPage> {
             if (!snapshot.hasData) {
               return const CircularProgressIndicator();
             }
-            return Text(
-              snapshot.requireData,
-              style: Theme.of(context).textTheme.headlineSmall,
+            return ListView(
+              children: [
+                for (final network in snapshot.requireData)
+                  ListTile(
+                    title: Text(network.networkName),
+                    subtitle: Text('Chain ${network.networkIdentity}'),
+                  ),
+              ],
             );
           },
         ),

@@ -46,9 +46,14 @@ both: ui dev
 
 # --- mobile (run inside `nix develop .#mobile`) ---
 
+mobile-rpc-bindings:
+    cargo run -p koi-api --bin rpc-bindings
+    cd interfaces/mobile && dart run tool/generate_rpc_models.dart
+    cd interfaces/mobile && dart format lib/src/core/rpc.gen.dart lib/src/core/rpc_models.gen.dart
+
 # Regenerate flutter_rust_bridge bindings after changing crates/ffi/src/api
 # (config lives in the pubspec's flutter_rust_bridge section)
-bridge:
+bridge: mobile-rpc-bindings
     cd interfaces/mobile && flutter_rust_bridge_codegen generate
     cd interfaces/mobile && dart run tool/normalize_frb_bindings.dart
     cargo fmt -p koi-ffi
