@@ -64,16 +64,6 @@ import type { RpcMethodName, RpcParams, RpcResult } from "./rpc-contract.gen";
 export const rpcTransport = createRpcClient();
 const empty = {};
 
-export type RpcBatchItem<TMethod extends RpcMethodName> = {
-    method: TMethod;
-    params: RpcParams<TMethod>;
-    parse: (value: unknown) => RpcResult<TMethod>;
-};
-
-export const rpcBatch = async <TMethod extends RpcMethodName>(calls: readonly RpcBatchItem<TMethod>[]): Promise<RpcResult<TMethod>[]> => (
-    await rpcTransport.batch(calls)
-);
-
 export const rpc = {
     systemPing: (): Promise<RpcResult<"system.ping">> => rpcTransport.call("system.ping", empty, value => systemPingRpcResultSchema.parse(value)),
     accountList: (): Promise<RpcResult<"account.list">> => rpcTransport.call("account.list", empty, value => accountListRpcResultSchema.parse(value)),

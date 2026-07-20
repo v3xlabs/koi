@@ -222,7 +222,7 @@ fn main() {
     let mut wrappers = format!("{GENERATED_HEADER}import {{\n");
     push_schema_imports(&mut wrappers);
     wrappers.push_str(
-        "} from \"./bindings.zod.gen\";\nimport { createRpcClient } from \"./rpc-transport\";\nimport type { RpcMethodName, RpcParams, RpcResult } from \"./rpc-contract.gen\";\n\nexport const rpcTransport = createRpcClient();\nconst empty = {};\n\nexport type RpcBatchItem<TMethod extends RpcMethodName> = {\n    method: TMethod;\n    params: RpcParams<TMethod>;\n    parse: (value: unknown) => RpcResult<TMethod>;\n};\n\nexport const rpcBatch = async <TMethod extends RpcMethodName>(calls: readonly RpcBatchItem<TMethod>[]): Promise<RpcResult<TMethod>[]> => (\n    await rpcTransport.batch(calls)\n);\n\nexport const rpc = {\n",
+        "} from \"./bindings.zod.gen\";\nimport { createRpcClient } from \"./rpc-transport\";\nimport type { RpcMethodName, RpcParams, RpcResult } from \"./rpc-contract.gen\";\n\nexport const rpcTransport = createRpcClient();\nconst empty = {};\n\nexport const rpc = {\n",
     );
     push_wrappers(&mut wrappers);
     wrappers.push_str("};\n");
