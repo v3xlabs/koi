@@ -1,34 +1,32 @@
-//! Dispatches typed JSON-RPC requests to Koi's domain operations.
+//! JSON-RPC 2.0 message handling over the registered method records.
+//!
+//! Methods self-register into `koi::rpc::RPC_METHODS` at their definition
+//! sites; the dispatcher only indexes that slice. Duplicate method names
+//! panic when the map is first built.
 
-use alloy::primitives::U256;
-use futures::{StreamExt, future::join_all, stream};
+use std::{collections::HashMap, sync::LazyLock};
+
+use futures::future::join_all;
 use koi::{
     error::KoiError,
-    models::{
-        account::{
-            Account,
-            derive::{
-                default_derivation_path, derive_address_from_private_key,
-                derive_addresses_from_mnemonic, generate_mnemonic,
-            },
-            group::AccountGroup,
-            identity::AccountIdentity,
-            layout::AccountLayout,
-            metadata::WalletType,
-        },
-        asset::{Asset, identity::AssetIdentity},
-        network::{Network, endpoint::NetworkEndpoint},
-        quoter::Quoter,
-        tx::{Tx, TxBase, decode::decode_transaction, simulate::simulate_transaction},
-        vendor::flags::VendorFlag,
-    },
+    rpc::{MethodRecord, RPC_METHODS, RpcCallError},
     state::AppState,
-    vendor::safe_wallet::tx::fetch_safewallet_tx,
 };
-use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Map, Value, json};
 
 use super::*;
+
+static METHODS: LazyLock<HashMap<&'static str, &'static MethodRecord>> = LazyLock::new(|| {
+    let mut map = HashMap::with_capacity(RPC_METHODS.len());
+    for record in RPC_METHODS {
+        assert!(
+            map.insert(record.name, record).is_none(),
+            "duplicate RPC method name: {}",
+            record.name
+        );
+    }
+    map
+});
 
 #[derive(Clone)]
 pub struct Dispatcher {
@@ -59,7 +57,7 @@ impl Dispatcher {
             )),
             Value::Array(values) if values.len() > MAX_BATCH_ENTRIES => Some(error_response(
                 Value::Null,
-                invalid_request("batch exceeds 128 entries"),
+                invalid_request(&format!("batch exceeds {MAX_BATCH_ENTRIES} entries")),
             )),
             Value::Array(values) => {
                 let responses =
@@ -125,325 +123,25 @@ impl Dispatcher {
     }
 
     async fn dispatch_method(&self, method: &str, params: Value) -> Result<Value, RpcErrorObject> {
-        macro_rules! run {
-            ($params:ty, |_| $body:expr) => {{
-                let _: $params = parse_params(params)?;
-                let result: Result<_, KoiError> = $body.await;
-                serialize_domain_result(result)
-            }};
-            ($params:ty, |$binding:ident| $body:expr) => {{
-                let $binding: $params = parse_params(params)?;
-                let result: Result<_, KoiError> = $body.await;
-                serialize_domain_result(result)
-            }};
+        let Some(record) = METHODS.get(method) else {
+            return Err(method_not_found());
+        };
+        if !params.is_object() {
+            return Err(invalid_params());
         }
 
-        match method {
-            "system.ping" => run!(EmptyParams, |_| async { Ok("OK".to_string()) }),
-            "account.list" => run!(EmptyParams, |_| async {
-                Account::all(&self.state.database).await
-            }),
-            "account.get" => run!(AccountParams, |p| async {
-                Account::get_by_id(&self.state.database, p.account_identity).await
-            }),
-            "account.create" => run!(AccountCreateParams, |p| async {
-                Account::create(&self.state.database, p.input).await
-            }),
-            "account.nextIdentity" => run!(EmptyParams, |_| async {
-                Account::get_next_identity(&self.state.database).await
-            }),
-            "account.update" => run!(AccountUpdateParams, |p| async {
-                Account::update(&self.state.database, p.account_identity, p.input).await
-            }),
-            "account.delete" => run!(AccountParams, |p| async {
-                Account::delete(&self.state.database, p.account_identity).await
-            }),
-            "account.asset.list" => run!(AccountParams, |p| async {
-                Account::get_assets(&self.state.database, p.account_identity).await
-            }),
-            "account.asset.add" => run!(AccountAssetParams, |p| async {
-                Account::add_asset(&self.state.database, p.account_identity, p.asset_identity).await
-            }),
-            "account.asset.remove" => run!(AccountAssetParams, |p| async {
-                Account::remove_asset(&self.state.database, p.account_identity, p.asset_identity)
-                    .await
-            }),
-            "account.asset.balance" => run!(AccountAssetBalanceParams, |p| async {
-                let account = Account::get_by_id(&self.state.database, p.account_identity).await?;
-                account
-                    .fetch_asset_balance(&self.state, &p.asset_identity, &p.display_currency)
-                    .await
-            }),
-            "account.balance.list" => run!(AccountBalancesParams, |p| async {
-                let account = Account::get_by_id(&self.state.database, p.account_identity).await?;
-                self.state
-                    .balances
-                    .get_balances(
-                        &self.state,
-                        &account,
-                        &p.display_currency,
-                        p.fresh.unwrap_or(false),
-                    )
-                    .await
-            }),
-            "account.layout.get" => run!(EmptyParams, |_| async {
-                AccountLayout::get(&self.state.database).await
-            }),
-            "account.layout.update" => run!(LayoutUpdateParams, |p| async {
-                AccountLayout::update(&self.state.database, p.input).await
-            }),
-            "account.group.create" => run!(GroupCreateParams, |p| async {
-                AccountGroup::create(&self.state.database, p.input.name).await
-            }),
-            "account.group.update" => run!(GroupUpdateParams, |p| async {
-                AccountGroup::update(&self.state.database, p.group_identity, p.input).await
-            }),
-            "account.group.delete" => run!(GroupParams, |p| async {
-                AccountGroup::delete(&self.state.database, p.group_identity).await
-            }),
-            "account.transaction.list" => run!(AccountParams, |p| async {
-                account_transactions(&self.state, p.account_identity).await
-            }),
-            "account.transaction.pending" => run!(AccountParams, |p| async {
-                let account = Account::get_by_id(&self.state.database, p.account_identity).await?;
-                account
-                    .metadata
-                    .unwrap_address()
-                    .ok_or_else(|| KoiError::InvalidInput("account has no address".to_string()))?;
-                Ok(Vec::<Tx>::new())
-            }),
-            "account.mnemonic.generate" => run!(EmptyParams, |_| async { generate_mnemonic() }),
-            "account.derivation.defaultPath" => run!(EmptyParams, |_| async {
-                Ok(default_derivation_path().to_string())
-            }),
-            "account.derivation.fromMnemonic" => run!(DeriveMnemonicParams, |p| async {
-                derive_addresses_from_mnemonic(&p.input.mnemonic, &p.input.paths).map(|values| {
-                    values
-                        .into_iter()
-                        .map(|(path, address)| DeriveMnemonicResult {
-                            path,
-                            address: address.to_checksum(None),
-                        })
-                        .collect::<Vec<_>>()
-                })
-            }),
-            "account.derivation.fromPrivateKey" => run!(DerivePrivateKeyParams, |p| async {
-                derive_address_from_private_key(&p.input).map(|address| address.to_checksum(None))
-            }),
-            "asset.list" => run!(EmptyParams, |_| async {
-                Asset::all(&self.state.database).await
-            }),
-            "asset.get" => run!(AssetParams, |p| async {
-                Asset::get_by_id(&self.state.database, &p.asset_identity).await
-            }),
-            "asset.create" => run!(AssetCreateParams, |p| async {
-                Asset::create(&self.state.database, p.input).await
-            }),
-            "asset.update" => run!(AssetUpdateParams, |p| async {
-                Asset::update(&self.state.database, &p.asset_identity, p.input).await
-            }),
-            "asset.delete" => run!(AssetParams, |p| async {
-                Asset::delete(&self.state.database, &p.asset_identity).await
-            }),
-            "asset.discoverMetadata" => run!(AssetParams, |p| async {
-                Asset::fetch_metadata(&self.state, &p.asset_identity).await
-            }),
-            "asset.quote" => run!(AssetQuoteParams, |p| async {
-                let network = p
-                    .asset_identity
-                    .unwrap_network()
-                    .ok_or_else(|| KoiError::InvalidInput("asset has no network".to_string()))?;
-                let output = p
-                    .display_asset
-                    .unwrap_or_else(|| AssetIdentity::Fiat("usd".to_string()));
-                let asset = Asset::get_by_id(&self.state.database, &p.asset_identity).await?;
-                let amount = U256::from(10).pow(U256::from(asset.asset_decimals));
-                self.state
-                    .quoters
-                    .quote(&self.state, &network, &p.asset_identity, &output, amount)
-                    .await
-                    .map(|quote| quote.to_string())
-            }),
-            "network.list" => run!(EmptyParams, |_| async {
-                Network::all(&self.state.database).await
-            }),
-            "network.get" => run!(NetworkParams, |p| async {
-                Network::get_by_id(&self.state.database, &p.network_identity).await
-            }),
-            "network.create" => run!(NetworkCreateParams, |p| async {
-                Network::create(&self.state.database, p.input).await
-            }),
-            "network.update" => run!(NetworkUpdateParams, |p| async {
-                Network::update(&self.state.database, &p.network_identity, p.input).await
-            }),
-            "network.delete" => run!(NetworkParams, |p| async {
-                Network::delete(&self.state.database, &p.network_identity).await
-            }),
-            "network.listPresets" => run!(EmptyParams, |_| async { Ok(Network::presets()) }),
-            "network.discoverMetadata" => run!(NetworkParams, |p| async {
-                Network::fetch_metadata(&self.state, &p.network_identity).await
-            }),
-            "network.rpcStats" => run!(NetworkParams, |p| async {
-                Ok(self.state.networks.get_pool(&p.network_identity).snapshot())
-            }),
-            "network.endpoint.list" => run!(NetworkParams, |p| async {
-                NetworkEndpoint::get_by_network_id(&self.state.database, &p.network_identity).await
-            }),
-            "network.endpoint.get" => run!(EndpointParams, |p| async {
-                NetworkEndpoint::get_by_id(
-                    &self.state.database,
-                    &p.network_identity,
-                    &p.endpoint_identity,
-                )
-                .await
-            }),
-            "network.endpoint.create" => run!(EndpointCreateParams, |p| async {
-                if p.input.network_identity != p.network_identity {
-                    return Err(KoiError::InvalidInput(
-                        "endpoint network does not match parameters".to_string(),
-                    ));
-                }
-                NetworkEndpoint::create(&self.state.database, p.input).await
-            }),
-            "network.endpoint.update" => run!(EndpointUpdateParams, |p| async {
-                let endpoint = NetworkEndpoint::update(
-                    &self.state.database,
-                    &p.network_identity,
-                    &p.endpoint_identity,
-                    p.input,
-                )
-                .await?;
-                self.state
-                    .networks
-                    .get_pool(&p.network_identity)
-                    .get_rpc(&p.endpoint_identity, &self.state)
-                    .await
-                    .update(&endpoint)
-                    .await
-                    .map_err(KoiError::from)?;
-                Ok(endpoint)
-            }),
-            "network.endpoint.delete" => run!(EndpointParams, |p| async {
-                NetworkEndpoint::delete(
-                    &self.state.database,
-                    &p.network_identity,
-                    &p.endpoint_identity,
-                )
-                .await?;
-                self.state
-                    .networks
-                    .get_pool(&p.network_identity)
-                    .remove_endpoint(&p.endpoint_identity);
-                Ok(())
-            }),
-            "network.endpoint.nextIdentity" => run!(NetworkParams, |_| async {
-                NetworkEndpoint::get_next_id(&self.state.database).await
-            }),
-            "network.endpoint.status" => run!(EndpointParams, |p| async {
-                Ok(self
-                    .state
-                    .networks
-                    .get_pool(&p.network_identity)
-                    .get_rpc(&p.endpoint_identity, &self.state)
-                    .await
-                    .get_status()
-                    .await)
-            }),
-            "transaction.simulate" => run!(SimulateParams, |p| async {
-                Network::get_by_id(&self.state.database, &p.network_identity).await?;
-                simulate_transaction(&self.state, &p.network_identity, &p.input).await
-            }),
-            "transaction.decode" => run!(DecodeParams, |p| async {
-                Network::get_by_id(&self.state.database, &p.network_identity).await?;
-                decode_transaction(&self.state, &p.network_identity, &p.input).await
-            }),
-            "quoter.list" => run!(EmptyParams, |_| async {
-                Quoter::all(&self.state.database).await
-            }),
-            "quoter.get" => run!(QuoterParams, |p| async {
-                Quoter::get_by_id(&self.state.database, &p.quoter_identity).await
-            }),
-            "quoter.create" => run!(QuoterCreateParams, |p| async {
-                let quoter = Quoter::insert(&self.state.database, p.input).await?;
-                self.state.quoters.build_graph(&self.state.database).await?;
-                Ok(quoter)
-            }),
-            "quoter.update" => run!(QuoterUpdateParams, |p| async {
-                let quoter =
-                    Quoter::update(&self.state.database, &p.quoter_identity, p.input).await?;
-                self.state.quoters.build_graph(&self.state.database).await?;
-                Ok(quoter)
-            }),
-            "quoter.discover" => run!(QuoterDiscoverParams, |p| async {
-                p.input.discover(&self.state).await
-            }),
-            "vendor.listEnabled" => run!(EmptyParams, |_| async { Ok(self.state.vendors.all()) }),
-            "vendor.listAll" => run!(EmptyParams, |_| async { Ok(VendorFlag::all()) }),
-            "vendor.enable" => run!(VendorParams, |p| async {
-                self.state
-                    .vendors
-                    .set_flag(&p.flag, true, &self.state.database)
-                    .await
-            }),
-            "vendor.disable" => run!(VendorParams, |p| async {
-                self.state
-                    .vendors
-                    .set_flag(&p.flag, false, &self.state.database)
-                    .await
-            }),
-            _ => Err(RpcErrorObject {
-                code: -32601,
-                message: "Method not found".to_string(),
-                data: None,
-            }),
-        }
-    }
-}
-
-async fn account_transactions(
-    state: &AppState,
-    identity: AccountIdentity,
-) -> Result<Vec<Tx>, KoiError> {
-    let account = Account::get_by_id(&state.database, identity).await?;
-    let bases = match account.metadata {
-        WalletType::Safe(safe) => stream::iter(account.networks)
-            .map(|network| async move {
-                fetch_safewallet_tx(network, safe.evm_address.0)
-                    .await
-                    .map(|response| {
-                        response
-                            .results
-                            .into_iter()
-                            .filter_map(|tx| tx.try_into().ok())
-                            .collect::<Vec<TxBase>>()
-                    })
-                    .unwrap_or_default()
-            })
-            .buffered(8)
-            .collect::<Vec<_>>()
+        (record.dispatch)(&self.state, params)
             .await
-            .into_iter()
-            .flatten()
-            .collect::<Vec<_>>(),
-        _ => Vec::new(),
-    };
-
-    Ok(stream::iter(bases)
-        .map(|tx| async move { tx.decode(state).await.ok() })
-        .buffered(8)
-        .collect::<Vec<_>>()
-        .await
-        .into_iter()
-        .flatten()
-        .collect())
+            .map_err(call_error)
+    }
 }
 
-pub(crate) fn parse_params<T: DeserializeOwned>(params: Value) -> Result<T, RpcErrorObject> {
-    if !params.is_object() {
-        return Err(invalid_params());
+fn call_error(error: RpcCallError) -> RpcErrorObject {
+    match error {
+        RpcCallError::InvalidParams => invalid_params(),
+        RpcCallError::Domain(error) => application_error(error),
+        RpcCallError::Encode(error) => internal_error(error),
     }
-
-    serde_json::from_value(params).map_err(|_| invalid_params())
 }
 
 fn invalid_params() -> RpcErrorObject {
@@ -457,12 +155,12 @@ fn invalid_params() -> RpcErrorObject {
     }
 }
 
-fn serialize_domain_result<T: Serialize>(
-    result: Result<T, KoiError>,
-) -> Result<Value, RpcErrorObject> {
-    result
-        .map_err(application_error)
-        .and_then(|value| serde_json::to_value(value).map_err(internal_error))
+fn method_not_found() -> RpcErrorObject {
+    RpcErrorObject {
+        code: -32601,
+        message: "Method not found".to_string(),
+        data: None,
+    }
 }
 
 fn application_error(error: KoiError) -> RpcErrorObject {

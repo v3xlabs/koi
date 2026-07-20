@@ -9,6 +9,7 @@ pub mod identity;
 pub mod manager;
 pub mod metadata;
 pub mod pool;
+pub mod rpc;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, TS)]
 #[ts(optional_fields)]

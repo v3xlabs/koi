@@ -9,6 +9,7 @@ pub mod balances;
 pub mod erc20;
 pub mod identity;
 pub mod metadata;
+pub mod rpc;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, TS)]
 #[ts(optional_fields)]

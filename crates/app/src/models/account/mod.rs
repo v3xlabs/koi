@@ -19,6 +19,7 @@ pub mod group;
 pub mod identity;
 pub mod layout;
 pub mod metadata;
+pub mod rpc;
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(optional_fields)]

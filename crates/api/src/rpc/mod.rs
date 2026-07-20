@@ -1,9 +1,8 @@
-mod contract;
 mod dispatcher;
-mod params;
+mod protocol;
 #[cfg(test)]
 mod tests;
 
-pub use contract::*;
 pub use dispatcher::*;
-pub use params::*;
+pub use koi::rpc::{EmptyParams, RpcHandler, RpcMethod, SystemPing};
+pub use protocol::*;

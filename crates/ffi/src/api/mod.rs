@@ -8,7 +8,7 @@ use std::path::Path;
 use koi::{config::Configuration, state::State};
 use koi_api::{
     Dispatcher,
-    rpc::{EmptyParams, methods::SystemPing},
+    rpc::{EmptyParams, SystemPing},
 };
 
 pub struct InProcessClient {

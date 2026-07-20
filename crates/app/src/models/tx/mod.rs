@@ -12,6 +12,7 @@ use crate::{
 };
 
 pub mod decode;
+pub mod rpc;
 pub mod simulate;
 
 #[derive(Debug, Serialize, Deserialize, TS)]

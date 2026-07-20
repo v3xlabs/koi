@@ -1,98 +1,13 @@
-use std::{
-    any::{TypeId, type_name},
-    collections::{BTreeMap, HashSet},
-    fmt::Write,
-    fs,
-    path::PathBuf,
-};
+use std::{fmt::Write, fs, path::PathBuf};
 
+use koi::rpc::{MethodRecord, RPC_METHODS, bindings::DeclarationCollector};
 use koi_api::rpc::{
-    RpcErrorData, RpcErrorEnvelope, RpcErrorKind, RpcErrorObject, RpcIdentity, RpcMethod,
-    RpcRequestEnvelope, RpcResponseEnvelope, RpcSuccessEnvelope, methods::*,
+    RpcErrorData, RpcErrorEnvelope, RpcErrorKind, RpcErrorObject, RpcIdentity, RpcRequestEnvelope,
+    RpcResponseEnvelope, RpcSuccessEnvelope,
 };
-use ts_rs::{Config, TS, TypeVisitor};
+use ts_rs::Config;
 
 const GENERATED_HEADER: &str = "/* Generated from the Rust RPC contract. Do not edit. */\n\n";
-
-struct DeclarationCollector<'a> {
-    config: &'a Config,
-    seen: HashSet<TypeId>,
-    declarations: BTreeMap<String, String>,
-}
-
-impl<'a> DeclarationCollector<'a> {
-    fn new(config: &'a Config) -> Self {
-        Self {
-            config,
-            seen: HashSet::new(),
-            declarations: BTreeMap::new(),
-        }
-    }
-
-    fn collect<T: TS + 'static + ?Sized>(&mut self) {
-        self.visit::<T>();
-    }
-
-    fn render(self) -> String {
-        let mut output = GENERATED_HEADER.to_string();
-
-        for declaration in self.declarations.into_values() {
-            writeln!(output, "export {declaration}\n").unwrap();
-        }
-
-        output
-    }
-}
-
-impl TypeVisitor for DeclarationCollector<'_> {
-    fn visit<T: TS + 'static + ?Sized>(&mut self) {
-        if !self.seen.insert(TypeId::of::<T>()) {
-            return;
-        }
-
-        if T::output_path().is_some() {
-            let declaration = normalize_declaration(T::decl(self.config));
-            let previous = self
-                .declarations
-                .insert(T::ident(self.config), declaration.clone());
-
-            assert!(
-                previous.as_ref().is_none_or(|value| value == &declaration),
-                "conflicting TypeScript declarations for {}",
-                T::ident(self.config)
-            );
-        }
-
-        T::visit_dependencies(self);
-        T::visit_generics(self);
-    }
-}
-
-fn normalize_declaration(declaration: String) -> String {
-    let mut declaration = declaration.replace("Record<symbol, never>", "Record<string, never>");
-    let prefix = "{ [key in string]: ";
-
-    while let Some(start) = declaration.find(prefix) {
-        let value_start = start + prefix.len();
-        let end = declaration[value_start..]
-            .find(" }")
-            .map(|offset| value_start + offset)
-            .expect("ts-rs string map declaration should have a closing brace");
-        let value = declaration[value_start..end].to_string();
-
-        declaration.replace_range(start..end + 2, &format!("Record<string, {value}>"));
-    }
-
-    declaration
-        .lines()
-        .map(str::trim_end)
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-fn marker_name<M: RpcMethod>() -> &'static str {
-    type_name::<M>().rsplit("::").next().unwrap()
-}
 
 fn lower_camel(value: &str) -> String {
     let mut characters = value.chars();
@@ -103,101 +18,71 @@ fn lower_camel(value: &str) -> String {
     first.to_lowercase().chain(characters).collect()
 }
 
-fn push_aliases<M: RpcMethod>(output: &mut String, config: &Config) {
-    let marker = marker_name::<M>();
-
+fn push_aliases(output: &mut String, record: &MethodRecord, config: &Config) {
     writeln!(
         output,
-        "export type {marker}RpcParams = {};",
-        M::Params::name(config)
+        "export type {}RpcParams = {};",
+        record.marker,
+        (record.params_ts_name)(config)
     )
     .unwrap();
     writeln!(
         output,
-        "export type {marker}RpcResult = {};",
-        M::Output::name(config)
+        "export type {}RpcResult = {};",
+        record.marker,
+        (record.output_ts_name)(config)
     )
     .unwrap();
 }
 
-fn push_contract_method<M: RpcMethod>(output: &mut String) {
-    let marker = marker_name::<M>();
-
+fn push_contract_method(output: &mut String, record: &MethodRecord) {
     writeln!(
         output,
         "    \"{}\": {{ params: RpcBindings.{marker}RpcParams; result: RpcBindings.{marker}RpcResult }};",
-        M::NAME
+        record.name,
+        marker = record.marker
     )
     .unwrap();
 }
 
-fn push_schema_import<M: RpcMethod>(output: &mut String) {
-    writeln!(
-        output,
-        "    {}RpcResultSchema,",
-        lower_camel(marker_name::<M>())
-    )
-    .unwrap();
+fn push_schema_import(output: &mut String, record: &MethodRecord) {
+    writeln!(output, "    {}RpcResultSchema,", lower_camel(record.marker)).unwrap();
 }
 
-fn push_wrapper<M: RpcMethod>(output: &mut String) {
-    let marker = marker_name::<M>();
-    let function = lower_camel(marker);
+fn push_wrapper(output: &mut String, record: &MethodRecord) {
+    let function = lower_camel(record.marker);
     let schema = format!("{function}RpcResultSchema");
 
-    if TypeId::of::<M::Params>() == TypeId::of::<koi_api::rpc::EmptyParams>() {
+    if (record.takes_params)() {
         writeln!(
             output,
-            "    {function}: (): Promise<RpcResult<\"{}\">> => rpcTransport.call(\"{}\", empty, value => {schema}.parse(value)),",
-            M::NAME,
-            M::NAME
+            "    {function}: (params: RpcParams<\"{name}\">): Promise<RpcResult<\"{name}\">> => rpcTransport.call(\"{name}\", params, value => {schema}.parse(value)),",
+            name = record.name
         )
         .unwrap();
     } else {
         writeln!(
             output,
-            "    {function}: (params: RpcParams<\"{}\">): Promise<RpcResult<\"{}\">> => rpcTransport.call(\"{}\", params, value => {schema}.parse(value)),",
-            M::NAME,
-            M::NAME,
-            M::NAME
+            "    {function}: (): Promise<RpcResult<\"{name}\">> => rpcTransport.call(\"{name}\", empty, value => {schema}.parse(value)),",
+            name = record.name
         )
         .unwrap();
     }
 }
 
-macro_rules! for_each_method {
-    ($( $marker:ident, $params:ty, $output:ty, $name:literal; )*) => {
-        fn collect_method_declarations(collector: &mut DeclarationCollector<'_>) {
-            $(
-                collector.collect::<<$marker as RpcMethod>::Params>();
-                collector.collect::<<$marker as RpcMethod>::Output>();
-            )*
-        }
-
-        fn push_method_aliases(output: &mut String, config: &Config) {
-            $(push_aliases::<$marker>(output, config);)*
-        }
-
-        fn push_contract_methods(output: &mut String) {
-            $(push_contract_method::<$marker>(output);)*
-        }
-
-        fn push_schema_imports(output: &mut String) {
-            $(push_schema_import::<$marker>(output);)*
-        }
-
-        fn push_wrappers(output: &mut String) {
-            $(push_wrapper::<$marker>(output);)*
-        }
-    };
-}
-
-koi_api::rpc_method_registry!(for_each_method);
-
 fn main() {
     let config = Config::default().with_large_int("number");
-    let mut collector = DeclarationCollector::new(&config);
+    let mut records = RPC_METHODS.iter().collect::<Vec<_>>();
+    records.sort_by_key(|record| record.name);
+    for pair in records.windows(2) {
+        assert_ne!(
+            pair[0].name, pair[1].name,
+            "duplicate RPC method name: {}",
+            pair[0].name
+        );
+    }
 
+    let mut collector = DeclarationCollector::new(&config);
     collector.collect::<RpcErrorKind>();
     collector.collect::<RpcErrorData>();
     collector.collect::<RpcErrorObject>();
@@ -206,25 +91,38 @@ fn main() {
     collector.collect::<RpcSuccessEnvelope>();
     collector.collect::<RpcErrorEnvelope>();
     collector.collect::<RpcResponseEnvelope>();
-    collect_method_declarations(&mut collector);
+    for record in &records {
+        (record.collect_types)(&mut collector);
+    }
 
-    let mut bindings = collector.render();
-    push_method_aliases(&mut bindings, &config);
+    let mut bindings = GENERATED_HEADER.to_string();
+    for declaration in collector.into_declarations().into_values() {
+        writeln!(bindings, "export {declaration}\n").unwrap();
+    }
+    for record in &records {
+        push_aliases(&mut bindings, record, &config);
+    }
 
     let mut contract = format!(
         "{GENERATED_HEADER}import type * as RpcBindings from \"./bindings.gen\";\n\nexport type {{ RpcErrorEnvelope, RpcIdentity, RpcRequestEnvelope, RpcResponseEnvelope, RpcSuccessEnvelope }} from \"./bindings.gen\";\n\nexport type RpcMethodMap = {{\n"
     );
-    push_contract_methods(&mut contract);
+    for record in &records {
+        push_contract_method(&mut contract, record);
+    }
     contract.push_str(
         "};\n\nexport type RpcMethodName = keyof RpcMethodMap;\nexport type RpcParams<TMethod extends RpcMethodName> = RpcMethodMap[TMethod][\"params\"];\nexport type RpcResult<TMethod extends RpcMethodName> = RpcMethodMap[TMethod][\"result\"];\n",
     );
 
     let mut wrappers = format!("{GENERATED_HEADER}import {{\n");
-    push_schema_imports(&mut wrappers);
+    for record in &records {
+        push_schema_import(&mut wrappers, record);
+    }
     wrappers.push_str(
         "} from \"./bindings.zod.gen\";\nimport { createRpcClient } from \"./rpc-transport\";\nimport type { RpcMethodName, RpcParams, RpcResult } from \"./rpc-contract.gen\";\n\nexport const rpcTransport = createRpcClient();\nconst empty = {};\n\nexport const rpc = {\n",
     );
-    push_wrappers(&mut wrappers);
+    for record in &records {
+        push_wrapper(&mut wrappers, record);
+    }
     wrappers.push_str("};\n");
 
     let api_directory =

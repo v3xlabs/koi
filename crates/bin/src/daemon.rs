@@ -24,6 +24,10 @@ use tracing::info;
 pub const LISTEN_ADDRESS: &str = "localhost:7777";
 pub const DAEMON_ORIGIN: &str = "http://localhost:7777";
 
+// Host must be a loopback authority: a DNS-rebinding page satisfies the
+// Origin == Host equality with its own hostname, so equality alone is not enough.
+const ALLOWED_HOSTS: &[&str] = &["localhost:7777", "127.0.0.1:7777", "[::1]:7777"];
+
 #[derive(Clone)]
 struct DaemonState {
     dispatcher: Dispatcher,
@@ -170,7 +174,7 @@ fn valid_origin(request: &Request) -> bool {
         return false;
     };
 
-    origin == format!("http://{host}")
+    ALLOWED_HOSTS.contains(&host) && origin == format!("http://{host}")
 }
 
 #[cfg(test)]
@@ -212,5 +216,15 @@ mod tests {
         assert!(!valid_origin(&missing));
         assert!(!valid_origin(&disallowed));
         assert!(!valid_origin(&mismatched));
+    }
+
+    #[test]
+    fn websocket_rejects_dns_rebinding_hosts() {
+        let rebinding = Request::builder()
+            .header(header::ORIGIN, "http://evil.example:7777")
+            .header(header::HOST, "evil.example:7777")
+            .finish();
+
+        assert!(!valid_origin(&rebinding));
     }
 }

@@ -7,8 +7,12 @@ use koi::{
     db::connect,
     models::{
         abi::AbiManager,
-        account::balance_cache::BalanceCacheManager,
-        network::{identity::NetworkIdentity, manager::NetworkManager},
+        account::{balance_cache::BalanceCacheManager, rpc::AccountBalancesParams},
+        network::{
+            identity::NetworkIdentity,
+            manager::NetworkManager,
+            rpc::{EndpointNextIdentity, NetworkParams},
+        },
         quoter::man::QuoterManager,
         vendor::man::VendorManager,
     },
@@ -78,14 +82,14 @@ async fn typed_in_process_dispatch_uses_the_same_method_markers() {
 
     assert_eq!(
         dispatcher
-            .call::<methods::SystemPing>(EmptyParams::default())
+            .call::<SystemPing>(EmptyParams::default())
             .await
             .unwrap(),
         "OK"
     );
     assert_eq!(
         dispatcher
-            .call::<methods::EndpointNextIdentity>(NetworkParams {
+            .call::<EndpointNextIdentity>(NetworkParams {
                 network_identity: NetworkIdentity(1),
             })
             .await
@@ -248,7 +252,7 @@ async fn account_crud_returns_direct_domain_values_and_null_units() {
 
 #[test]
 fn optional_balance_fresh_flag_defaults_to_false() {
-    let params = parse_params::<AccountBalancesParams>(json!({
+    let params = serde_json::from_value::<AccountBalancesParams>(json!({
         "account_identity": 1,
         "display_currency": "fiat:usd"
     }))

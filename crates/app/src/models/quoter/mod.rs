@@ -26,6 +26,7 @@ use crate::{
 
 pub mod discover;
 pub mod man;
+pub mod rpc;
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]

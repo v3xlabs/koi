@@ -466,11 +466,29 @@ export const walletTypeSchema = z.union([z.object({
         "type": z.literal("railgun")
     }).and(railgunWalletSchema)]);
 
-export const systemPingRpcParamsSchema = emptyParamsSchema;
+export const accountAssetAddRpcParamsSchema = accountAssetParamsSchema;
 
-export const systemPingRpcResultSchema = z.string();
+export const accountAssetAddRpcResultSchema = z.null();
 
-export const accountListRpcParamsSchema = emptyParamsSchema;
+export const accountAssetBalanceParamsSchema = z.object({
+    account_identity: accountIdentitySchema,
+    asset_identity: assetIdentitySchema,
+    display_currency: assetIdentitySchema
+});
+
+export const accountAssetBalanceRpcResultSchema = accountBalanceSchema;
+
+export const accountAssetListRpcParamsSchema = accountParamsSchema;
+
+export const accountAssetListRpcResultSchema = z.array(assetIdentitySchema);
+
+export const accountAssetRemoveRpcParamsSchema = accountAssetParamsSchema;
+
+export const accountAssetRemoveRpcResultSchema = z.null();
+
+export const accountBalanceListRpcParamsSchema = accountBalancesParamsSchema;
+
+export const accountBalanceListRpcResultSchema = accountBalancesSchema;
 
 export const accountSchema = z.object({
     account_identity: accountIdentitySchema,
@@ -481,80 +499,9 @@ export const accountSchema = z.object({
     display_order: z.number()
 });
 
-export const accountGetRpcParamsSchema = accountParamsSchema;
-
-export const accountGetRpcResultSchema = accountSchema;
-
-export const accountCreateParamsSchema = z.object({
-    input: accountSchema
-});
-
-export const accountCreateRpcResultSchema = accountSchema;
-
-export const accountNextIdentityRpcParamsSchema = emptyParamsSchema;
-
-export const accountNextIdentityRpcResultSchema = accountIdentitySchema;
-
-export const accountUpdateRpcResultSchema = accountSchema;
-
 export const accountDeleteRpcParamsSchema = accountParamsSchema;
 
 export const accountDeleteRpcResultSchema = z.null();
-
-export const accountAssetListRpcParamsSchema = accountParamsSchema;
-
-export const accountAssetListRpcResultSchema = z.array(assetIdentitySchema);
-
-export const accountAssetAddRpcParamsSchema = accountAssetParamsSchema;
-
-export const accountAssetAddRpcResultSchema = z.null();
-
-export const accountAssetRemoveRpcParamsSchema = accountAssetParamsSchema;
-
-export const accountAssetRemoveRpcResultSchema = z.null();
-
-export const accountAssetBalanceParamsSchema = z.object({
-    account_identity: accountIdentitySchema,
-    asset_identity: assetIdentitySchema,
-    display_currency: assetIdentitySchema
-});
-
-export const accountAssetBalanceRpcResultSchema = accountBalanceSchema;
-
-export const accountBalanceListRpcParamsSchema = accountBalancesParamsSchema;
-
-export const accountBalanceListRpcResultSchema = accountBalancesSchema;
-
-export const accountLayoutGetRpcParamsSchema = emptyParamsSchema;
-
-export const accountLayoutSchema = z.object({
-    groups: z.array(accountGroupSchema),
-    accounts: z.array(accountSchema)
-});
-
-export const accountLayoutUpdateRpcParamsSchema = layoutUpdateParamsSchema;
-
-export const accountLayoutUpdateRpcResultSchema = accountLayoutSchema;
-
-export const accountGroupCreateRpcParamsSchema = groupCreateParamsSchema;
-
-export const accountGroupCreateRpcResultSchema = accountGroupSchema;
-
-export const accountGroupUpdateRpcParamsSchema = groupUpdateParamsSchema;
-
-export const accountGroupUpdateRpcResultSchema = accountGroupSchema;
-
-export const accountGroupDeleteRpcParamsSchema = groupParamsSchema;
-
-export const accountGroupDeleteRpcResultSchema = z.null();
-
-export const accountTransactionListRpcParamsSchema = accountParamsSchema;
-
-export const accountTransactionPendingRpcParamsSchema = accountParamsSchema;
-
-export const accountMnemonicGenerateRpcParamsSchema = emptyParamsSchema;
-
-export const accountMnemonicGenerateRpcResultSchema = z.string();
 
 export const accountDerivationDefaultPathRpcParamsSchema = emptyParamsSchema;
 
@@ -568,21 +515,54 @@ export const accountDerivationFromPrivateKeyRpcParamsSchema = derivePrivateKeyPa
 
 export const accountDerivationFromPrivateKeyRpcResultSchema = z.string();
 
-export const assetListRpcParamsSchema = emptyParamsSchema;
+export const accountGetRpcParamsSchema = accountParamsSchema;
 
-export const assetListRpcResultSchema = z.array(assetSchema);
+export const accountGetRpcResultSchema = accountSchema;
 
-export const assetGetRpcParamsSchema = assetParamsSchema;
+export const accountGroupCreateRpcParamsSchema = groupCreateParamsSchema;
 
-export const assetGetRpcResultSchema = assetSchema;
+export const accountGroupCreateRpcResultSchema = accountGroupSchema;
+
+export const accountGroupDeleteRpcParamsSchema = groupParamsSchema;
+
+export const accountGroupDeleteRpcResultSchema = z.null();
+
+export const accountGroupUpdateRpcParamsSchema = groupUpdateParamsSchema;
+
+export const accountGroupUpdateRpcResultSchema = accountGroupSchema;
+
+export const accountLayoutGetRpcParamsSchema = emptyParamsSchema;
+
+export const accountLayoutSchema = z.object({
+    groups: z.array(accountGroupSchema),
+    accounts: z.array(accountSchema)
+});
+
+export const accountLayoutUpdateRpcParamsSchema = layoutUpdateParamsSchema;
+
+export const accountLayoutUpdateRpcResultSchema = accountLayoutSchema;
+
+export const accountListRpcParamsSchema = emptyParamsSchema;
+
+export const accountListRpcResultSchema = z.array(accountSchema);
+
+export const accountMnemonicGenerateRpcParamsSchema = emptyParamsSchema;
+
+export const accountMnemonicGenerateRpcResultSchema = z.string();
+
+export const accountNextIdentityRpcParamsSchema = emptyParamsSchema;
+
+export const accountNextIdentityRpcResultSchema = accountIdentitySchema;
+
+export const accountTransactionListRpcParamsSchema = accountParamsSchema;
+
+export const accountTransactionPendingRpcParamsSchema = accountParamsSchema;
+
+export const accountUpdateRpcResultSchema = accountSchema;
 
 export const assetCreateRpcParamsSchema = assetCreateParamsSchema;
 
 export const assetCreateRpcResultSchema = assetSchema;
-
-export const assetUpdateRpcParamsSchema = assetUpdateParamsSchema;
-
-export const assetUpdateRpcResultSchema = assetSchema;
 
 export const assetDeleteRpcParamsSchema = assetParamsSchema;
 
@@ -595,33 +575,29 @@ export const assetMetadataDiscoverySchema = z.object({
     options: z.record(z.string(), assetMetadataOptionSchema)
 });
 
+export const assetGetRpcParamsSchema = assetParamsSchema;
+
+export const assetGetRpcResultSchema = assetSchema;
+
+export const assetListRpcParamsSchema = emptyParamsSchema;
+
+export const assetListRpcResultSchema = z.array(assetSchema);
+
 export const assetQuoteRpcParamsSchema = assetQuoteParamsSchema;
 
 export const assetQuoteRpcResultSchema = z.string();
 
-export const networkListRpcParamsSchema = emptyParamsSchema;
+export const assetUpdateRpcParamsSchema = assetUpdateParamsSchema;
 
-export const networkListRpcResultSchema = z.array(networkSchema);
-
-export const networkGetRpcParamsSchema = networkParamsSchema;
-
-export const networkGetRpcResultSchema = networkSchema;
+export const assetUpdateRpcResultSchema = assetSchema;
 
 export const networkCreateRpcParamsSchema = networkCreateParamsSchema;
 
 export const networkCreateRpcResultSchema = networkSchema;
 
-export const networkUpdateRpcParamsSchema = networkUpdateParamsSchema;
-
-export const networkUpdateRpcResultSchema = networkSchema;
-
 export const networkDeleteRpcParamsSchema = networkParamsSchema;
 
 export const networkDeleteRpcResultSchema = z.null();
-
-export const networkListPresetsRpcParamsSchema = emptyParamsSchema;
-
-export const networkListPresetsRpcResultSchema = z.array(networkSchema);
 
 export const networkDiscoverMetadataRpcParamsSchema = networkParamsSchema;
 
@@ -630,24 +606,30 @@ export const networkMetadataDiscoverySchema = z.object({
     options: z.record(z.string(), networkMetadataOptionSchema)
 });
 
-export const networkRpcStatsRpcParamsSchema = networkParamsSchema;
-
-export const networkRpcStatsRpcResultSchema = rpcPoolStatsSchema;
-
-export const endpointListRpcParamsSchema = networkParamsSchema;
-
-export const endpointListRpcResultSchema = z.array(networkEndpointSchema);
-
-export const endpointGetRpcParamsSchema = endpointParamsSchema;
-
-export const endpointGetRpcResultSchema = networkEndpointSchema;
-
 export const endpointCreateParamsSchema = z.object({
     network_identity: networkIdentitySchema,
     input: networkEndpointSchema
 });
 
 export const endpointCreateRpcResultSchema = networkEndpointSchema;
+
+export const endpointDeleteRpcParamsSchema = endpointParamsSchema;
+
+export const endpointDeleteRpcResultSchema = z.null();
+
+export const endpointGetRpcParamsSchema = endpointParamsSchema;
+
+export const endpointGetRpcResultSchema = networkEndpointSchema;
+
+export const endpointListRpcParamsSchema = networkParamsSchema;
+
+export const endpointListRpcResultSchema = z.array(networkEndpointSchema);
+
+export const endpointNextIdentityRpcParamsSchema = networkParamsSchema;
+
+export const endpointNextIdentityRpcResultSchema = z.number();
+
+export const endpointStatusRpcParamsSchema = endpointParamsSchema;
 
 export const endpointUpdateParamsSchema = z.object({
     network_identity: networkIdentitySchema,
@@ -657,27 +639,29 @@ export const endpointUpdateParamsSchema = z.object({
 
 export const endpointUpdateRpcResultSchema = networkEndpointSchema;
 
-export const endpointDeleteRpcParamsSchema = endpointParamsSchema;
+export const networkGetRpcParamsSchema = networkParamsSchema;
 
-export const endpointDeleteRpcResultSchema = z.null();
+export const networkGetRpcResultSchema = networkSchema;
 
-export const endpointNextIdentityRpcParamsSchema = networkParamsSchema;
+export const networkListRpcParamsSchema = emptyParamsSchema;
 
-export const endpointNextIdentityRpcResultSchema = z.number();
+export const networkListRpcResultSchema = z.array(networkSchema);
 
-export const endpointStatusRpcParamsSchema = endpointParamsSchema;
+export const networkListPresetsRpcParamsSchema = emptyParamsSchema;
 
-export const simulateParamsSchema = z.object({
-    network_identity: networkIdentitySchema,
-    input: simulateTransactionRequestSchema
+export const networkListPresetsRpcResultSchema = z.array(networkSchema);
+
+export const networkRpcStatsRpcParamsSchema = networkParamsSchema;
+
+export const networkRpcStatsRpcResultSchema = rpcPoolStatsSchema;
+
+export const networkUpdateRpcParamsSchema = networkUpdateParamsSchema;
+
+export const networkUpdateRpcResultSchema = networkSchema;
+
+export const quoterCreateParamsSchema = z.object({
+    input: quoterCreateSchema
 });
-
-export const decodeParamsSchema = z.object({
-    network_identity: networkIdentitySchema,
-    input: decodeTransactionRequestSchema
-});
-
-export const quoterListRpcParamsSchema = emptyParamsSchema;
 
 export const quoterSchema = z.object({
     quoter_identity: z.string(),
@@ -689,20 +673,6 @@ export const quoterSchema = z.object({
     watch: z.boolean()
 });
 
-export const quoterGetRpcParamsSchema = quoterParamsSchema;
-
-export const quoterGetRpcResultSchema = quoterSchema;
-
-export const quoterCreateParamsSchema = z.object({
-    input: quoterCreateSchema
-});
-
-export const quoterCreateRpcResultSchema = quoterSchema;
-
-export const quoterUpdateRpcParamsSchema = quoterUpdateParamsSchema;
-
-export const quoterUpdateRpcResultSchema = quoterSchema;
-
 export const quoterDiscoverParamsSchema = z.object({
     input: quoterDiscoverySchema
 });
@@ -713,21 +683,51 @@ export const quoterDiscoveryResponseSchema = z.object({
     uniswap_v3: z.array(uniswapV3PoolSchema).nullish().transform(value => value ?? undefined)
 });
 
-export const vendorListEnabledRpcParamsSchema = emptyParamsSchema;
+export const quoterGetRpcParamsSchema = quoterParamsSchema;
 
-export const vendorListEnabledRpcResultSchema = z.array(vendorFlagSchema);
+export const quoterGetRpcResultSchema = quoterSchema;
 
-export const vendorListAllRpcParamsSchema = emptyParamsSchema;
+export const quoterListRpcParamsSchema = emptyParamsSchema;
 
-export const vendorListAllRpcResultSchema = z.array(vendorFlagInfoSchema);
+export const quoterListRpcResultSchema = z.array(quoterSchema);
+
+export const quoterUpdateRpcParamsSchema = quoterUpdateParamsSchema;
+
+export const quoterUpdateRpcResultSchema = quoterSchema;
+
+export const systemPingRpcParamsSchema = emptyParamsSchema;
+
+export const systemPingRpcResultSchema = z.string();
+
+export const decodeParamsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    input: decodeTransactionRequestSchema
+});
+
+export const simulateParamsSchema = z.object({
+    network_identity: networkIdentitySchema,
+    input: simulateTransactionRequestSchema
+});
+
+export const vendorDisableRpcParamsSchema = vendorParamsSchema;
+
+export const vendorDisableRpcResultSchema = z.null();
 
 export const vendorEnableRpcParamsSchema = vendorParamsSchema;
 
 export const vendorEnableRpcResultSchema = z.null();
 
-export const vendorDisableRpcParamsSchema = vendorParamsSchema;
+export const vendorListAllRpcParamsSchema = emptyParamsSchema;
 
-export const vendorDisableRpcResultSchema = z.null();
+export const vendorListAllRpcResultSchema = z.array(vendorFlagInfoSchema);
+
+export const vendorListEnabledRpcParamsSchema = emptyParamsSchema;
+
+export const vendorListEnabledRpcResultSchema = z.array(vendorFlagSchema);
+
+export const accountCreateParamsSchema = z.object({
+    input: accountSchema
+});
 
 export const accountUpdateSchema = z.object({
     name: z.string().nullish().transform(value => value ?? undefined),
@@ -801,13 +801,11 @@ export const txSchema = z.object({
     extra: txExtraSchema
 });
 
-export const accountListRpcResultSchema = z.array(accountSchema);
+export const accountAssetBalanceRpcParamsSchema = accountAssetBalanceParamsSchema;
 
 export const accountCreateRpcParamsSchema = accountCreateParamsSchema;
 
-export const accountUpdateRpcParamsSchema = accountUpdateParamsSchema;
-
-export const accountAssetBalanceRpcParamsSchema = accountAssetBalanceParamsSchema;
+export const accountCreateRpcResultSchema = accountSchema;
 
 export const accountLayoutGetRpcResultSchema = accountLayoutSchema;
 
@@ -815,13 +813,13 @@ export const accountTransactionListRpcResultSchema = z.array(txSchema);
 
 export const accountTransactionPendingRpcResultSchema = z.array(txSchema);
 
+export const accountUpdateRpcParamsSchema = accountUpdateParamsSchema;
+
 export const assetDiscoverMetadataRpcResultSchema = assetMetadataDiscoverySchema;
 
 export const networkDiscoverMetadataRpcResultSchema = networkMetadataDiscoverySchema;
 
 export const endpointCreateRpcParamsSchema = endpointCreateParamsSchema;
-
-export const endpointUpdateRpcParamsSchema = endpointUpdateParamsSchema;
 
 export const rpcStatusSchema = z.union([z.object({
         "status": z.literal("Alive")
@@ -831,9 +829,15 @@ export const rpcStatusSchema = z.union([z.object({
         "status": z.literal("Disabled")
     }).and(rpcStatusDisabledSchema)]);
 
-export const transactionSimulateRpcParamsSchema = simulateParamsSchema;
+export const endpointUpdateRpcParamsSchema = endpointUpdateParamsSchema;
 
-export const transactionSimulateRpcResultSchema = simulateTransactionResponseSchema;
+export const quoterCreateRpcParamsSchema = quoterCreateParamsSchema;
+
+export const quoterCreateRpcResultSchema = quoterSchema;
+
+export const quoterDiscoverRpcParamsSchema = quoterDiscoverParamsSchema;
+
+export const quoterDiscoverRpcResultSchema = quoterDiscoveryResponseSchema;
 
 export const transactionDecodeRpcParamsSchema = decodeParamsSchema;
 
@@ -841,13 +845,9 @@ export const decodeTransactionResponseSchema = z.object({
     call: decodedCallSchema
 });
 
-export const quoterListRpcResultSchema = z.array(quoterSchema);
+export const transactionSimulateRpcParamsSchema = simulateParamsSchema;
 
-export const quoterCreateRpcParamsSchema = quoterCreateParamsSchema;
-
-export const quoterDiscoverRpcParamsSchema = quoterDiscoverParamsSchema;
-
-export const quoterDiscoverRpcResultSchema = quoterDiscoveryResponseSchema;
+export const transactionSimulateRpcResultSchema = simulateTransactionResponseSchema;
 
 export const rpcResponseEnvelopeSchema = z.union([rpcSuccessEnvelopeSchema, rpcErrorEnvelopeSchema]);
 
