@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use anyhow::{Context, Result};
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{Sink, SinkExt, Stream, StreamExt, lock::Mutex};
 use koi::models::{
     account::{Account, balances::AccountBalances},
     asset::{Asset, metadata::AssetMetadataDiscovery},
@@ -15,7 +15,7 @@ use serde_json::{Value, json};
 use tokio_tungstenite::{
     connect_async,
     tungstenite::{
-        Message,
+        Error as WebSocketError, Message,
         client::IntoClientRequest,
         http::{Request, header::ORIGIN},
     },
@@ -26,12 +26,30 @@ const DISPLAY_CURRENCY: &str = "fiat:usd";
 #[derive(Clone)]
 pub struct ApiClient {
     base: String,
+    socket: Arc<Mutex<Option<Box<dyn RpcSocket>>>>,
+}
+
+trait RpcSocket:
+    Sink<Message, Error = WebSocketError>
+    + Stream<Item = Result<Message, WebSocketError>>
+    + Send
+    + Unpin
+{
+}
+
+impl<T> RpcSocket for T where
+    T: Sink<Message, Error = WebSocketError>
+        + Stream<Item = Result<Message, WebSocketError>>
+        + Send
+        + Unpin
+{
 }
 
 impl ApiClient {
     pub fn new(base_url: String) -> Self {
         Self {
             base: base_url.trim_end_matches('/').to_string(),
+            socket: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -181,30 +199,53 @@ impl ApiClient {
     }
 
     async fn call<T: DeserializeOwned>(&self, method: &str, params: Value) -> Result<T> {
-        let request = self.websocket_request()?;
-        let (mut socket, _) = connect_async(request)
-            .await
-            .with_context(|| format!("could not connect to Koi RPC at {}", self.base))?;
+        let mut socket = self.socket.lock().await;
+        if socket.is_none() {
+            *socket = Some(self.connect().await?);
+        }
+        let Some(mut active_socket) = socket.take() else {
+            anyhow::bail!("Koi RPC connection was not initialized")
+        };
+
         let request = json!({
             "jsonrpc": "2.0",
             "id": 1,
             "method": method,
             "params": params,
         });
-        socket
+        if let Err(error) = active_socket
             .send(Message::Text(request.to_string().into()))
             .await
-            .with_context(|| format!("could not send Koi RPC request for {method}"))?;
+        {
+            return Err(error)
+                .with_context(|| format!("could not send Koi RPC request for {method}"));
+        }
 
-        while let Some(message) = socket.next().await {
-            match message.context("could not read Koi RPC response")? {
-                Message::Text(text) => return decode_response(&text, method),
-                Message::Close(frame) => anyhow::bail!("Koi RPC connection closed: {frame:?}"),
+        while let Some(message) = active_socket.next().await {
+            match message {
+                Ok(Message::Text(text)) => {
+                    *socket = Some(active_socket);
+                    return decode_response(&text, method);
+                }
+                Ok(Message::Close(frame)) => {
+                    anyhow::bail!("Koi RPC connection closed: {frame:?}");
+                }
+                Err(error) => {
+                    return Err(error).context("could not read Koi RPC response");
+                }
                 _ => {}
             }
         }
 
         anyhow::bail!("Koi RPC connection closed before responding to {method}")
+    }
+
+    async fn connect(&self) -> Result<Box<dyn RpcSocket>> {
+        let request = self.websocket_request()?;
+        let (socket, _) = connect_async(request)
+            .await
+            .with_context(|| format!("could not connect to Koi RPC at {}", self.base))?;
+        Ok(Box::new(socket))
     }
 
     fn websocket_request(&self) -> Result<Request<()>> {
