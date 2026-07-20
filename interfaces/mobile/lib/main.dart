@@ -10,13 +10,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final dataDirectory = await getApplicationSupportDirectory();
   await RustLib.init();
-  runApp(KoiApp(dataDirectory: dataDirectory.path));
+  final client = await createClient(dataDir: dataDirectory.path);
+  runApp(KoiApp(rpc: RpcClient(client)));
 }
 
 class KoiApp extends StatelessWidget {
-  const KoiApp({required this.dataDirectory, super.key});
+  const KoiApp({required this.rpc, super.key});
 
-  final String dataDirectory;
+  final RpcClient rpc;
 
   @override
   Widget build(BuildContext context) {
@@ -25,27 +26,22 @@ class KoiApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
       ),
-      home: PingPage(dataDirectory: dataDirectory),
+      home: PingPage(rpc: rpc),
     );
   }
 }
 
 class PingPage extends StatefulWidget {
-  const PingPage({required this.dataDirectory, super.key});
+  const PingPage({required this.rpc, super.key});
 
-  final String dataDirectory;
+  final RpcClient rpc;
 
   @override
   State<PingPage> createState() => _PingPageState();
 }
 
 class _PingPageState extends State<PingPage> {
-  late final Future<List<Network>> _networks = _loadNetworks();
-
-  Future<List<Network>> _loadNetworks() async {
-    final client = await createClient(dataDir: widget.dataDirectory);
-    return RpcClient(client).networkListPresets();
-  }
+  late final networks = widget.rpc.networkListPresets();
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +49,7 @@ class _PingPageState extends State<PingPage> {
       appBar: AppBar(title: const Text('koi')),
       body: Center(
         child: FutureBuilder<List<Network>>(
-          future: _networks,
+          future: networks,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return const Text('Rust core unavailable');
