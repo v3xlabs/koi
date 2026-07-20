@@ -2,7 +2,7 @@ use ratatui::layout::Rect;
 
 use crate::app::{AccountPanel, Tab};
 
-const TABLE_HEADER_ROWS: u16 = 2;
+const TABLE_HEADER_ROWS: u16 = 1;
 
 #[derive(Clone, Copy)]
 pub struct ListTableLayout {
@@ -43,12 +43,29 @@ impl Default for AccountSidebarLayout {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct UiLayout {
     pub body: Rect,
-    pub nav: Rect,
+    pub tabs: [(Rect, Tab); 5],
     pub list_table: Option<ListTableLayout>,
     pub account_sidebar: Option<AccountSidebarLayout>,
+}
+
+impl Default for UiLayout {
+    fn default() -> Self {
+        Self {
+            body: Rect::default(),
+            tabs: [
+                (Rect::default(), Tab::Accounts),
+                (Rect::default(), Tab::Assets),
+                (Rect::default(), Tab::Prices),
+                (Rect::default(), Tab::Networks),
+                (Rect::default(), Tab::Settings),
+            ],
+            list_table: None,
+            account_sidebar: None,
+        }
+    }
 }
 
 impl UiLayout {
@@ -57,19 +74,9 @@ impl UiLayout {
     }
 
     pub fn tab_at(&self, column: u16, row: u16) -> Option<Tab> {
-        if !contains(self.nav, column, row) {
-            return None;
-        }
-
-        let rel = column.saturating_sub(self.nav.x);
-        let slot = u16::from(rel.saturating_mul(5) / self.nav.width.max(1)).min(4);
-        Some(match slot {
-            0 => Tab::Accounts,
-            1 => Tab::Assets,
-            2 => Tab::Prices,
-            3 => Tab::Networks,
-            _ => Tab::Settings,
-        })
+        self.tabs
+            .iter()
+            .find_map(|(area, tab)| contains(*area, column, row).then_some(*tab))
     }
 
     pub fn list_row_at(&self, column: u16, row: u16) -> Option<usize> {

@@ -95,6 +95,22 @@ export const assetCreateParamsSchema = z.object({
     input: assetSchema
 });
 
+export const assetIconColorSchema = z.object({
+    red: z.number(),
+    green: z.number(),
+    blue: z.number()
+});
+
+export const assetIconColorsSchema = z.object({
+    primary: assetIconColorSchema,
+    secondary: assetIconColorSchema.nullish().transform(value => value ?? undefined)
+});
+
+export const assetIconDataSchema = z.object({
+    png_data: z.array(z.number()),
+    colors: assetIconColorsSchema
+});
+
 export const assetMetadataOptionSchema = z.object({
     name: z.string().nullish().transform(value => value ?? undefined),
     symbol: z.string().nullish().transform(value => value ?? undefined),
@@ -195,6 +211,14 @@ export const networkEndpointUpdateSchema = z.object({
     endpoint_type: z.string().nullish().transform(value => value ?? undefined),
     endpoint_url: z.string().nullish().transform(value => value ?? undefined),
     endpoint_disabled: z.boolean().nullish().transform(value => value ?? undefined)
+});
+
+export const ensResolveParamsSchema = z.object({
+    name: z.string()
+});
+
+export const ensReverseParamsSchema = z.object({
+    address: z.string()
 });
 
 export const erc4626QuoterConfigSchema = z.record(z.string(), z.never());
@@ -579,6 +603,10 @@ export const assetGetRpcParamsSchema = assetParamsSchema;
 
 export const assetGetRpcResultSchema = assetSchema;
 
+export const assetIconRpcParamsSchema = assetParamsSchema;
+
+export const assetIconRpcResultSchema = assetIconDataSchema.nullable();
+
 export const assetListRpcParamsSchema = emptyParamsSchema;
 
 export const assetListRpcResultSchema = z.array(assetSchema);
@@ -590,6 +618,14 @@ export const assetQuoteRpcResultSchema = z.string();
 export const assetUpdateRpcParamsSchema = assetUpdateParamsSchema;
 
 export const assetUpdateRpcResultSchema = assetSchema;
+
+export const ensResolveRpcParamsSchema = ensResolveParamsSchema;
+
+export const ensResolveRpcResultSchema = z.string().nullable();
+
+export const ensReverseRpcParamsSchema = ensReverseParamsSchema;
+
+export const ensReverseRpcResultSchema = z.string().nullable();
 
 export const networkCreateRpcParamsSchema = networkCreateParamsSchema;
 

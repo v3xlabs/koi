@@ -31,9 +31,12 @@ export type RpcMethodMap = {
     "asset.delete": { params: RpcBindings.AssetDeleteRpcParams; result: RpcBindings.AssetDeleteRpcResult };
     "asset.discoverMetadata": { params: RpcBindings.AssetDiscoverMetadataRpcParams; result: RpcBindings.AssetDiscoverMetadataRpcResult };
     "asset.get": { params: RpcBindings.AssetGetRpcParams; result: RpcBindings.AssetGetRpcResult };
+    "asset.icon": { params: RpcBindings.AssetIconRpcParams; result: RpcBindings.AssetIconRpcResult };
     "asset.list": { params: RpcBindings.AssetListRpcParams; result: RpcBindings.AssetListRpcResult };
     "asset.quote": { params: RpcBindings.AssetQuoteRpcParams; result: RpcBindings.AssetQuoteRpcResult };
     "asset.update": { params: RpcBindings.AssetUpdateRpcParams; result: RpcBindings.AssetUpdateRpcResult };
+    "ens.resolve": { params: RpcBindings.EnsResolveRpcParams; result: RpcBindings.EnsResolveRpcResult };
+    "ens.reverse": { params: RpcBindings.EnsReverseRpcParams; result: RpcBindings.EnsReverseRpcResult };
     "network.create": { params: RpcBindings.NetworkCreateRpcParams; result: RpcBindings.NetworkCreateRpcResult };
     "network.delete": { params: RpcBindings.NetworkDeleteRpcParams; result: RpcBindings.NetworkDeleteRpcResult };
     "network.discoverMetadata": { params: RpcBindings.NetworkDiscoverMetadataRpcParams; result: RpcBindings.NetworkDiscoverMetadataRpcResult };

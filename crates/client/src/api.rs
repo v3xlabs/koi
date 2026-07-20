@@ -61,6 +61,14 @@ impl ApiClient {
         Ok(())
     }
 
+    /// Calls any registered RPC method through its marker type, so new
+    /// methods need no hand-written wrapper here.
+    pub async fn call_typed<M: koi::rpc::RpcMethod>(&self, params: M::Params) -> Result<M::Output> {
+        let params = serde_json::to_value(params)
+            .with_context(|| format!("could not encode Koi RPC params for {}", M::NAME))?;
+        self.call(M::NAME, params).await
+    }
+
     pub async fn accounts(&self) -> Result<Vec<Account>> {
         self.call("account.list", json!({})).await
     }

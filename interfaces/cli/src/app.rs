@@ -7,13 +7,14 @@ use crossterm::event::{KeyCode, MouseButton, MouseEvent, MouseEventKind};
 
 use koi::models::{
     account::{Account, balances::AccountBalances, group::AccountGroup, metadata::WalletType},
-    asset::Asset,
+    asset::{Asset, AssetIconData},
     network::{Network, pool::RpcPoolStats},
     tx::Tx,
 };
 
+use super::config::Theme;
 use super::defi::DefiResult;
-use super::form::{ActiveForm, FormAction};
+use super::form::{ActiveForm, FormAction, NewAccountWallet};
 use super::icon::IconRenderer;
 use super::layout::{UiLayout, table_body_height};
 use super::settings::{SettingsSection, SettingsSnapshot, SettingsState};
@@ -87,8 +88,49 @@ pub enum AccountListRow {
     EmptyGroup,
 }
 
+#[derive(Clone)]
+pub enum CommandChoice {
+    Tab(Tab),
+    Account(u64),
+    Theme(Theme),
+    DisplayCurrency,
+}
+
+impl CommandChoice {
+    pub fn label(&self, app: &App) -> String {
+        match self {
+            Self::Tab(Tab::Accounts) => "Go to Accounts".to_string(),
+            Self::Tab(Tab::Assets) => "Go to Assets".to_string(),
+            Self::Tab(Tab::Prices) => "Go to Prices".to_string(),
+            Self::Tab(Tab::Networks) => "Go to Networks".to_string(),
+            Self::Tab(Tab::Settings) => "Go to Settings".to_string(),
+            Self::Account(id) => app
+                .account_by_id(*id)
+                .map(|account| format!("Open account: {}", account.name))
+                .unwrap_or_else(|| "Open account".to_string()),
+            Self::Theme(theme) => format!("Theme: {}", theme.label()),
+            Self::DisplayCurrency => "Change display currency".to_string(),
+        }
+    }
+}
+
+pub struct CommandPalette {
+    pub query: String,
+    pub selected: usize,
+}
+
 pub fn normalized_group_id(account: &Account) -> Option<u64> {
     account.group_id.map(|group| group.0).filter(|id| *id > 0)
+}
+
+fn derivation_paths(base: &str) -> Vec<String> {
+    let trimmed = base.trim();
+    match trimmed.rsplit_once('/') {
+        Some((prefix, last)) if last.parse::<u32>().is_ok() => {
+            (0..10).map(|index| format!("{prefix}/{index}")).collect()
+        }
+        _ => vec![trimmed.to_string()],
+    }
 }
 
 fn sorted_group_refs(groups: &[AccountGroup]) -> Vec<&AccountGroup> {
@@ -106,19 +148,43 @@ fn bucket_refs<'a>(accounts: &'a [Account], group_id: Option<u64>) -> Vec<&'a Ac
     bucket
 }
 
+fn account_matches(account: &Account, query: &str) -> bool {
+    if query.is_empty() {
+        return true;
+    }
+    let query = query.to_lowercase();
+    if account.name.to_lowercase().contains(&query) {
+        return true;
+    }
+    let address = match &account.metadata {
+        WalletType::Safe(wallet) => wallet.evm_address.to_string(),
+        WalletType::EOA(wallet) => wallet.evm_address.to_string(),
+        WalletType::View(wallet) => wallet.evm_address.to_string(),
+        WalletType::Railgun(wallet) => wallet.railgun_address.clone(),
+    };
+    address.to_lowercase().contains(&query)
+}
+
 pub struct App {
     pub tab: Tab,
     pub account_panel: AccountPanel,
     pub account_focus: AccountFocus,
+    pub account_scroll: usize,
     pub accounts: Vec<Account>,
     pub groups: Vec<AccountGroup>,
     pub collapsed_groups: HashSet<Option<u64>>,
     pub move_mode: Option<MoveMode>,
     pub display_currency: String,
+    pub theme: Theme,
+    pub colored_assets: bool,
+    pub command_palette: Option<CommandPalette>,
     pub networks: Vec<Network>,
     pub assets: HashMap<String, Asset>,
+    pub asset_icons: HashMap<String, AssetIconData>,
     pub rpc_states: HashMap<u64, ResourceState<RpcPoolStats>>,
     pub asset_quotes: HashMap<String, ResourceState<String>>,
+    balance_cache: HashMap<(String, u64), ResourceState<AccountBalances>>,
+    asset_quote_cache: HashMap<(String, String), ResourceState<String>>,
     pub balance_states: HashMap<u64, ResourceState<AccountBalances>>,
     balance_refreshing: HashSet<u64>,
     pub defi_states: HashMap<u64, ResourceState<DefiResult>>,
@@ -126,6 +192,11 @@ pub struct App {
     pub settings: SettingsState,
     pub settings_state: ResourceState<SettingsSnapshot>,
     pub form: Option<ActiveForm>,
+    pub show_help: bool,
+    pub account_filter: String,
+    pub filter_input: bool,
+    pub tx_index: usize,
+    pub tx_detail: bool,
     pub list_index: usize,
     pub list_scroll: usize,
     pub selected_account: Option<u64>,
@@ -146,16 +217,23 @@ impl App {
         Self {
             tab: Tab::Accounts,
             account_panel: AccountPanel::Overview,
+            account_scroll: 0,
             account_focus: AccountFocus::Sidebar,
             accounts: Vec::new(),
             groups: Vec::new(),
             collapsed_groups: HashSet::new(),
             move_mode: None,
             display_currency: "fiat:usd".to_string(),
+            theme: Theme::default(),
+            colored_assets: true,
+            command_palette: None,
             networks: Vec::new(),
             assets: HashMap::new(),
+            asset_icons: HashMap::new(),
             rpc_states: HashMap::new(),
             asset_quotes: HashMap::new(),
+            balance_cache: HashMap::new(),
+            asset_quote_cache: HashMap::new(),
             balance_states: HashMap::new(),
             balance_refreshing: HashSet::new(),
             defi_states: HashMap::new(),
@@ -163,6 +241,11 @@ impl App {
             settings: SettingsState::new(),
             settings_state: ResourceState::Idle,
             form: None,
+            show_help: false,
+            account_filter: String::new(),
+            filter_input: false,
+            tx_index: 0,
+            tx_detail: false,
             list_index: 0,
             list_scroll: 0,
             selected_account: None,
@@ -183,6 +266,19 @@ impl App {
         self.icon_renderer = Some(IconRenderer::new());
     }
 
+    pub fn set_account_panel(&mut self, panel: AccountPanel) {
+        if self.account_panel != panel {
+            self.account_scroll = 0;
+        }
+        self.account_panel = panel;
+    }
+
+    pub fn handle_resize(&mut self) {
+        if let Some(renderer) = &mut self.icon_renderer {
+            renderer.handle_resize();
+        }
+    }
+
     pub fn layout_view(&self) -> (&[AccountGroup], &[Account]) {
         match &self.move_mode {
             Some(mode) => (&mode.groups, &mode.accounts),
@@ -192,13 +288,20 @@ impl App {
 
     pub fn account_rows(&self) -> Vec<AccountListRow> {
         let editing = self.move_mode.is_some();
+        let filtering = !editing && !self.account_filter.is_empty();
         let (groups, accounts) = self.layout_view();
         let mut rows = Vec::new();
 
         for group in sorted_group_refs(groups) {
             let group_id = Some(group.group_identity.0);
-            let members = bucket_refs(accounts, group_id);
-            let collapsed = !editing && self.collapsed_groups.contains(&group_id);
+            let mut members = bucket_refs(accounts, group_id);
+            if filtering {
+                members.retain(|account| account_matches(account, &self.account_filter));
+                if members.is_empty() {
+                    continue;
+                }
+            }
+            let collapsed = !editing && !filtering && self.collapsed_groups.contains(&group_id);
             rows.push(AccountListRow::GroupHeader {
                 group_id,
                 name: group.name.clone(),
@@ -216,7 +319,28 @@ impl App {
             }));
         }
 
-        let ungrouped = bucket_refs(accounts, None);
+        let mut ungrouped = bucket_refs(accounts, None);
+        if filtering {
+            ungrouped.retain(|account| account_matches(account, &self.account_filter));
+            if !ungrouped.is_empty() {
+                if !rows.is_empty() {
+                    rows.push(AccountListRow::GroupHeader {
+                        group_id: None,
+                        name: "Ungrouped".to_string(),
+                        collapsed: false,
+                        count: ungrouped.len(),
+                    });
+                }
+                rows.extend(
+                    ungrouped
+                        .into_iter()
+                        .map(|account| AccountListRow::Account {
+                            account_id: account.account_identity.0,
+                        }),
+                );
+            }
+            return rows;
+        }
         if groups.is_empty() {
             rows.extend(
                 ungrouped
@@ -288,6 +412,8 @@ impl App {
 
     fn enter_move_mode(&mut self) {
         if self.move_mode.is_none() {
+            self.account_filter.clear();
+            self.filter_input = false;
             self.move_mode = Some(MoveMode {
                 groups: self.groups.clone(),
                 accounts: self.accounts.clone(),
@@ -552,26 +678,69 @@ impl App {
     }
 
     fn open_group_rename_selected(&mut self) -> KeyAction {
-        if let Some(AccountListRow::GroupHeader {
-            group_id: Some(group_id),
-            name,
-            ..
-        }) = self.selected_list_row()
-        {
-            self.form = Some(ActiveForm::open_group_name(Some(group_id), &name));
+        match self.selected_list_row() {
+            Some(AccountListRow::GroupHeader {
+                group_id: Some(group_id),
+                name,
+                ..
+            }) => {
+                self.form = Some(ActiveForm::open_group_name(Some(group_id), &name));
+            }
+            Some(AccountListRow::Account { account_id }) => {
+                if let Some(account) = self.account_by_id(account_id) {
+                    let name = account.name.clone();
+                    self.form = Some(ActiveForm::open_rename_account(account_id, &name));
+                }
+            }
+            _ => {}
         }
         KeyAction::None
     }
 
     fn open_group_delete_selected(&mut self) -> KeyAction {
-        if let Some(AccountListRow::GroupHeader {
-            group_id: Some(group_id),
-            name,
-            ..
-        }) = self.selected_list_row()
-        {
-            self.form = Some(ActiveForm::open_confirm_delete_group(group_id, name));
+        match self.selected_list_row() {
+            Some(AccountListRow::GroupHeader {
+                group_id: Some(group_id),
+                name,
+                ..
+            }) => {
+                self.form = Some(ActiveForm::open_confirm_delete_group(group_id, name));
+            }
+            Some(AccountListRow::Account { account_id }) => {
+                if let Some(account) = self.account_by_id(account_id) {
+                    let name = account.name.clone();
+                    self.form = Some(ActiveForm::open_confirm_delete_account(account_id, name));
+                }
+            }
+            _ => {}
         }
+        KeyAction::None
+    }
+
+    fn open_account_networks_selected(&mut self) -> KeyAction {
+        let Some(AccountListRow::Account { account_id }) = self.selected_list_row() else {
+            return KeyAction::None;
+        };
+        let Some(account) = self.account_by_id(account_id) else {
+            return KeyAction::None;
+        };
+        let member: HashSet<u64> = account.networks.iter().map(|network| network.0).collect();
+        let options: Vec<(u64, String, bool)> = self
+            .networks
+            .iter()
+            .map(|network| {
+                (
+                    network.network_identity.0,
+                    network.network_name.clone(),
+                    member.contains(&network.network_identity.0),
+                )
+            })
+            .collect();
+        if options.is_empty() {
+            self.notice = Some("No networks configured".to_string());
+            return KeyAction::None;
+        }
+        self.form = Some(ActiveForm::open_account_networks(account_id, options));
         KeyAction::None
     }
 
@@ -618,6 +787,24 @@ impl App {
     }
 
     pub fn current_generation(&self) -> u64 {
+        self.refresh_generation
+    }
+
+    // Lighter than begin_refresh: keeps the generation and core state so in-flight
+    // updates still apply; only balances re-fetch, with cached values left on screen.
+    pub fn begin_balance_refresh(&mut self) -> u64 {
+        let account_ids: Vec<u64> = self
+            .accounts
+            .iter()
+            .map(|account| account.account_identity.0)
+            .collect();
+        // with no accounts nothing will arrive to clear the in-flight flag
+        if !account_ids.is_empty() {
+            self.refresh_in_flight = true;
+        }
+        for account_id in account_ids {
+            self.prepare_balance_fetch(account_id);
+        }
         self.refresh_generation
     }
 
@@ -741,6 +928,8 @@ impl App {
                     return;
                 }
                 self.assets = assets;
+                self.asset_icons
+                    .retain(|identity, _| self.assets.contains_key(identity));
                 if notice.is_some() {
                     self.notice = notice;
                 }
@@ -762,13 +951,23 @@ impl App {
             BackgroundUpdate::Balance {
                 generation,
                 account_id,
+                display_currency,
                 state,
+                refreshing,
             } => {
                 if generation != self.refresh_generation {
                     return;
                 }
-                self.balance_states.insert(account_id, state);
-                self.balance_refreshing.remove(&account_id);
+                self.balance_cache
+                    .insert((display_currency.clone(), account_id), state.clone());
+                if display_currency == self.display_currency {
+                    self.balance_states.insert(account_id, state);
+                }
+                if refreshing {
+                    self.balance_refreshing.insert(account_id);
+                } else {
+                    self.balance_refreshing.remove(&account_id);
+                }
                 self.update_status();
 
                 let pending = self
@@ -820,7 +1019,6 @@ impl App {
             BackgroundUpdate::EndpointNextId {
                 generation,
                 next_id,
-                ..
             } => {
                 if generation != self.refresh_generation {
                     return;
@@ -842,12 +1040,29 @@ impl App {
             BackgroundUpdate::AssetQuote {
                 generation,
                 identity,
+                display_currency,
                 state,
             } => {
                 if generation != self.refresh_generation {
                     return;
                 }
-                self.asset_quotes.insert(identity, state);
+                self.asset_quote_cache
+                    .insert((display_currency.clone(), identity.clone()), state.clone());
+                if display_currency == self.display_currency {
+                    self.asset_quotes.insert(identity, state);
+                }
+            }
+            BackgroundUpdate::AssetIcon {
+                generation,
+                identity,
+                icon,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                if let Some(icon) = icon {
+                    self.asset_icons.insert(identity, icon);
+                }
             }
             BackgroundUpdate::NetworkPresets {
                 generation,
@@ -878,7 +1093,248 @@ impl App {
                     }
                 }
             }
+            BackgroundUpdate::DerivationPath { generation, path } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                if let Some(ActiveForm::AddAccountMnemonic {
+                    form,
+                    deriving: false,
+                }) = &mut self.form
+                {
+                    if let Some(field) = form.fields.get_mut(2) {
+                        if field.value.is_empty() {
+                            field.value = path;
+                        }
+                    }
+                }
+            }
+            BackgroundUpdate::EnsResolved {
+                generation,
+                name,
+                address,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                if let Some(ActiveForm::AddAccountAddress {
+                    ens_hint,
+                    ens_pending,
+                    ..
+                }) = &mut self.form
+                {
+                    if ens_pending.as_deref() == Some(name.as_str()) {
+                        *ens_hint = address;
+                    }
+                }
+            }
+            BackgroundUpdate::EnsReversed {
+                generation,
+                address,
+                name,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                if let Some(ActiveForm::AddAccountAddress {
+                    ens_primary,
+                    ens_primary_pending,
+                    ..
+                }) = &mut self.form
+                {
+                    if ens_primary_pending.as_deref() == Some(address.to_lowercase().as_str()) {
+                        *ens_primary = name;
+                    }
+                }
+            }
+            BackgroundUpdate::GeneratedMnemonic {
+                generation,
+                mnemonic,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                if let Some(ActiveForm::AddAccountMnemonic {
+                    form,
+                    deriving: false,
+                }) = &mut self.form
+                {
+                    if let Some(field) = form.fields.get_mut(1) {
+                        if field.value.is_empty() {
+                            field.value = mnemonic;
+                        }
+                    }
+                }
+            }
+            BackgroundUpdate::DerivedAddresses {
+                generation,
+                name,
+                result,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                let Some(ActiveForm::AddAccountMnemonic { deriving, .. }) = &mut self.form else {
+                    return;
+                };
+                match result {
+                    Ok(options) if !options.is_empty() => {
+                        self.form = Some(ActiveForm::AddAccountPickAddress {
+                            name,
+                            options,
+                            selected: 0,
+                        });
+                    }
+                    Ok(_) => {
+                        *deriving = false;
+                        self.notice = Some("No addresses derived".to_string());
+                    }
+                    Err(error) => {
+                        *deriving = false;
+                        self.notice = Some(format!("Derivation failed: {error}"));
+                    }
+                }
+            }
+            BackgroundUpdate::AccountAssets {
+                generation,
+                account_id,
+                unlink,
+                identities,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                self.open_asset_picker(account_id, unlink, &identities);
+            }
+            BackgroundUpdate::QuoterDiscovered {
+                generation,
+                token_a,
+                token_b,
+                result,
+            } => {
+                if generation != self.refresh_generation {
+                    return;
+                }
+                if !matches!(self.form, Some(ActiveForm::QuoterDiscovering)) {
+                    return;
+                }
+                let response = match result {
+                    Ok(response) => response,
+                    Err(error) => {
+                        self.settings.notice = Some(format!("Quoter discovery failed: {error}"));
+                        self.form = None;
+                        return;
+                    }
+                };
+
+                use koi::models::quoter::{
+                    Erc4626QuoterConfig, QuoterConfig, UniswapV2QuoterConfig, UniswapV3QuoterConfig,
+                };
+                let mut options = Vec::new();
+                if let (Some(pair), Some(token_b)) = (&response.uniswap_v2, &token_b) {
+                    options.push(super::form::QuoterSourceOption {
+                        label: format!("Uniswap V2 pair {}", pair.pair_address),
+                        token_b: token_b.clone(),
+                        config: QuoterConfig::UniswapV2(UniswapV2QuoterConfig {
+                            pair_address: pair.pair_address.clone(),
+                        }),
+                    });
+                }
+                if let (Some(pools), Some(token_b)) = (&response.uniswap_v3, &token_b) {
+                    for pool in pools {
+                        options.push(super::form::QuoterSourceOption {
+                            label: format!(
+                                "Uniswap V3 {:.2}% pool {}",
+                                pool.fee as f64 / 10_000.0,
+                                pool.pool_address
+                            ),
+                            token_b: token_b.clone(),
+                            config: QuoterConfig::UniswapV3(UniswapV3QuoterConfig {
+                                pool_address: pool.pool_address.clone(),
+                            }),
+                        });
+                    }
+                }
+                if let Some(underlying) = &response.erc4626 {
+                    options.push(super::form::QuoterSourceOption {
+                        label: format!("ERC-4626 vault → {underlying}"),
+                        token_b: underlying.to_string(),
+                        config: QuoterConfig::Erc4626(Erc4626QuoterConfig {}),
+                    });
+                }
+
+                if options.is_empty() {
+                    self.settings.notice =
+                        Some("No quoter routes discovered for that pair".to_string());
+                    self.form = None;
+                } else {
+                    self.form = Some(ActiveForm::PickQuoterSource {
+                        token_a,
+                        options,
+                        selected: 0,
+                    });
+                }
+            }
         }
+    }
+
+    fn open_asset_picker(&mut self, account_id: u64, unlink: bool, linked: &[String]) {
+        let label = |identity: &str| {
+            self.assets
+                .get(identity)
+                .map(|asset| format!("{} · {}", asset.asset_symbol, asset.asset_name))
+                .unwrap_or_else(|| identity.to_string())
+        };
+
+        let options: Vec<(String, String)> = if unlink {
+            linked
+                .iter()
+                .map(|identity| (identity.clone(), label(identity)))
+                .collect()
+        } else {
+            let member_networks: HashSet<u64> = self
+                .account_by_id(account_id)
+                .map(|account| account.networks.iter().map(|network| network.0).collect())
+                .unwrap_or_default();
+            let mut candidates: Vec<(String, String)> = self
+                .assets
+                .values()
+                .filter(|asset| {
+                    let identity = asset.asset_identity.to_string();
+                    !linked.contains(&identity)
+                        && asset
+                            .asset_identity
+                            .unwrap_network()
+                            .is_some_and(|network| member_networks.contains(&network.0))
+                })
+                .map(|asset| {
+                    let identity = asset.asset_identity.to_string();
+                    let label = label(&identity);
+                    (identity, label)
+                })
+                .collect();
+            candidates.sort();
+            candidates
+        };
+
+        if options.is_empty() {
+            self.notice = Some(
+                if unlink {
+                    "No linked assets to remove"
+                } else {
+                    "No linkable assets on this account's networks"
+                }
+                .to_string(),
+            );
+            return;
+        }
+
+        self.form = Some(ActiveForm::PickAccountAsset {
+            account_id,
+            unlink,
+            options,
+            selected: 0,
+        });
     }
 
     fn complete_refresh_if_idle(&mut self) {
@@ -910,6 +1366,27 @@ impl App {
         }
     }
 
+    pub fn set_display_currency(&mut self, display_currency: String) {
+        self.display_currency = display_currency;
+        for account in &self.accounts {
+            let account_id = account.account_identity.0;
+            let state = self
+                .balance_cache
+                .get(&(self.display_currency.clone(), account_id))
+                .cloned()
+                .unwrap_or(ResourceState::Loading);
+            self.balance_states.insert(account_id, state);
+        }
+        for identity in self.quote_asset_identities() {
+            let state = self
+                .asset_quote_cache
+                .get(&(self.display_currency.clone(), identity.clone()))
+                .cloned()
+                .unwrap_or(ResourceState::Loading);
+            self.asset_quotes.insert(identity, state);
+        }
+    }
+
     pub fn is_balance_refreshing(&self, account_id: u64) -> bool {
         self.balance_refreshing.contains(&account_id)
     }
@@ -923,7 +1400,7 @@ impl App {
     }
 
     pub fn handle_mouse(&mut self, event: MouseEvent) -> KeyAction {
-        if self.form.is_some() {
+        if self.form.is_some() || self.show_help || self.command_palette.is_some() {
             return KeyAction::None;
         }
 
@@ -971,7 +1448,7 @@ impl App {
     fn handle_mouse_move(&mut self, column: u16, row: u16) {
         if let Some(panel) = self.layout.account_panel_at(column, row) {
             if self.selected_account.is_some() {
-                self.account_panel = panel;
+                self.set_account_panel(panel);
                 self.account_focus = AccountFocus::Sidebar;
             }
             return;
@@ -1006,7 +1483,7 @@ impl App {
         }
 
         if let Some(panel) = self.layout.account_panel_at(column, row) {
-            self.account_panel = panel;
+            self.set_account_panel(panel);
             self.account_focus = AccountFocus::Sidebar;
             if let Some(account_id) = self.selected_account {
                 return match panel {
@@ -1046,6 +1523,17 @@ impl App {
 
     fn handle_mouse_scroll(&mut self, column: u16, row: u16, delta: i32) {
         if self.selected_account.is_some() {
+            if self.account_panel == AccountPanel::Transactions {
+                let len = self.selected_account_txs().map(<[Tx]>::len).unwrap_or(0);
+                let current = self.clamped_tx_index();
+                self.tx_index = if delta < 0 {
+                    current.saturating_sub(delta.unsigned_abs() as usize)
+                } else {
+                    (current + delta as usize).min(len.saturating_sub(1))
+                };
+            } else {
+                self.account_scroll = self.account_scroll.saturating_add_signed(delta as isize);
+            }
             return;
         }
 
@@ -1066,21 +1554,74 @@ impl App {
     }
 
     pub fn handle_key(&mut self, code: KeyCode) -> KeyAction {
+        if self.show_help {
+            self.show_help = false;
+            return KeyAction::None;
+        }
+
         if self.form.is_some() {
             return self.handle_form_key(code);
+        }
+
+        if self.command_palette.is_some() {
+            return self.handle_command_palette_key(code);
+        }
+
+        if code == KeyCode::Char('?') && !self.filter_input {
+            self.show_help = true;
+            return KeyAction::None;
         }
 
         if self.move_mode.is_some() {
             return self.handle_move_mode_key(code);
         }
 
+        if self.filter_input {
+            match code {
+                KeyCode::Esc => {
+                    self.account_filter.clear();
+                    self.filter_input = false;
+                }
+                KeyCode::Enter => self.filter_input = false,
+                KeyCode::Backspace => {
+                    if self.account_filter.pop().is_none() {
+                        self.filter_input = false;
+                    }
+                }
+                KeyCode::Char(ch) if !ch.is_control() => self.account_filter.push(ch),
+                _ => {}
+            }
+            self.clamp_list_index();
+            return KeyAction::None;
+        }
+
         match code {
             KeyCode::Char('q') => KeyAction::Quit,
+            KeyCode::Char(':') => {
+                self.command_palette = Some(CommandPalette {
+                    query: String::new(),
+                    selected: 0,
+                });
+                KeyAction::None
+            }
+            KeyCode::Char('/') if self.tab == Tab::Accounts && self.selected_account.is_none() => {
+                self.filter_input = true;
+                KeyAction::None
+            }
             KeyCode::Esc | KeyCode::Char('b') => {
-                if self.selected_account.is_some() {
+                if self.tx_detail {
+                    self.tx_detail = false;
+                } else if code == KeyCode::Esc
+                    && !self.account_filter.is_empty()
+                    && self.selected_account.is_none()
+                {
+                    self.account_filter.clear();
+                    self.clamp_list_index();
+                } else if self.selected_account.is_some() {
                     self.selected_account = None;
-                    self.account_panel = AccountPanel::Overview;
+                    self.set_account_panel(AccountPanel::Overview);
                     self.account_focus = AccountFocus::Sidebar;
+                    self.tx_index = 0;
                 } else if self.tab == Tab::Networks && self.settings.nested_network.is_some() {
                     self.settings.nested_network = None;
                     self.settings.row_index = 0;
@@ -1143,11 +1684,11 @@ impl App {
                     KeyAction::RefreshAll
                 }
             }
-            KeyCode::Left if self.selected_account.is_some() => {
+            KeyCode::Left | KeyCode::Char('h') if self.selected_account.is_some() => {
                 self.account_focus = AccountFocus::Sidebar;
                 KeyAction::None
             }
-            KeyCode::Right if self.selected_account.is_some() => {
+            KeyCode::Right | KeyCode::Char('l') if self.selected_account.is_some() => {
                 self.account_focus = AccountFocus::Content;
                 KeyAction::None
             }
@@ -1157,6 +1698,65 @@ impl App {
             }
             KeyCode::Right if self.tab == Tab::Settings => {
                 self.settings.move_section(1);
+                KeyAction::None
+            }
+            KeyCode::Up | KeyCode::Char('k')
+                if self.selected_account.is_some()
+                    && self.account_focus == AccountFocus::Content
+                    && self.account_panel == AccountPanel::Transactions =>
+            {
+                self.tx_index = self.clamped_tx_index().saturating_sub(1);
+                KeyAction::None
+            }
+            KeyCode::Down | KeyCode::Char('j')
+                if self.selected_account.is_some()
+                    && self.account_focus == AccountFocus::Content
+                    && self.account_panel == AccountPanel::Transactions =>
+            {
+                let len = self.selected_account_txs().map(<[Tx]>::len).unwrap_or(0);
+                self.tx_index = (self.clamped_tx_index() + 1).min(len.saturating_sub(1));
+                KeyAction::None
+            }
+            KeyCode::Enter
+                if self.selected_account.is_some()
+                    && self.account_focus == AccountFocus::Content
+                    && self.account_panel == AccountPanel::Transactions =>
+            {
+                if self
+                    .selected_account_txs()
+                    .is_some_and(|transactions| !transactions.is_empty())
+                {
+                    self.tx_index = self.clamped_tx_index();
+                    self.tx_detail = true;
+                }
+                KeyAction::None
+            }
+            KeyCode::Up | KeyCode::Char('k')
+                if self.selected_account.is_some()
+                    && self.account_focus == AccountFocus::Content =>
+            {
+                self.account_scroll = self.account_scroll.saturating_sub(1);
+                KeyAction::None
+            }
+            KeyCode::Down | KeyCode::Char('j')
+                if self.selected_account.is_some()
+                    && self.account_focus == AccountFocus::Content =>
+            {
+                self.account_scroll = self.account_scroll.saturating_add(1);
+                KeyAction::None
+            }
+            KeyCode::PageUp
+                if self.selected_account.is_some()
+                    && self.account_focus == AccountFocus::Content =>
+            {
+                self.account_scroll = self.account_scroll.saturating_sub(10);
+                KeyAction::None
+            }
+            KeyCode::PageDown
+                if self.selected_account.is_some()
+                    && self.account_focus == AccountFocus::Content =>
+            {
+                self.account_scroll = self.account_scroll.saturating_add(10);
                 KeyAction::None
             }
             KeyCode::Up | KeyCode::Char('k') => {
@@ -1220,7 +1820,41 @@ impl App {
                 self.enter_move_mode();
                 KeyAction::None
             }
-            KeyCode::Char('$') if self.selected_account.is_none() => self.open_currency_picker(),
+            KeyCode::Char('$') => self.open_currency_picker(),
+            KeyCode::Char('c')
+                if self.tab == Tab::Settings
+                    && self.settings.section() == SettingsSection::General =>
+            {
+                self.colored_assets = !self.colored_assets;
+                KeyAction::None
+            }
+            KeyCode::Char('t' | 'T')
+                if self.tab == Tab::Settings
+                    && self.settings.section() == SettingsSection::General =>
+            {
+                KeyAction::SetTheme(self.theme.next())
+            }
+            KeyCode::Char('N') if self.tab == Tab::Accounts && self.selected_account.is_none() => {
+                self.open_account_networks_selected()
+            }
+            KeyCode::Char('n')
+                if self.selected_account.is_some()
+                    && self.account_panel == AccountPanel::Assets =>
+            {
+                KeyAction::OpenAssetPicker {
+                    account_id: self.selected_account.unwrap_or_default(),
+                    unlink: false,
+                }
+            }
+            KeyCode::Char('x')
+                if self.selected_account.is_some()
+                    && self.account_panel == AccountPanel::Assets =>
+            {
+                KeyAction::OpenAssetPicker {
+                    account_id: self.selected_account.unwrap_or_default(),
+                    unlink: true,
+                }
+            }
             KeyCode::Char('x') if self.uses_resource_rows() && self.selected_account.is_none() => {
                 self.settings_action()
             }
@@ -1229,12 +1863,12 @@ impl App {
             }
             KeyCode::Char('n') if self.selected_account.is_none() => self.open_add_form(),
             KeyCode::Char('a') if self.selected_account.is_some() => {
-                self.account_panel = AccountPanel::Assets;
+                self.set_account_panel(AccountPanel::Assets);
                 self.account_focus = AccountFocus::Sidebar;
                 KeyAction::None
             }
             KeyCode::Char('d') if self.selected_account.is_some() => {
-                self.account_panel = AccountPanel::Defi;
+                self.set_account_panel(AccountPanel::Defi);
                 self.account_focus = AccountFocus::Sidebar;
                 let account_id = self.selected_account.unwrap();
                 if matches!(
@@ -1247,7 +1881,7 @@ impl App {
                 }
             }
             KeyCode::Char('t') if self.selected_account.is_some() => {
-                self.account_panel = AccountPanel::Transactions;
+                self.set_account_panel(AccountPanel::Transactions);
                 self.account_focus = AccountFocus::Sidebar;
                 let account_id = self.selected_account.unwrap();
                 if matches!(
@@ -1259,12 +1893,118 @@ impl App {
                     KeyAction::RefreshTransactions(account_id)
                 }
             }
-            KeyCode::Char('h') if self.selected_account.is_some() => {
-                self.account_panel = AccountPanel::Overview;
+            KeyCode::Char('o') if self.selected_account.is_some() => {
+                self.set_account_panel(AccountPanel::Overview);
                 self.account_focus = AccountFocus::Sidebar;
                 KeyAction::None
             }
             _ => KeyAction::None,
+        }
+    }
+
+    pub fn command_choices(&self) -> Vec<CommandChoice> {
+        let mut choices = vec![
+            CommandChoice::Tab(Tab::Accounts),
+            CommandChoice::Tab(Tab::Assets),
+            CommandChoice::Tab(Tab::Networks),
+            CommandChoice::Tab(Tab::Settings),
+            CommandChoice::Theme(Theme::Dark),
+            CommandChoice::Theme(Theme::Midnight),
+            CommandChoice::Theme(Theme::Light),
+            CommandChoice::Theme(Theme::Paper),
+            CommandChoice::Theme(Theme::Terminal),
+            CommandChoice::DisplayCurrency,
+        ];
+        choices.extend(
+            self.accounts
+                .iter()
+                .map(|account| CommandChoice::Account(account.account_identity.0)),
+        );
+        let query = self
+            .command_palette
+            .as_ref()
+            .map(|palette| palette.query.to_lowercase())
+            .unwrap_or_default();
+        choices.retain(|choice| choice.label(self).to_lowercase().contains(&query));
+        choices
+    }
+
+    fn handle_command_palette_key(&mut self, code: KeyCode) -> KeyAction {
+        match code {
+            KeyCode::Esc => self.command_palette = None,
+            KeyCode::Up => {
+                let len = self.command_choices().len();
+                if let Some(palette) = &mut self.command_palette {
+                    palette.selected = palette
+                        .selected
+                        .saturating_sub(1)
+                        .min(len.saturating_sub(1));
+                }
+            }
+            KeyCode::Down => {
+                let len = self.command_choices().len();
+                if let Some(palette) = &mut self.command_palette {
+                    palette.selected = (palette.selected + 1).min(len.saturating_sub(1));
+                }
+            }
+            KeyCode::Backspace => {
+                if let Some(palette) = &mut self.command_palette {
+                    palette.query.pop();
+                    palette.selected = 0;
+                }
+            }
+            KeyCode::Char(ch) if !ch.is_control() => {
+                if let Some(palette) = &mut self.command_palette {
+                    palette.query.push(ch);
+                    palette.selected = 0;
+                }
+            }
+            KeyCode::Enter => {
+                let selected = self
+                    .command_palette
+                    .as_ref()
+                    .map(|palette| palette.selected);
+                let choice = selected.and_then(|index| self.command_choices().get(index).cloned());
+                self.command_palette = None;
+                return match choice {
+                    Some(CommandChoice::Tab(tab)) => self.navigate_to_tab(tab),
+                    Some(CommandChoice::Account(account_id)) => {
+                        self.open_account_from_palette(account_id)
+                    }
+                    Some(CommandChoice::Theme(theme)) if theme != self.theme => {
+                        KeyAction::SetTheme(theme)
+                    }
+                    Some(CommandChoice::DisplayCurrency) => self.open_currency_picker(),
+                    _ => KeyAction::None,
+                };
+            }
+            _ => {}
+        }
+        KeyAction::None
+    }
+
+    fn navigate_to_tab(&mut self, tab: Tab) -> KeyAction {
+        self.switch_tab(tab);
+        match tab {
+            Tab::Assets => KeyAction::RefreshQuotes,
+            Tab::Prices | Tab::Settings
+                if !matches!(self.settings_state, ResourceState::Ready(_)) =>
+            {
+                KeyAction::RefreshSettings
+            }
+            _ => KeyAction::None,
+        }
+    }
+
+    fn open_account_from_palette(&mut self, account_id: u64) -> KeyAction {
+        self.switch_tab(Tab::Accounts);
+        if let Some(index) = self.account_rows().iter().position(
+            |row| matches!(row, AccountListRow::Account { account_id: id } if *id == account_id),
+        ) {
+            self.list_index = index;
+            self.activate()
+        } else {
+            KeyAction::None
         }
     }
 
@@ -1282,7 +2022,7 @@ impl App {
     fn switch_tab(&mut self, tab: Tab) {
         self.tab = tab;
         self.selected_account = None;
-        self.account_panel = AccountPanel::Overview;
+        self.set_account_panel(AccountPanel::Overview);
         self.account_focus = AccountFocus::Sidebar;
         self.form = None;
         self.settings.row_index = 0;
@@ -1298,6 +2038,10 @@ impl App {
 
     fn open_add_form(&mut self) -> KeyAction {
         match self.tab {
+            Tab::Accounts => {
+                self.form = Some(ActiveForm::open_add_account());
+                KeyAction::None
+            }
             Tab::Assets => {
                 self.form = Some(ActiveForm::open_add_asset());
                 KeyAction::None
@@ -1309,6 +2053,20 @@ impl App {
             }
             Tab::Networks => {
                 self.form = Some(ActiveForm::open_add_network());
+                KeyAction::None
+            }
+            Tab::Prices => {
+                let options = self.quoter_token_options(None);
+                if options.is_empty() {
+                    self.settings.notice =
+                        Some("No ERC-20 assets configured to build a quoter from".to_string());
+                    return KeyAction::None;
+                }
+                self.form = Some(ActiveForm::PickQuoterToken {
+                    token_a: None,
+                    options,
+                    selected: 0,
+                });
                 KeyAction::None
             }
             _ => KeyAction::None,
@@ -1374,7 +2132,151 @@ impl App {
                     KeyAction::SetDisplayCurrency(identity)
                 }
             }
+            FormAction::FetchDerivationPath => {
+                self.form = Some(form);
+                KeyAction::FetchDerivationPath
+            }
+            FormAction::GenerateMnemonic => {
+                self.form = Some(form);
+                KeyAction::GenerateMnemonic
+            }
+            FormAction::ResolveEns(name) => {
+                self.form = Some(form);
+                KeyAction::ResolveEns(name)
+            }
+            FormAction::ReverseEns(address) => {
+                self.form = Some(form);
+                KeyAction::ReverseEns(address)
+            }
+            FormAction::SubmitCreateAccount { name, wallet } => {
+                self.form = None;
+                self.notice = Some(format!("Creating account {name}…"));
+                KeyAction::CreateAccount { name, wallet }
+            }
+            FormAction::DeriveMnemonic {
+                name,
+                mnemonic,
+                base_path,
+            } => {
+                if let ActiveForm::AddAccountMnemonic { deriving, .. } = &mut form {
+                    *deriving = true;
+                }
+                self.form = Some(form);
+                KeyAction::DeriveAddresses {
+                    name,
+                    mnemonic,
+                    paths: derivation_paths(&base_path),
+                }
+            }
+            FormAction::CreateAccountFromKey { name, key } => {
+                self.form = None;
+                self.notice = Some(format!("Creating account {name}…"));
+                KeyAction::CreateAccountFromKey { name, key }
+            }
+            FormAction::SubmitRenameAccount { account_id, name } => {
+                self.form = None;
+                KeyAction::RenameAccount(account_id, name)
+            }
+            FormAction::ConfirmDeleteAccount(account_id) => {
+                self.form = None;
+                KeyAction::DeleteAccount(account_id)
+            }
+            FormAction::SubmitAccountNetworks {
+                account_id,
+                networks,
+            } => {
+                self.form = None;
+                KeyAction::UpdateAccountNetworks(account_id, networks)
+            }
+            FormAction::SubmitAccountAsset {
+                account_id,
+                unlink,
+                identity,
+            } => {
+                self.form = None;
+                KeyAction::AccountAssetAction {
+                    account_id,
+                    identity,
+                    unlink,
+                }
+            }
+            FormAction::SubmitEditEndpoint {
+                network_id,
+                endpoint_id,
+                update,
+            } => {
+                self.form = None;
+                KeyAction::UpdateEndpoint {
+                    network_id,
+                    endpoint_id,
+                    update,
+                }
+            }
+            FormAction::SubmitEditNetwork { network_id, update } => {
+                self.form = None;
+                KeyAction::UpdateNetwork { network_id, update }
+            }
+            FormAction::SubmitEditAsset { identity, update } => {
+                self.form = None;
+                KeyAction::UpdateAsset { identity, update }
+            }
+            FormAction::ConfirmDeleteNetwork(network_id) => {
+                self.form = None;
+                KeyAction::DeleteNetwork(network_id)
+            }
+            FormAction::PickQuoterTokenA(token_a) => {
+                let mut options = self.quoter_token_options(Some(&token_a));
+                options.insert(
+                    0,
+                    (
+                        super::form::ERC4626_SENTINEL.to_string(),
+                        "(no pair · discover ERC-4626 underlying)".to_string(),
+                    ),
+                );
+                self.form = Some(ActiveForm::PickQuoterToken {
+                    token_a: Some(token_a),
+                    options,
+                    selected: 0,
+                });
+                KeyAction::None
+            }
+            FormAction::DiscoverQuoter { token_a, token_b } => {
+                self.form = Some(ActiveForm::QuoterDiscovering);
+                KeyAction::DiscoverQuoter { token_a, token_b }
+            }
+            FormAction::SubmitCreateQuoter {
+                token_a,
+                token_b,
+                config,
+            } => {
+                self.form = None;
+                self.settings.notice = Some("Creating quoter…".to_string());
+                KeyAction::CreateQuoter {
+                    token_a,
+                    token_b,
+                    config,
+                }
+            }
         }
+    }
+
+    fn quoter_token_options(&self, exclude: Option<&str>) -> Vec<(String, String)> {
+        let mut options: Vec<(String, String)> = self
+            .assets
+            .values()
+            .filter(|asset| {
+                let identity = asset.asset_identity.to_string();
+                identity.starts_with("erc20:") && Some(identity.as_str()) != exclude
+            })
+            .map(|asset| {
+                (
+                    asset.asset_identity.to_string(),
+                    format!("{} · {}", asset.asset_symbol, asset.asset_name),
+                )
+            })
+            .collect();
+        options.sort();
+        options
     }
 
     pub fn open_currency_picker(&mut self) -> KeyAction {
@@ -1420,7 +2322,8 @@ impl App {
             .retain(|identity, _| identities.contains(identity));
         for identity in identities {
             self.asset_quotes
-                .insert(identity.clone(), ResourceState::Loading);
+                .entry(identity.clone())
+                .or_insert(ResourceState::Loading);
         }
     }
 
@@ -1453,7 +2356,7 @@ impl App {
             .position(|panel| *panel == self.account_panel)
             .unwrap_or_default() as i32;
         let next = (current + delta).rem_euclid(AccountPanel::ALL.len() as i32) as usize;
-        self.account_panel = AccountPanel::ALL[next];
+        self.set_account_panel(AccountPanel::ALL[next]);
 
         let Some(account_id) = self.selected_account else {
             return KeyAction::None;
@@ -1515,7 +2418,7 @@ impl App {
         };
 
         self.selected_account = Some(account_id);
-        self.account_panel = AccountPanel::Overview;
+        self.set_account_panel(AccountPanel::Overview);
         self.account_focus = AccountFocus::Sidebar;
 
         if matches!(
@@ -1623,6 +2526,19 @@ impl App {
         self.tx_states.get(&account_id)
     }
 
+    pub fn selected_account_txs(&self) -> Option<&[Tx]> {
+        let account_id = self.selected_account?;
+        match self.tx_states.get(&account_id) {
+            Some(ResourceState::Ready(transactions)) => Some(transactions.as_slice()),
+            _ => None,
+        }
+    }
+
+    pub fn clamped_tx_index(&self) -> usize {
+        let len = self.selected_account_txs().map(<[Tx]>::len).unwrap_or(0);
+        self.tx_index.min(len.saturating_sub(1))
+    }
+
     pub fn account_address(&self, account_id: u64) -> Option<String> {
         let account = self
             .accounts
@@ -1713,6 +2629,12 @@ impl App {
         match section {
             SettingsSection::Networks => {
                 let Some(network_id) = self.settings.nested_network else {
+                    if let Some(network) = self.networks.get(self.settings.row_index) {
+                        self.form = Some(ActiveForm::open_confirm_delete_network(
+                            network.network_identity.0,
+                            network.network_name.clone(),
+                        ));
+                    }
                     return KeyAction::None;
                 };
                 let Some(endpoint_id) = self
@@ -1724,6 +2646,16 @@ impl App {
                     return KeyAction::None;
                 };
                 KeyAction::DeleteNetworkEndpoint(network_id, endpoint_id)
+            }
+            SettingsSection::PriceFeeds => {
+                let Some((identity, enabled)) = self
+                    .settings_snapshot()
+                    .and_then(|snapshot| snapshot.quoters.get(self.settings.row_index))
+                    .map(|quoter| (quoter.quoter_identity.clone(), quoter.enabled))
+                else {
+                    return KeyAction::None;
+                };
+                KeyAction::ToggleQuoter(identity, !enabled)
             }
             SettingsSection::Assets => {
                 let Some(asset_identity) = self
@@ -1741,7 +2673,7 @@ impl App {
                 };
                 KeyAction::SetVendor(flag, !enabled)
             }
-            SettingsSection::General | SettingsSection::PriceFeeds => KeyAction::None,
+            SettingsSection::General => KeyAction::None,
         }
     }
 
@@ -1754,14 +2686,32 @@ impl App {
         };
 
         match section {
-            SettingsSection::Vendors => self.settings_action(),
-            _ => {
-                self.settings.notice = Some(
-                    "Editing/adding complex resources is not interactive yet; use web settings for forms"
-                        .to_string(),
-                );
+            SettingsSection::Vendors | SettingsSection::PriceFeeds => self.settings_action(),
+            SettingsSection::Networks => {
+                if let Some(network_id) = self.settings.nested_network {
+                    let endpoint = self
+                        .settings_snapshot()
+                        .and_then(|snapshot| snapshot.endpoints.get(&network_id))
+                        .and_then(|endpoints| endpoints.get(self.settings.row_index));
+                    if let Some(endpoint) = endpoint {
+                        self.form = Some(ActiveForm::open_edit_endpoint(endpoint));
+                    }
+                } else if let Some(network) = self.networks.get(self.settings.row_index) {
+                    self.form = Some(ActiveForm::open_edit_network(network));
+                }
                 KeyAction::None
             }
+            SettingsSection::Assets => {
+                let asset = self
+                    .settings_asset_identities()
+                    .get(self.settings.row_index)
+                    .and_then(|identity| self.assets.get(identity));
+                if let Some(asset) = asset {
+                    self.form = Some(ActiveForm::open_edit_asset(asset));
+                }
+                KeyAction::None
+            }
+            SettingsSection::General => KeyAction::None,
         }
     }
 
@@ -1811,6 +2761,60 @@ pub enum KeyAction {
     DeleteGroup(u64),
     CommitLayout(koi::models::account::layout::AccountLayoutUpdate),
     SetDisplayCurrency(String),
+    SetTheme(Theme),
     RefreshQuotes,
     FetchNetworkPresets,
+    FetchDerivationPath,
+    GenerateMnemonic,
+    ResolveEns(String),
+    ReverseEns(String),
+    DeriveAddresses {
+        name: String,
+        mnemonic: String,
+        paths: Vec<String>,
+    },
+    CreateAccount {
+        name: String,
+        wallet: NewAccountWallet,
+    },
+    CreateAccountFromKey {
+        name: String,
+        key: String,
+    },
+    RenameAccount(u64, String),
+    DeleteAccount(u64),
+    UpdateAccountNetworks(u64, Vec<u64>),
+    OpenAssetPicker {
+        account_id: u64,
+        unlink: bool,
+    },
+    AccountAssetAction {
+        account_id: u64,
+        identity: String,
+        unlink: bool,
+    },
+    UpdateEndpoint {
+        network_id: u64,
+        endpoint_id: i32,
+        update: koi::models::network::endpoint::NetworkEndpointUpdate,
+    },
+    UpdateNetwork {
+        network_id: u64,
+        update: koi::models::network::NetworkUpdate,
+    },
+    DeleteNetwork(u64),
+    UpdateAsset {
+        identity: String,
+        update: koi::models::asset::AssetUpdate,
+    },
+    ToggleQuoter(String, bool),
+    DiscoverQuoter {
+        token_a: String,
+        token_b: Option<String>,
+    },
+    CreateQuoter {
+        token_a: String,
+        token_b: String,
+        config: koi::models::quoter::QuoterConfig,
+    },
 }

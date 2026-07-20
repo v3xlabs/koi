@@ -46,6 +46,12 @@ export type Asset = { asset_identity: AssetIdentity, asset_name: string, asset_s
 
 export type AssetCreateParams = { input: Asset, };
 
+export type AssetIconColor = { red: number, green: number, blue: number, };
+
+export type AssetIconColors = { primary: AssetIconColor, secondary?: AssetIconColor, };
+
+export type AssetIconData = { png_data: Array<number>, colors: AssetIconColors, };
+
 export type AssetIdentity = string;
 
 export type AssetMetadataDiscovery = { asset_identity: AssetIdentity, options: Record<string, AssetMetadataOption>, };
@@ -95,6 +101,10 @@ export type EndpointCreateParams = { network_identity: NetworkIdentity, input: N
 export type EndpointParams = { network_identity: NetworkIdentity, endpoint_identity: number, };
 
 export type EndpointUpdateParams = { network_identity: NetworkIdentity, endpoint_identity: number, input: NetworkEndpointUpdate, };
+
+export type EnsResolveParams = { name: string, };
+
+export type EnsReverseParams = { address: string, };
 
 export type Erc4626QuoterConfig = Record<string, never>;
 
@@ -288,12 +298,18 @@ export type AssetDiscoverMetadataRpcParams = AssetParams;
 export type AssetDiscoverMetadataRpcResult = AssetMetadataDiscovery;
 export type AssetGetRpcParams = AssetParams;
 export type AssetGetRpcResult = Asset;
+export type AssetIconRpcParams = AssetParams;
+export type AssetIconRpcResult = AssetIconData | null;
 export type AssetListRpcParams = EmptyParams;
 export type AssetListRpcResult = Array<Asset>;
 export type AssetQuoteRpcParams = AssetQuoteParams;
 export type AssetQuoteRpcResult = string;
 export type AssetUpdateRpcParams = AssetUpdateParams;
 export type AssetUpdateRpcResult = Asset;
+export type EnsResolveRpcParams = EnsResolveParams;
+export type EnsResolveRpcResult = string | null;
+export type EnsReverseRpcParams = EnsReverseParams;
+export type EnsReverseRpcResult = string | null;
 export type NetworkCreateRpcParams = NetworkCreateParams;
 export type NetworkCreateRpcResult = Network;
 export type NetworkDeleteRpcParams = NetworkParams;

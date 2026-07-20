@@ -13,8 +13,9 @@ use koi::models::{
 
 use super::{
     app::{AccountFocus, AccountListRow, AccountPanel, App, ResourceState, Tab},
+    config::Theme,
     defi::DefiResult,
-    form::{ActiveForm, AssetType, DiscoveryState, TextForm},
+    form::{AccountKind, ActiveForm, AssetType, DiscoveryState, TextForm},
     format::{DisplayAmount, format_quote, format_token, percent_change},
     icon::IconRenderer,
     layout::{AccountSidebarLayout, ListTableLayout, table_body_height},
@@ -28,9 +29,9 @@ pub fn render(frame: &mut Frame, app: &mut App) {
     let vertical = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),
+            Constraint::Length(1),
             Constraint::Min(0),
-            Constraint::Length(2),
+            Constraint::Length(1),
         ])
         .split(frame.area());
 
@@ -49,12 +50,199 @@ pub fn render(frame: &mut Frame, app: &mut App) {
     render_body(frame, app, vertical[1]);
     render_footer(frame, app, vertical[2]);
 
+    if app.tx_detail && app.account_panel == AccountPanel::Transactions {
+        render_tx_detail(frame, app, frame.area());
+    }
+
     if let Some(form) = &app.form {
-        render_form(frame, form, frame.area());
+        render_form(frame, form, frame.area(), app.theme);
+    }
+
+    if app.show_help {
+        render_help(frame, app, frame.area());
+    }
+
+    if app.command_palette.is_some() {
+        render_command_palette(frame, app, frame.area());
     }
 }
 
+#[derive(Clone, Copy)]
+struct Palette {
+    chrome: Color,
+    chrome_fg: Color,
+    panel: Color,
+    panel_fg: Color,
+    selected: Color,
+    selected_fg: Color,
+    muted: Color,
+    accent: Color,
+    overlay: Color,
+}
+
+fn palette(theme: Theme) -> Palette {
+    match theme {
+        Theme::Terminal => Palette {
+            chrome: Color::Reset,
+            chrome_fg: Color::Reset,
+            panel: Color::Reset,
+            panel_fg: Color::Reset,
+            overlay: Color::Black,
+            muted: Color::DarkGray,
+            accent: Color::Cyan,
+            selected: Color::DarkGray,
+            selected_fg: Color::Reset,
+        },
+        Theme::Dark | Theme::Midnight => Palette {
+            chrome: Color::Rgb(18, 24, 35),
+            chrome_fg: Color::Rgb(225, 232, 240),
+            panel: Color::Rgb(29, 38, 52),
+            panel_fg: Color::Rgb(225, 232, 240),
+            selected: Color::Rgb(50, 82, 105),
+            selected_fg: Color::White,
+            muted: Color::Rgb(145, 160, 175),
+            accent: Color::Cyan,
+            overlay: Color::Rgb(10, 14, 20),
+        },
+        Theme::Light | Theme::Paper => Palette {
+            chrome: Color::Rgb(220, 229, 238),
+            chrome_fg: Color::Rgb(24, 35, 48),
+            panel: Color::Rgb(246, 249, 252),
+            panel_fg: Color::Rgb(24, 35, 48),
+            selected: Color::Rgb(183, 213, 235),
+            selected_fg: Color::Rgb(14, 39, 59),
+            muted: Color::Rgb(83, 99, 116),
+            accent: Color::Blue,
+            overlay: Color::Rgb(190, 200, 210),
+        },
+    }
+}
+
+fn render_command_palette(frame: &mut Frame, app: &App, area: Rect) {
+    let Some(command) = &app.command_palette else {
+        return;
+    };
+    let colors = palette(app.theme);
+    let choices = app.command_choices();
+    let height = (choices.len().min(8) + 4) as u16;
+    let popup = centered_modal(area, 56, height);
+    paint_area(frame, popup, colors.panel);
+    let mut lines = vec![Line::from(Span::styled(
+        format!(":{}", command.query),
+        Style::default()
+            .fg(colors.accent)
+            .bg(colors.panel)
+            .add_modifier(Modifier::BOLD),
+    ))];
+    if choices.is_empty() {
+        lines.push(Line::from(Span::styled(
+            " No matching commands",
+            Style::default().fg(colors.muted).bg(colors.panel),
+        )));
+    } else {
+        lines.extend(choices.iter().take(8).enumerate().map(|(index, choice)| {
+            let selected = index == command.selected;
+            Line::from(Span::styled(
+                format!("{} {}", if selected { "›" } else { " " }, choice.label(app)),
+                if selected {
+                    Style::default().fg(colors.selected_fg).bg(colors.selected)
+                } else {
+                    Style::default().fg(colors.panel_fg).bg(colors.panel)
+                },
+            ))
+        }));
+    }
+    lines.push(Line::from(Span::styled(
+        " Enter select · Esc close",
+        Style::default().fg(colors.muted).bg(colors.panel),
+    )));
+    frame.render_widget(
+        Paragraph::new(lines)
+            .style(Style::default().bg(colors.panel).fg(colors.panel_fg))
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(colors.accent).bg(colors.panel))
+                    .style(Style::default().bg(colors.panel))
+                    .title(" Command "),
+            ),
+        popup,
+    );
+}
+
+fn render_help(frame: &mut Frame, app: &App, area: Rect) {
+    let bindings: Vec<(&str, &str)> = if app.move_mode.is_some() {
+        vec![
+            ("j/k", "navigate · move grabbed item"),
+            ("Space/Enter", "grab or drop the row"),
+            ("s", "save the new layout"),
+            ("Esc", "drop grab, then cancel"),
+            ("g / e / x", "create · rename · delete group"),
+        ]
+    } else if app.selected_account.is_some() {
+        vec![
+            ("o/a/d/t", "overview · assets · defi · transactions"),
+            ("h/l", "focus sidebar · content"),
+            ("j/k", "switch panel (sidebar) · scroll (content)"),
+            ("n / x", "link · unlink asset (Assets panel)"),
+            ("$", "display currency"),
+            ("r", "refresh current panel"),
+            ("Esc/b", "back to the account list"),
+        ]
+    } else if app.tab == Tab::Accounts {
+        vec![
+            ("j/k, Enter", "navigate · open (headers: collapse)"),
+            ("/", "filter accounts (Esc clears)"),
+            ("n", "add account (watch · ENS · mnemonic · key)"),
+            ("e / x", "rename · delete (account or group)"),
+            ("g", "new group"),
+            ("N", "edit account networks"),
+            ("m", "move mode (reorder)"),
+            ("$", "display currency"),
+            ("r", "refresh everything"),
+        ]
+    } else {
+        vec![
+            ("1-5, Tab", "switch tabs"),
+            ("j/k, Enter", "navigate · open"),
+            ("n / e / x", "add · edit · delete/toggle"),
+            ("$", "display currency"),
+            ("r", "refresh"),
+        ]
+    };
+
+    let width = 56;
+    let height = (bindings.len() + 6).min(20) as u16;
+    let popup = centered_modal(area, width, height);
+    paint_area(frame, popup, PANEL_BG);
+
+    let lines: Vec<Line> = bindings
+        .into_iter()
+        .map(|(keys, action)| {
+            Line::from(vec![
+                Span::styled(
+                    format!(" {keys:<12}"),
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .bg(PANEL_BG)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(action.to_string(), Style::default().bg(PANEL_BG)),
+            ])
+        })
+        .chain(std::iter::once(Line::from(Span::raw(""))))
+        .chain(std::iter::once(Line::from(Span::styled(
+            " q quit · ? close this help",
+            Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+        ))))
+        .collect();
+
+    render_panel(frame, popup, "Keys", lines);
+}
+
 fn render_top_bar(frame: &mut Frame, app: &mut App, area: Rect) {
+    let colors = palette(app.theme);
+    paint_area(frame, area, colors.chrome);
     let status = if app.loading_core {
         "Loading accounts & networks…".to_string()
     } else if let Some(notice) = &app.notice {
@@ -82,40 +270,50 @@ fn render_top_bar(frame: &mut Frame, app: &mut App, area: Rect) {
     ];
 
     let mut nav_spans = vec![Span::styled(
-        " koi ",
+        "koi",
         Style::default()
-            .fg(Color::Black)
-            .bg(Color::Yellow)
+            .fg(colors.accent)
+            .bg(colors.chrome)
             .add_modifier(Modifier::BOLD),
     )];
     nav_spans.push(Span::raw(" "));
+    let status_text = format!("{} {}", if app.connected { "●" } else { "○" }, status);
+    let status_width = status_text.chars().count() as u16;
+    let nav_width = area.width.saturating_sub(status_width.saturating_add(1));
+    let mut tab_x = area.x.saturating_add(4);
+
     for (key, label, tab) in nav {
         let selected = app.tab == tab && app.selected_account.is_none();
         let style = if selected {
             Style::default()
-                .fg(Color::Cyan)
+                .fg(colors.accent)
+                .bg(colors.chrome)
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::DarkGray)
+            Style::default().fg(colors.muted).bg(colors.chrome)
         };
-        nav_spans.push(Span::styled(format!(" {key}:{label} "), style));
+        let tab_label = format!(" {key}:{label} ");
+        let width =
+            (tab_label.chars().count() as u16).min(nav_width.saturating_sub(tab_x - area.x));
+        if width > 0 {
+            app.layout.tabs[tab as usize] = (
+                Rect {
+                    x: tab_x,
+                    y: area.y,
+                    width,
+                    height: area.height,
+                },
+                tab,
+            );
+        }
+        tab_x = tab_x.saturating_add(tab_label.chars().count() as u16);
+        nav_spans.push(Span::styled(tab_label, style));
     }
-
-    let status_text = format!("{} {}", if app.connected { "●" } else { "○" }, status);
-    let status_width = status_text.chars().count().saturating_add(2) as u16;
-    let nav_width = area.width.saturating_sub(status_width).max(1);
-
-    app.layout.nav = Rect {
-        x: area.x,
-        y: area.y,
-        width: nav_width,
-        height: area.height,
-    };
 
     frame.render_widget(
         Paragraph::new(Line::from(nav_spans))
-            .wrap(Wrap { trim: true })
-            .block(Block::default().borders(Borders::ALL)),
+            .style(Style::default().bg(colors.chrome))
+            .wrap(Wrap { trim: true }),
         Rect {
             x: area.x,
             y: area.y,
@@ -129,13 +327,17 @@ fn render_top_bar(frame: &mut Frame, app: &mut App, area: Rect) {
             if app.connected { "● " } else { "○ " },
             Style::default().fg(status_color),
         ),
-        Span::raw(status),
+        Span::styled(
+            status,
+            Style::default().fg(colors.chrome_fg).bg(colors.chrome),
+        ),
     ]);
 
     frame.render_widget(
         Paragraph::new(status_line)
+            .style(Style::default().bg(colors.chrome))
             .wrap(Wrap { trim: true })
-            .block(Block::default().borders(Borders::ALL)),
+            .alignment(ratatui::layout::Alignment::Right),
         Rect {
             x: area.x.saturating_add(nav_width),
             y: area.y,
@@ -200,13 +402,24 @@ fn render_price_board(frame: &mut Frame, app: &mut App, area: Rect) {
                     .map(|asset| (asset.asset_symbol.clone(), asset.asset_name.clone()))
                     .unwrap_or_else(|| (identity.clone(), String::new()));
                 let (price, change) = asset_quote_cells(app, identity);
+                let mut symbol_spans = vec![Span::raw(format!(
+                    "    {} ",
+                    if selected { "›" } else { " " }
+                ))];
+                if app.colored_assets
+                    && let Some(icon) = app.asset_icons.get(identity)
+                {
+                    symbol_spans.extend(IconRenderer::color_symbol(&symbol, &icon.colors));
+                } else {
+                    symbol_spans.push(Span::raw(symbol));
+                }
                 Row::new(vec![
-                    Cell::from(format!("{} {}", if selected { "›" } else { " " }, symbol)),
+                    Cell::from(Line::from(symbol_spans)),
                     Cell::from(truncate(&name, 26)),
                     price,
                     change,
                 ])
-                .style(selected_row_style(selected))
+                .style(selected_row_style(app.theme, selected))
             })
             .collect()
     };
@@ -224,14 +437,10 @@ fn render_price_board(frame: &mut Frame, app: &mut App, area: Rect) {
         Row::new(vec!["Symbol", "Name", "Price", "24h"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(Block::default().borders(Borders::ALL).title(format!(
-        " Prices · in {} · r refresh {} ",
-        app.display_currency,
-        position_label(identities.len(), app.settings.row_index)
-    )))
     .column_spacing(2);
 
     frame.render_widget(table, area);
+    render_asset_table_icons(frame, app, area, &identities, app.settings.row_scroll);
     register_resource_list_table(app, area, identities.len());
 }
 
@@ -277,11 +486,7 @@ fn render_accounts_list(frame: &mut Frame, app: &mut App, area: Rect) {
             .map(|(index, list_row)| {
                 let selected = index == app.list_index;
                 let grabbed = app.is_grabbed_row(list_row);
-                let mut row_style = if selected {
-                    Style::default().bg(Color::DarkGray).fg(Color::White)
-                } else {
-                    Style::default()
-                };
+                let mut row_style = selected_row_style(app.theme, selected);
                 if grabbed {
                     row_style = row_style.add_modifier(Modifier::REVERSED);
                 }
@@ -374,21 +579,8 @@ fn render_accounts_list(frame: &mut Frame, app: &mut App, area: Rect) {
         Row::new(vec!["Name", "Type", "Address", "Balance"])
     };
 
-    let title = if let Some(mode) = &app.move_mode {
-        if mode.grabbed.is_some() {
-            " Accounts · MOVE (j/k move · Space drop · s save · Esc cancel) ".to_string()
-        } else {
-            " Accounts · MOVE (Space grab · s save · Esc cancel) ".to_string()
-        }
-    } else {
-        format!(
-            " Accounts {} ",
-            position_label(list_rows.len(), app.list_index)
-        )
-    };
     let table = Table::new(rows, constraints)
         .header(header.style(Style::default().add_modifier(Modifier::BOLD)))
-        .block(Block::default().borders(Borders::ALL).title(title))
         .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -454,12 +646,7 @@ fn render_selected_account_preview(frame: &mut Frame, app: &mut App, area: Rect)
             Line::from("x: delete group"),
             Line::from("m: move accounts"),
         ];
-        frame.render_widget(
-            Paragraph::new(lines)
-                .wrap(Wrap { trim: true })
-                .block(Block::default().borders(Borders::ALL).title(" Group ")),
-            area,
-        );
+        frame.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), area);
         return;
     }
 
@@ -468,11 +655,7 @@ fn render_selected_account_preview(frame: &mut Frame, app: &mut App, area: Rect)
         _ => None,
     };
     let Some(account) = account else {
-        frame.render_widget(
-            Paragraph::new("No account selected")
-                .block(Block::default().borders(Borders::ALL).title(" Preview ")),
-            area,
-        );
+        frame.render_widget(Paragraph::new("No account selected"), area);
         return;
     };
 
@@ -520,8 +703,7 @@ fn render_selected_account_preview(frame: &mut Frame, app: &mut App, area: Rect)
         )));
     }
 
-    let block = Block::default().borders(Borders::ALL).title(" Preview ");
-    let inner = block.inner(area);
+    let inner = area;
     let address = account_evm_address(&account.metadata);
 
     if let Some(address) = address.as_deref() {
@@ -541,8 +723,6 @@ fn render_selected_account_preview(frame: &mut Frame, app: &mut App, area: Rect)
     } else {
         frame.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), inner);
     }
-
-    frame.render_widget(block, area);
 }
 
 fn render_settings(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -570,14 +750,7 @@ fn render_settings(frame: &mut Frame, app: &mut App, area: Rect) {
             .collect::<Vec<_>>(),
     );
 
-    frame.render_widget(
-        Paragraph::new(section_line).block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title(" Settings sections · ←/→ "),
-        ),
-        chunks[0],
-    );
+    frame.render_widget(Paragraph::new(section_line), chunks[0]);
 
     render_settings_detail(frame, app, chunks[1]);
 }
@@ -607,6 +780,22 @@ fn render_settings_general(frame: &mut Frame, app: &App, area: Rect) {
         Line::from(""),
         Line::from("Press $ to pick a fiat asset as the display currency."),
         Line::from("The choice is saved to the koi/tui.json config file."),
+        Line::from(""),
+        Line::from(Span::styled("Theme", Style::default().fg(Color::DarkGray))),
+        Line::from(format!("{} · press t to switch", app.theme.label())),
+        Line::from(""),
+        Line::from(Span::styled(
+            "Colored assets",
+            Style::default().fg(Color::DarkGray),
+        )),
+        Line::from(format!(
+            "{} · press c to toggle",
+            if app.colored_assets {
+                "enabled"
+            } else {
+                "disabled"
+            }
+        )),
     ];
 
     if let Some(notice) = &app.settings.notice {
@@ -617,14 +806,7 @@ fn render_settings_general(frame: &mut Frame, app: &App, area: Rect) {
         )));
     }
 
-    frame.render_widget(
-        Paragraph::new(lines).wrap(Wrap { trim: true }).block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title(" General settings "),
-        ),
-        area,
-    );
+    frame.render_widget(Paragraph::new(lines).wrap(Wrap { trim: true }), area);
 }
 
 fn render_settings_networks(frame: &mut Frame, app: &mut App, area: Rect) {
@@ -650,7 +832,7 @@ fn render_settings_networks(frame: &mut Frame, app: &mut App, area: Rect) {
             .take(end.saturating_sub(start))
             .map(|(index, network)| {
                 let selected = index == app.settings.row_index;
-                let style = selected_row_style(selected);
+                let style = selected_row_style(app.theme, selected);
                 let endpoint_count = app
                     .settings_snapshot()
                     .and_then(|snapshot| snapshot.endpoints.get(&network.network_identity.0))
@@ -705,10 +887,6 @@ fn render_settings_networks(frame: &mut Frame, app: &mut App, area: Rect) {
         Row::new(vec!["Network", "Chain ID", "RPC health", "Endpoints"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(Block::default().borders(Borders::ALL).title(format!(
-        " Networks · Enter endpoints · n add {} ",
-        position_label(app.networks.len(), app.settings.row_index)
-    )))
     .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -737,7 +915,27 @@ fn render_settings_endpoints(frame: &mut Frame, app: &mut App, network_id: u64, 
                 .take(end.saturating_sub(start))
                 .map(|(index, endpoint)| {
                     let selected = index == app.settings.row_index;
-                    let style = selected_row_style(selected);
+                    let style = selected_row_style(app.theme, selected);
+                    let live_status = match app.rpc_state(network_id) {
+                        Some(ResourceState::Ready(stats)) => stats
+                            .endpoints
+                            .iter()
+                            .find(|stats| stats.endpoint_identity == endpoint.endpoint_identity)
+                            .map(|stats| stats.status.clone()),
+                        _ => None,
+                    };
+                    let status = if endpoint.endpoint_disabled {
+                        ("disabled".to_string(), Style::default().fg(Color::DarkGray))
+                    } else {
+                        match live_status.as_deref() {
+                            Some("alive") => {
+                                ("alive".to_string(), Style::default().fg(Color::Green))
+                            }
+                            Some("dead") => ("dead".to_string(), Style::default().fg(Color::Red)),
+                            Some(other) => (other.to_string(), Style::default().fg(Color::Yellow)),
+                            None => ("enabled".to_string(), Style::default()),
+                        }
+                    };
                     Row::new(vec![
                         Cell::from(format!(
                             "{} #{}",
@@ -751,11 +949,7 @@ fn render_settings_endpoints(frame: &mut Frame, app: &mut App, network_id: u64, 
                                 .unwrap_or_else(|| "—".to_string()),
                         ),
                         Cell::from(endpoint.endpoint_type.clone()),
-                        Cell::from(if endpoint.endpoint_disabled {
-                            "disabled"
-                        } else {
-                            "enabled"
-                        }),
+                        Cell::from(status.0).style(status.1),
                         Cell::from(truncate(&endpoint.endpoint_url, 54)),
                     ])
                     .style(style)
@@ -785,13 +979,6 @@ fn render_settings_endpoints(frame: &mut Frame, app: &mut App, network_id: u64, 
         Row::new(vec!["ID", "Label", "Type", "Status", "URL"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(Block::default().borders(Borders::ALL).title(format!(
-        " Endpoints for network {network_id} · n add · x delete · b back {} ",
-        position_label(
-            endpoints.map(|items| items.len()).unwrap_or(0),
-            app.settings.row_index,
-        )
-    )))
     .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -841,20 +1028,30 @@ fn render_settings_assets(frame: &mut Frame, app: &mut App, area: Rect) {
                 let asset = app.assets.get(identity)?;
                 let selected = index == app.settings.row_index;
                 let (price, change) = asset_quote_cells(app, identity);
+                let mut symbol_spans = vec![Span::raw(format!(
+                    "    {} ",
+                    if selected { "›" } else { " " }
+                ))];
+                if app.colored_assets
+                    && let Some(icon) = app.asset_icons.get(identity)
+                {
+                    symbol_spans.extend(IconRenderer::color_symbol(
+                        &asset.asset_symbol,
+                        &icon.colors,
+                    ));
+                } else {
+                    symbol_spans.push(Span::raw(asset.asset_symbol.clone()));
+                }
                 Some(
                     Row::new(vec![
-                        Cell::from(format!(
-                            "{} {}",
-                            if selected { "›" } else { " " },
-                            asset.asset_symbol
-                        )),
+                        Cell::from(Line::from(symbol_spans)),
                         Cell::from(truncate(&asset.asset_name, 26)),
                         price,
                         change,
                         Cell::from(asset.asset_decimals.to_string()),
                         Cell::from(truncate(&asset.asset_identity.to_string(), 42)),
                     ])
-                    .style(selected_row_style(selected)),
+                    .style(selected_row_style(app.theme, selected)),
                 )
             })
             .collect()
@@ -877,13 +1074,10 @@ fn render_settings_assets(frame: &mut Frame, app: &mut App, area: Rect) {
         ])
         .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(Block::default().borders(Borders::ALL).title(format!(
-        " Assets · n add · x delete · r refresh {} ",
-        position_label(identities.len(), app.settings.row_index)
-    )))
     .column_spacing(2);
 
     frame.render_widget(table, area);
+    render_asset_table_icons(frame, app, area, &identities, app.settings.row_scroll);
     register_resource_list_table(app, area, identities.len());
 }
 
@@ -925,7 +1119,7 @@ fn render_quoter_table(frame: &mut Frame, app: &mut App, area: Rect, interactive
                         Cell::from(format!("{} -> {}", quoter.token_a, quoter.token_b)),
                         Cell::from(truncate(&quoter.quoter_identity, 16)),
                     ])
-                    .style(selected_row_style(selected))
+                    .style(selected_row_style(app.theme, selected))
                 })
                 .collect()
         }
@@ -954,18 +1148,6 @@ fn render_quoter_table(frame: &mut Frame, app: &mut App, area: Rect, interactive
     .header(
         Row::new(vec!["Name", "Status", "Pair", "ID"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
-    )
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title(if interactive {
-                format!(
-                    " Price feeds {} ",
-                    position_label(quoter_count, app.settings.row_index)
-                )
-            } else {
-                " Price feeds · configure in Settings ".to_string()
-            }),
     )
     .column_spacing(2);
 
@@ -1008,7 +1190,7 @@ fn render_settings_vendors(frame: &mut Frame, app: &mut App, area: Rect) {
                         Cell::from(if vendor.unfinished { "unfinished" } else { "" }),
                         Cell::from(vendor.comment.clone()),
                     ])
-                    .style(selected_row_style(selected))
+                    .style(selected_row_style(app.theme, selected))
                 })
                 .collect()
         }
@@ -1019,17 +1201,6 @@ fn render_settings_vendors(frame: &mut Frame, app: &mut App, area: Rect) {
             Cell::from(""),
         ])],
     };
-
-    let title = app
-        .settings_snapshot()
-        .map(|snapshot| {
-            format!(
-                " Vendors · {} enabled · e/x toggle {} ",
-                snapshot.enabled_vendor_count(),
-                position_label(snapshot.all_vendors.len(), app.settings.row_index)
-            )
-        })
-        .unwrap_or_else(|| " Vendors ".to_string());
 
     let table = Table::new(
         rows,
@@ -1044,7 +1215,6 @@ fn render_settings_vendors(frame: &mut Frame, app: &mut App, area: Rect) {
         Row::new(vec!["Flag", "Status", "State", "Comment"])
             .style(Style::default().add_modifier(Modifier::BOLD)),
     )
-    .block(Block::default().borders(Borders::ALL).title(title))
     .column_spacing(2);
 
     frame.render_widget(table, area);
@@ -1068,34 +1238,23 @@ fn render_account_detail(frame: &mut Frame, app: &mut App, area: Rect) {
         balance_cell(app, account_id, app.balance_state(account_id));
 
     let pages = [
-        (AccountPanel::Overview, "h", "Overview"),
+        (AccountPanel::Overview, "o", "Overview"),
         (AccountPanel::Assets, "a", "Assets"),
         (AccountPanel::Defi, "d", "DeFi"),
         (AccountPanel::Transactions, "t", "Tx"),
     ];
 
-    let mut sidebar_lines = vec![
-        Line::from(Span::styled(
-            truncate_address(&account.metadata),
-            Style::default().fg(Color::DarkGray),
-        )),
-        Line::from(Span::styled(
-            wallet_type_label(&account.metadata),
-            Style::default().fg(Color::DarkGray),
-        )),
-        Line::from(vec![
-            Span::styled("Balance ", Style::default().fg(Color::DarkGray)),
-            Span::styled(
-                balance_label,
-                balance_amount_style.patch(balance_sidebar_style(
-                    app,
-                    account_id,
-                    app.balance_state(account_id),
-                )),
-            ),
-        ]),
-        Line::from(""),
-    ];
+    let mut sidebar_lines = vec![Line::from(vec![
+        Span::styled("Balance ", Style::default().fg(Color::DarkGray)),
+        Span::styled(
+            balance_label,
+            balance_amount_style.patch(balance_sidebar_style(
+                app,
+                account_id,
+                app.balance_state(account_id),
+            )),
+        ),
+    ])];
 
     for (panel, key, label) in pages {
         let selected = app.account_panel == panel;
@@ -1129,29 +1288,46 @@ fn render_account_detail(frame: &mut Frame, app: &mut App, area: Rect) {
         )),
     ]);
 
-    let sidebar_title = truncate(&account.name, 20);
-    let sidebar_block = {
-        let mut block = Block::default()
-            .borders(Borders::ALL)
-            .title(format!(" {sidebar_title} "));
-        if app.account_focus == AccountFocus::Sidebar {
-            block = block.border_style(Style::default().fg(Color::Cyan));
-        }
-        block
-    };
-    let sidebar_inner = sidebar_block.inner(chunks[0]);
+    let sidebar_area = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Length(1), Constraint::Min(0)])
+        .split(chunks[0])[1];
+    let sidebar = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1),
+            Constraint::Length(IconRenderer::icon_height()),
+            Constraint::Length(3),
+            Constraint::Min(0),
+        ])
+        .split(sidebar_area);
+    let header_lines = vec![
+        Line::from(Span::styled(
+            truncate(&account.name, 20),
+            if app.account_focus == AccountFocus::Sidebar {
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().add_modifier(Modifier::BOLD)
+            },
+        )),
+        Line::from(Span::styled(
+            truncate_address(&account.metadata),
+            Style::default().fg(Color::DarkGray),
+        )),
+        Line::from(Span::styled(
+            wallet_type_label(&account.metadata),
+            Style::default().fg(Color::DarkGray),
+        )),
+    ];
+    frame.render_widget(Paragraph::new(header_lines), sidebar[2]);
+    let sidebar_inner = sidebar[3];
 
     if let Some(address) = account_evm_address(&account.metadata) {
         if account_icons_enabled(app) {
-            let body = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([
-                    Constraint::Length(IconRenderer::icon_height()),
-                    Constraint::Min(0),
-                ])
-                .split(sidebar_inner);
-            render_account_icon(frame, app, body[0], &address);
-            let text_area = body[1];
+            render_account_icon(frame, app, sidebar[1], &address);
+            let text_area = sidebar_inner;
             frame.render_widget(
                 Paragraph::new(sidebar_lines).wrap(Wrap { trim: true }),
                 text_area,
@@ -1172,29 +1348,33 @@ fn render_account_detail(frame: &mut Frame, app: &mut App, area: Rect) {
         register_account_sidebar_panels(app, chunks[0], sidebar_inner);
     }
 
-    frame.render_widget(sidebar_block, chunks[0]);
-
     let content_title = account_content_title(app, account_id);
-    let content = account_content_block(&content_title, app.account_focus == AccountFocus::Content);
-    let inner = content.inner(chunks[1]);
-    frame.render_widget(content, chunks[1]);
+    let content = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1), Constraint::Min(0)])
+        .split(chunks[1]);
+    frame.render_widget(
+        Paragraph::new(Span::styled(
+            content_title,
+            if app.account_focus == AccountFocus::Content {
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().add_modifier(Modifier::BOLD)
+            },
+        )),
+        content[0],
+    );
 
     match app.account_panel {
-        AccountPanel::Overview => render_account_overview(frame, app, account_id, inner),
-        AccountPanel::Assets => render_account_assets(frame, app, account_id, inner),
-        AccountPanel::Defi => render_account_defi(frame, app, account_id, inner),
-        AccountPanel::Transactions => render_account_transactions(frame, app, account_id, inner),
+        AccountPanel::Overview => render_account_overview(frame, app, account_id, content[1]),
+        AccountPanel::Assets => render_account_assets(frame, app, account_id, content[1]),
+        AccountPanel::Defi => render_account_defi(frame, app, account_id, content[1]),
+        AccountPanel::Transactions => {
+            render_account_transactions(frame, app, account_id, content[1])
+        }
     }
-}
-
-fn account_content_block(title: &str, focused: bool) -> Block<'_> {
-    let mut block = Block::default()
-        .borders(Borders::ALL)
-        .title(format!(" {title} "));
-    if focused {
-        block = block.border_style(Style::default().fg(Color::Cyan));
-    }
-    block
 }
 
 fn account_content_title(app: &App, account_id: u64) -> String {
@@ -1238,7 +1418,7 @@ fn render_horizontal_rule(frame: &mut Frame, area: Rect) {
     );
 }
 
-fn render_account_overview(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
+fn render_account_overview(frame: &mut Frame, app: &mut App, account_identity: u64, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -1316,46 +1496,90 @@ fn render_account_overview(frame: &mut Frame, app: &App, account_identity: u64, 
     render_account_asset_table(frame, app, account_identity, chunks[2]);
 }
 
-fn render_account_assets(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
+fn render_account_assets(frame: &mut Frame, app: &mut App, account_identity: u64, area: Rect) {
     render_account_asset_table(frame, app, account_identity, area);
 }
 
-fn render_account_asset_table(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
-    let state = app.balance_state(account_identity);
+fn render_account_asset_table(frame: &mut Frame, app: &mut App, account_identity: u64, area: Rect) {
+    let (table_rows, identities): (Vec<Row>, Vec<String>) =
+        match app.balance_state(account_identity) {
+            None | Some(ResourceState::Idle) => (
+                vec![Row::new(vec![
+                    Cell::from("No balance data yet — press r to refresh"),
+                    Cell::from(""),
+                    Cell::from(""),
+                    Cell::from(""),
+                    Cell::from(""),
+                ])],
+                Vec::new(),
+            ),
+            Some(ResourceState::Loading) => (
+                vec![Row::new(vec![
+                    Cell::from("Loading balances…"),
+                    Cell::from(""),
+                    Cell::from(""),
+                    Cell::from(""),
+                    Cell::from(""),
+                ])],
+                Vec::new(),
+            ),
+            Some(ResourceState::Error(error)) => (
+                vec![Row::new(vec![
+                    Cell::from(truncate_error(error)),
+                    Cell::from(""),
+                    Cell::from(""),
+                    Cell::from(""),
+                    Cell::from(""),
+                ])],
+                Vec::new(),
+            ),
+            Some(ResourceState::Ready(balances)) => {
+                let mut identities: Vec<_> = balances
+                    .balances
+                    .iter()
+                    .map(|balance| {
+                        (
+                            balance
+                                .balance_quote
+                                .as_deref()
+                                .and_then(|value| value.parse::<u128>().ok())
+                                .unwrap_or_default(),
+                            balance.asset_identity.to_string(),
+                        )
+                    })
+                    .collect();
+                identities.sort_by(|left, right| right.0.cmp(&left.0));
+                (
+                    asset_rows(app, balances),
+                    identities
+                        .into_iter()
+                        .map(|(_, identity)| identity)
+                        .collect(),
+                )
+            }
+        };
 
-    let table_rows: Vec<Row> = match state {
-        None | Some(ResourceState::Idle) => vec![Row::new(vec![
-            Cell::from("No balance data yet — press r to refresh"),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-        ])],
-        Some(ResourceState::Loading) => vec![Row::new(vec![
-            Cell::from("Loading balances…"),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-        ])],
-        Some(ResourceState::Error(error)) => vec![Row::new(vec![
-            Cell::from(truncate_error(error)),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-        ])],
-        Some(ResourceState::Ready(balances)) => asset_rows(app, balances),
-    };
+    let height = table_body_height(area);
+    let (start, end) = visible_window(table_rows.len(), app.account_scroll, height);
+    app.account_scroll = start;
+    let table_rows: Vec<Row> = table_rows
+        .into_iter()
+        .skip(start)
+        .take(end.saturating_sub(start))
+        .collect();
 
     let table = Table::new(
         table_rows,
         [
-            Constraint::Percentage(34),
-            Constraint::Percentage(28),
+            Constraint::Percentage(32),
+            Constraint::Percentage(26),
             Constraint::Length(14),
+            Constraint::Length(8),
             Constraint::Length(10),
         ],
     )
     .header(
-        Row::new(vec!["Asset", "Balance", "Value", "24h"]).style(
+        Row::new(vec!["    Asset", "Balance", "Value", "Weight", "24h"]).style(
             Style::default()
                 .add_modifier(Modifier::BOLD)
                 .fg(Color::DarkGray),
@@ -1364,9 +1588,18 @@ fn render_account_asset_table(frame: &mut Frame, app: &App, account_identity: u6
     .column_spacing(2);
 
     frame.render_widget(table, area);
+    if !identities.is_empty() {
+        render_asset_table_icons(
+            frame,
+            app,
+            area,
+            &identities[start.min(identities.len())..],
+            0,
+        );
+    }
 }
 
-fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
+fn render_account_defi(frame: &mut Frame, app: &mut App, account_identity: u64, area: Rect) {
     let state = app.defi_state(account_identity);
     let show_notice = matches!(
         state,
@@ -1401,36 +1634,67 @@ fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area
 
     let table_area = if show_notice { chunks[1] } else { chunks[0] };
 
-    let rows: Vec<Row> = match state {
-        None | Some(ResourceState::Idle) => vec![Row::new(vec![
-            Cell::from("No DeFi data yet — press d or r to refresh"),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-        ])],
-        Some(ResourceState::Loading) => vec![Row::new(vec![
-            Cell::from("Loading DeFi positions…"),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-        ])],
-        Some(ResourceState::Error(error)) => vec![Row::new(vec![
-            Cell::from(truncate_error(error)),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-        ])],
-        Some(ResourceState::Ready(result)) => defi_rows(result),
+    let (rows, identities): (Vec<Row>, Vec<String>) = match state {
+        None | Some(ResourceState::Idle) => (
+            vec![Row::new(vec![
+                Cell::from("No DeFi data yet — press d or r to refresh"),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+            ])],
+            Vec::new(),
+        ),
+        Some(ResourceState::Loading) => (
+            vec![Row::new(vec![
+                Cell::from("Loading DeFi positions…"),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+            ])],
+            Vec::new(),
+        ),
+        Some(ResourceState::Error(error)) => (
+            vec![Row::new(vec![
+                Cell::from(truncate_error(error)),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+                Cell::from(""),
+            ])],
+            Vec::new(),
+        ),
+        Some(ResourceState::Ready(result)) => (
+            defi_rows(result),
+            result
+                .positions
+                .iter()
+                .map(|position| {
+                    app.assets
+                        .values()
+                        .find(|asset| asset.asset_symbol == position.underlying_symbol)
+                        .map(|asset| asset.asset_identity.to_string())
+                        .unwrap_or_default()
+                })
+                .collect(),
+        ),
     };
+
+    let height = table_body_height(table_area);
+    let (start, end) = visible_window(rows.len(), app.account_scroll, height);
+    app.account_scroll = start;
+    let rows: Vec<Row> = rows
+        .into_iter()
+        .skip(start)
+        .take(end.saturating_sub(start))
+        .collect();
 
     let table = Table::new(
         rows,
@@ -1448,7 +1712,7 @@ fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area
         Row::new(vec![
             "Chain",
             "Protocol",
-            "Position",
+            "    Position",
             "Value",
             "TVL",
             "APR",
@@ -1463,6 +1727,16 @@ fn render_account_defi(frame: &mut Frame, app: &App, account_identity: u64, area
     .column_spacing(2);
 
     frame.render_widget(table, table_area);
+    if !identities.is_empty() {
+        render_asset_table_icons_at(
+            frame,
+            app,
+            table_area,
+            &identities[start.min(identities.len())..],
+            0,
+            24,
+        );
+    }
 }
 
 fn render_account_transactions(frame: &mut Frame, app: &App, account_identity: u64, area: Rect) {
@@ -1493,7 +1767,10 @@ fn render_account_transactions(frame: &mut Frame, app: &App, account_identity: u
             Cell::from(""),
             Cell::from(""),
         ])],
-        Some(ResourceState::Ready(transactions)) => transaction_rows(transactions),
+        Some(ResourceState::Ready(transactions)) => transaction_rows(
+            transactions,
+            (app.account_focus == AccountFocus::Content).then(|| app.clamped_tx_index()),
+        ),
     };
 
     let table = Table::new(
@@ -1568,7 +1845,7 @@ fn defi_rows(result: &DefiResult) -> Vec<Row<'static>> {
                     10,
                 )),
                 Cell::from(position.protocol.clone()),
-                Cell::from(truncate(&position.name, 32)),
+                Cell::from(format!("    {}", truncate(&position.name, 28))),
                 Cell::from(value),
                 Cell::from(format_fiat(position.tvl_usd)),
                 Cell::from(format_percent(position.apr)),
@@ -1578,7 +1855,7 @@ fn defi_rows(result: &DefiResult) -> Vec<Row<'static>> {
         .collect()
 }
 
-fn transaction_rows(transactions: &[Tx]) -> Vec<Row<'static>> {
+fn transaction_rows(transactions: &[Tx], selected: Option<usize>) -> Vec<Row<'static>> {
     if transactions.is_empty() {
         return vec![Row::new(vec![
             Cell::from("No transactions found"),
@@ -1592,13 +1869,19 @@ fn transaction_rows(transactions: &[Tx]) -> Vec<Row<'static>> {
 
     transactions
         .iter()
-        .map(|tx| {
+        .enumerate()
+        .map(|(index, tx)| {
             let status = transaction_status(tx);
             let status_style = match status.as_str() {
                 "Success" => Style::default().fg(Color::Green),
                 "Failed" => Style::default().fg(Color::Red),
                 "Executed" => Style::default().fg(Color::Yellow),
                 _ => Style::default().fg(Color::DarkGray),
+            };
+            let row_style = if selected == Some(index) {
+                Style::default().bg(Color::DarkGray).fg(Color::White)
+            } else {
+                Style::default()
             };
 
             Row::new(vec![
@@ -1609,12 +1892,165 @@ fn transaction_rows(transactions: &[Tx]) -> Vec<Row<'static>> {
                 Cell::from(truncate(&transaction_target(tx), 26)),
                 Cell::from(transaction_hash(tx)),
             ])
+            .style(row_style)
         })
         .collect()
 }
 
+fn decoded_call_label(call: &koi::models::tx::decode::DecodedCall) -> String {
+    use koi::models::tx::decode::Decoded;
+
+    match &call.decoded {
+        Decoded::Verified(function) => {
+            let contract = function
+                .contract
+                .verified_name
+                .clone()
+                .unwrap_or_else(|| truncate(&function.contract.address.to_string(), 12));
+            format!("{contract}.{}", function.function)
+        }
+        Decoded::SignatureFallback(fallback) => fallback
+            .candidates
+            .first()
+            .cloned()
+            .unwrap_or_else(|| format!("selector {}", fallback.selector)),
+        Decoded::Raw(raw) => {
+            if raw.data.0.is_empty() {
+                "transfer".to_string()
+            } else {
+                format!("raw call ({} bytes)", raw.data.0.len())
+            }
+        }
+    }
+}
+
+fn push_decoded_call_lines(
+    lines: &mut Vec<Line<'static>>,
+    call: &koi::models::tx::decode::DecodedCall,
+    depth: usize,
+) {
+    let indent = "  ".repeat(depth);
+    let value = call.value.to_string();
+    let suffix = if value != "0" {
+        format!(" · value {value}")
+    } else {
+        String::new()
+    };
+    lines.push(Line::from(vec![
+        Span::styled(
+            format!("{indent}› ",),
+            Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+        ),
+        Span::styled(
+            format!("{}{suffix}", decoded_call_label(call)),
+            Style::default().bg(PANEL_BG),
+        ),
+    ]));
+    lines.push(Line::from(Span::styled(
+        format!("{indent}  to {}", call.to),
+        Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+    )));
+
+    if let koi::models::tx::decode::Decoded::Verified(function) = &call.decoded {
+        for param in &function.params {
+            let name = param.name.clone().unwrap_or_else(|| param.ty.clone());
+            let value = serde_json::to_string(&param.value).unwrap_or_default();
+            lines.push(Line::from(Span::styled(
+                format!("{indent}  {name}: {}", truncate(&value, 60)),
+                Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+            )));
+        }
+    }
+
+    for subcall in &call.subcalls {
+        push_decoded_call_lines(lines, subcall, depth + 1);
+    }
+}
+
+fn render_tx_detail(frame: &mut Frame, app: &App, area: Rect) {
+    let Some(tx) = app
+        .selected_account_txs()
+        .and_then(|transactions| transactions.get(app.clamped_tx_index()))
+    else {
+        return;
+    };
+
+    let mut lines: Vec<Line> = vec![
+        Line::from(vec![
+            Span::styled(
+                "Network  ",
+                Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+            ),
+            Span::styled(
+                tx.network_identity.0.to_string(),
+                Style::default().bg(PANEL_BG),
+            ),
+        ]),
+        Line::from(vec![
+            Span::styled(
+                "Status   ",
+                Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+            ),
+            Span::styled(transaction_status(tx), Style::default().bg(PANEL_BG)),
+        ]),
+        Line::from(vec![
+            Span::styled(
+                "Date     ",
+                Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+            ),
+            Span::styled(transaction_date(tx), Style::default().bg(PANEL_BG)),
+        ]),
+        Line::from(vec![
+            Span::styled(
+                "Hash     ",
+                Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+            ),
+            Span::styled(
+                tx.tx_hash
+                    .as_ref()
+                    .map(|hash| hash.to_string())
+                    .unwrap_or_else(|| "—".to_string()),
+                Style::default().bg(PANEL_BG),
+            ),
+        ]),
+        Line::from(vec![
+            Span::styled(
+                "From     ",
+                Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+            ),
+            Span::styled(
+                tx.from
+                    .as_ref()
+                    .map(|from| from.to_string())
+                    .unwrap_or_else(|| "—".to_string()),
+                Style::default().bg(PANEL_BG),
+            ),
+        ]),
+        Line::from(Span::raw("")),
+    ];
+
+    match &tx.decoded {
+        Some(call) => push_decoded_call_lines(&mut lines, call, 0),
+        None => lines.push(Line::from(Span::styled(
+            "No decoded call data",
+            Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+        ))),
+    }
+
+    lines.push(Line::from(Span::raw("")));
+    lines.push(Line::from(Span::styled(
+        "Esc close",
+        Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+    )));
+
+    let height = (lines.len() + 2).min(28) as u16;
+    let popup = centered_modal(area, 86, height);
+    paint_area(frame, popup, PANEL_BG);
+    render_panel(frame, popup, "Transaction", lines);
+}
+
 fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
-    let mut entries: Vec<(u128, String, String, String, Style, String, Style, Style)> = balances
+    let mut entries: Vec<(u128, String, Line<'static>, String, String, Style, Style)> = balances
         .balances
         .iter()
         .map(|balance| {
@@ -1664,12 +2100,21 @@ fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
                 .and_then(|raw| raw.parse::<u128>().ok())
                 .unwrap_or(0);
 
+            let amount_style = amount.ratatui_style();
+            let mut balance_spans = vec![Span::styled(format!("{} ", amount.text), amount_style)];
+            if app.colored_assets
+                && let Some(icon) = app.asset_icons.get(&balance.asset_identity.to_string())
+            {
+                balance_spans.extend(IconRenderer::color_symbol(&symbol, &icon.colors));
+            } else {
+                balance_spans.push(Span::styled(symbol, amount_style));
+            }
+
             (
                 sort_value,
                 name,
-                format!("{} {}", amount.text, symbol),
+                Line::from(balance_spans),
                 value.text.clone(),
-                amount.ratatui_style(),
                 change_text,
                 change_style,
                 value.ratatui_style(),
@@ -1677,7 +2122,7 @@ fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
         })
         .collect();
 
-    entries.sort_by(|(left, _, _, _, _, _, _, _), (right, _, _, _, _, _, _, _)| right.cmp(left));
+    entries.sort_by(|(left, _, _, _, _, _, _), (right, _, _, _, _, _, _)| right.cmp(left));
 
     if entries.is_empty() {
         return vec![Row::new(vec![
@@ -1685,55 +2130,146 @@ fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
             Cell::from(""),
             Cell::from(""),
             Cell::from(""),
+            Cell::from(""),
         ])];
     }
 
-    entries
+    let total: u128 = balances
+        .total_quote
+        .as_ref()
+        .and_then(|raw| raw.parse::<u128>().ok())
+        .unwrap_or(0);
+    let weight = |value: u128| {
+        if total == 0 {
+            "—".to_string()
+        } else {
+            format!("{:.1}%", (value as f64 / total as f64) * 100.0)
+        }
+    };
+
+    let mut rows: Vec<Row<'static>> = entries
         .into_iter()
         .map(
-            |(_, name, amount, value, amount_style, change, change_style, value_style)| {
+            |(sort_value, name, balance_line, value, change, change_style, value_style)| {
                 Row::new(vec![
-                    Cell::from(name),
-                    Cell::from(amount).style(amount_style),
+                    Cell::from(format!("    {name}")),
+                    Cell::from(balance_line),
                     Cell::from(value).style(value_style),
+                    Cell::from(weight(sort_value)).style(Style::default().fg(Color::DarkGray)),
                     Cell::from(change).style(change_style),
                 ])
             },
         )
-        .collect()
+        .collect();
+
+    if let Some(total_quote) = balances.total_quote.as_ref() {
+        let formatted = format_quote(total_quote, app.display_asset());
+        rows.push(
+            Row::new(vec![
+                Cell::from("Total"),
+                Cell::from(""),
+                Cell::from(formatted.text),
+                Cell::from("100%"),
+                Cell::from(""),
+            ])
+            .style(Style::default().add_modifier(Modifier::BOLD)),
+        );
+    }
+
+    rows
 }
 
 fn render_footer(frame: &mut Frame, app: &App, area: Rect) {
-    let help = if let Some(form) = &app.form {
-        if matches!(form, ActiveForm::AddAsset { .. }) {
-            "form  ↑↓ field · Tab accept hint · Enter save · Esc cancel"
-        } else {
-            "form  ↑↓ field · Tab next · Enter save · Esc cancel"
-        }
+    let colors = palette(app.theme);
+    paint_area(frame, area, colors.chrome);
+    let mode = if app.move_mode.is_some() {
+        "MOVE"
+    } else if app.filter_input {
+        "SEARCH"
+    } else if app.form.is_some() {
+        "INSERT"
     } else if app.selected_account.is_some() {
-        "account  click sidebar pages · scroll · ←→ focus  r refresh  b back  q quit"
+        "ACCOUNT"
+    } else {
+        "NORMAL"
+    };
+    let keys = if let Some(form) = &app.form {
+        if matches!(form, ActiveForm::AddAsset { .. }) {
+            "↑↓ field · Tab hint · Enter save · Esc cancel"
+        } else {
+            "↑↓ field · Enter save · Esc cancel"
+        }
+    } else if app.move_mode.is_some() {
+        "Space grab · j/k move · s save · Esc cancel"
+    } else if app.selected_account.is_some() {
+        match app.account_panel {
+            AccountPanel::Assets => "n link · x unlink · $ currency · r refresh · b back · ? help",
+            AccountPanel::Transactions => "→ focus · Enter detail · r refresh · b back · ? help",
+            _ => "o/a/d/t panels · h/l focus · $ currency · r refresh · b back · ? help",
+        }
     } else if app.tab == Tab::Assets {
-        "assets  click/hover rows · scroll · n add  x delete  r reload  q quit"
+        "n add · e edit · x delete · $ currency · r refresh · ? help"
     } else if app.tab == Tab::Prices {
-        "prices  click/hover rows · scroll · r reload  q quit"
+        "n add quoter · x toggle · $ currency · r refresh · ? help"
     } else if app.tab == Tab::Networks {
         if app.settings.nested_network.is_some() {
-            "endpoints  click/hover rows · scroll · n add  x delete  b back  r reload  q quit"
+            "n add · e edit · x delete · b back · ? help"
         } else {
-            "networks  click/hover rows · scroll · n add  Enter endpoints  r reload  q quit"
+            "Enter endpoints · n add · e edit · x delete · ? help"
         }
     } else if app.tab == Tab::Settings {
-        "settings  click tabs/rows · scroll · e/x action  r reload  q quit"
+        "←→ section · e edit · x toggle · r refresh · ? help"
     } else {
-        "accounts  click/hover rows · scroll · Enter open  r reload  q quit"
+        "n add · g group · m move · e edit · x delete · $ currency · ? help"
     };
+
+    let mode = format!(" {mode} ");
+    let mode_width = (mode.chars().count() as u16).min(area.width);
+    frame.render_widget(
+        Paragraph::new(Line::from(Span::styled(
+            mode,
+            Style::default().fg(colors.selected_fg).bg(colors.selected),
+        ))),
+        Rect {
+            x: area.x,
+            y: area.y,
+            width: mode_width,
+            height: 1,
+        },
+    );
+
+    let currency = format!(" {} ", app.display_currency);
+    let currency_width = (currency.chars().count() as u16).min(area.width);
+    frame.render_widget(
+        Paragraph::new(Line::from(Span::styled(
+            currency,
+            Style::default().fg(colors.selected_fg).bg(colors.selected),
+        )))
+        .alignment(ratatui::layout::Alignment::Right),
+        Rect {
+            x: area
+                .x
+                .saturating_add(area.width.saturating_sub(currency_width)),
+            y: area.y,
+            width: currency_width,
+            height: 1,
+        },
+    );
 
     frame.render_widget(
         Paragraph::new(Line::from(vec![
-            Span::styled(" command ", Style::default().fg(Color::Cyan)),
-            Span::styled(help, Style::default().fg(Color::DarkGray)),
-        ])),
-        area,
+            Span::styled(keys, Style::default().fg(colors.muted).bg(colors.chrome)),
+            Span::raw(" "),
+        ]))
+        .alignment(ratatui::layout::Alignment::Right),
+        Rect {
+            x: area.x.saturating_add(mode_width),
+            y: area.y,
+            width: area
+                .width
+                .saturating_sub(mode_width.saturating_add(currency_width)),
+            height: 1,
+        },
     );
 }
 
@@ -1795,8 +2331,8 @@ fn account_icons_enabled(app: &App) -> bool {
 
 fn account_list_icon_rect(table_area: Rect, visible_row: usize, row_height: u16) -> Rect {
     Rect {
-        x: table_area.x + 1,
-        y: table_area.y + 2 + visible_row as u16 * row_height,
+        x: table_area.x,
+        y: table_area.y + 1 + visible_row as u16 * row_height,
         width: IconRenderer::list_column_width(),
         height: row_height,
     }
@@ -1805,6 +2341,57 @@ fn account_list_icon_rect(table_area: Rect, visible_row: usize, row_height: u16)
 fn render_account_icon(frame: &mut Frame, app: &mut App, area: Rect, address: &str) {
     if let Some(renderer) = app.icon_renderer.as_mut() {
         renderer.render_large(frame, area, address);
+    }
+}
+
+fn render_asset_table_icons(
+    frame: &mut Frame,
+    app: &mut App,
+    area: Rect,
+    identities: &[String],
+    scroll: usize,
+) {
+    render_asset_table_icons_at(frame, app, area, identities, scroll, 0);
+}
+
+fn render_asset_table_icons_at(
+    frame: &mut Frame,
+    app: &mut App,
+    area: Rect,
+    identities: &[String],
+    scroll: usize,
+    offset_x: u16,
+) {
+    let height = table_body_height(area);
+    let (_, end) = visible_window(identities.len(), scroll, height);
+    let icons: Vec<_> = identities
+        .iter()
+        .enumerate()
+        .skip(scroll)
+        .take(end.saturating_sub(scroll))
+        .filter_map(|(row, identity)| {
+            app.asset_icons
+                .get(identity)
+                .map(|icon| (row.saturating_sub(scroll), identity.clone(), icon.clone()))
+        })
+        .collect();
+    for (row, identity, icon) in icons {
+        let icon_area = Rect {
+            x: area.x.saturating_add(offset_x),
+            y: area.y + 1 + row as u16,
+            width: 3,
+            height: 1,
+        };
+        if let Some(renderer) = app.icon_renderer.as_mut()
+            && renderer.uses_graphics()
+        {
+            renderer.render_asset_icon(frame, icon_area, &identity, &icon.png_data);
+        } else {
+            frame.render_widget(
+                Paragraph::new(Line::from(IconRenderer::asset_symbol_spans(&icon.colors))),
+                icon_area,
+            );
+        }
     }
 }
 
@@ -1846,7 +2433,7 @@ fn register_resource_list_table(app: &mut App, area: Rect, len: usize) {
 }
 
 fn register_account_sidebar_panels(app: &mut App, sidebar: Rect, text_area: Rect) {
-    let panel_start = text_area.y + 4;
+    let panel_start = text_area.y + 2;
     let panels = [
         AccountPanel::Overview,
         AccountPanel::Assets,
@@ -1876,23 +2463,15 @@ fn register_account_sidebar_panels(app: &mut App, sidebar: Rect, text_area: Rect
     });
 }
 
-fn position_label(len: usize, selected: usize) -> String {
-    if len == 0 {
-        "(0)".to_string()
-    } else {
-        format!("({}/{len})", selected.saturating_add(1).min(len))
-    }
-}
-
-fn selected_row_style(selected: bool) -> Style {
+fn selected_row_style(theme: Theme, selected: bool) -> Style {
     if selected {
-        Style::default().bg(Color::DarkGray).fg(Color::White)
+        let colors = palette(theme);
+        Style::default().bg(colors.selected).fg(colors.selected_fg)
     } else {
         Style::default()
     }
 }
 
-const OVERLAY_BG: Color = Color::Rgb(18, 18, 18);
 const PANEL_BG: Color = Color::Rgb(36, 36, 36);
 const PANEL_SELECTED_BG: Color = Color::Rgb(58, 58, 58);
 const HINT_FG: Color = Color::Rgb(110, 110, 110);
@@ -1934,7 +2513,7 @@ fn centered_modal(area: Rect, width: u16, height: u16) -> Rect {
     }
 }
 
-fn render_form(frame: &mut Frame, form: &ActiveForm, area: Rect) {
+fn render_form(frame: &mut Frame, form: &ActiveForm, area: Rect, theme: Theme) {
     let (width, height) = form.modal_dimensions();
     let popup = centered_modal(area, width, height);
 
@@ -1945,10 +2524,10 @@ fn render_form(frame: &mut Frame, form: &ActiveForm, area: Rect) {
             width: popup.width,
             height: popup.height,
         };
-        paint_area(frame, shadow, OVERLAY_BG);
+        paint_area(frame, shadow, palette(theme).overlay);
     }
 
-    paint_area(frame, popup, PANEL_BG);
+    paint_area(frame, popup, palette(theme).panel);
 
     match form {
         ActiveForm::AddAssetType { selected } => {
@@ -2032,17 +2611,17 @@ fn render_form(frame: &mut Frame, form: &ActiveForm, area: Rect) {
             discovery,
         ),
         ActiveForm::AddNetwork(text_form) => {
-            render_text_form(frame, popup, form.title(), text_form, false);
+            render_text_form(frame, popup, form.title(), text_form, Vec::new());
         }
         ActiveForm::AddEndpoint {
             form: text_form, ..
         } => {
-            render_text_form(frame, popup, form.title(), text_form, false);
+            render_text_form(frame, popup, form.title(), text_form, Vec::new());
         }
         ActiveForm::GroupName {
             form: text_form, ..
         } => {
-            render_text_form(frame, popup, form.title(), text_form, false);
+            render_text_form(frame, popup, form.title(), text_form, Vec::new());
         }
         ActiveForm::PickCurrency { options, selected } => {
             let lines: Vec<Line> = options
@@ -2065,6 +2644,278 @@ fn render_form(frame: &mut Frame, form: &ActiveForm, area: Rect) {
                     Style::default().fg(Color::DarkGray).bg(PANEL_BG),
                 ))))
                 .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::AddAccountType { selected } => {
+            let lines: Vec<Line> = AccountKind::ALL
+                .iter()
+                .enumerate()
+                .map(|(index, kind)| {
+                    Line::from(Span::styled(
+                        format!(
+                            "{} {}",
+                            if index == *selected { "›" } else { " " },
+                            kind.label()
+                        ),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Enter choose · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::AddAccountAddress {
+            form: text_form,
+            ens_hint,
+            ens_primary,
+            ..
+        } => {
+            let mut extras = Vec::new();
+            if let Some(hint) = ens_hint {
+                extras.push(Line::from(vec![
+                    Span::styled(
+                        format!("  ↳ {hint}"),
+                        Style::default().fg(Color::Green).bg(PANEL_BG),
+                    ),
+                    Span::styled(
+                        "  Tab accept",
+                        Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                    ),
+                ]));
+            }
+            if let Some(primary) = ens_primary {
+                let mut spans = vec![Span::styled(
+                    format!("  ★ {primary}"),
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .bg(PANEL_BG)
+                        .add_modifier(Modifier::BOLD),
+                )];
+                let name_empty = text_form
+                    .field(0)
+                    .is_none_or(|value| value.trim().is_empty());
+                if name_empty {
+                    spans.push(Span::styled(
+                        "  Tab on Name to use",
+                        Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                    ));
+                }
+                extras.push(Line::from(spans));
+            }
+            render_text_form(frame, popup, form.title(), text_form, extras);
+        }
+        ActiveForm::AddAccountMnemonic {
+            form: text_form,
+            deriving,
+        } => {
+            if *deriving {
+                render_panel(
+                    frame,
+                    popup,
+                    form.title(),
+                    vec![
+                        Line::from(Span::styled(
+                            "Deriving addresses…",
+                            Style::default().fg(Color::Yellow).bg(PANEL_BG),
+                        )),
+                        Line::from(Span::raw("")),
+                        Line::from(Span::styled(
+                            "Esc cancel",
+                            Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                        )),
+                    ],
+                );
+            } else {
+                render_text_form(frame, popup, form.title(), text_form, Vec::new());
+            }
+        }
+        ActiveForm::AddAccountPickAddress {
+            options, selected, ..
+        } => {
+            let lines: Vec<Line> = options
+                .iter()
+                .enumerate()
+                .map(|(index, option)| {
+                    Line::from(Span::styled(
+                        format!(
+                            "{} {} · {}",
+                            if index == *selected { "›" } else { " " },
+                            option.path,
+                            option.address
+                        ),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Enter create account · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::RenameAccount {
+            form: text_form, ..
+        } => {
+            render_text_form(frame, popup, form.title(), text_form, Vec::new());
+        }
+        ActiveForm::ConfirmDeleteAccount { name, .. } => {
+            let lines = vec![
+                Line::from(Span::styled(
+                    format!("Delete account \"{name}\"?"),
+                    Style::default().bg(PANEL_BG),
+                )),
+                Line::from(Span::styled(
+                    "Balances and history references are removed.",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                )),
+                Line::from(Span::raw("")),
+                Line::from(Span::styled(
+                    "Enter delete · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                )),
+            ];
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::AccountNetworks {
+            options, selected, ..
+        } => {
+            let lines: Vec<Line> = options
+                .iter()
+                .enumerate()
+                .map(|(index, (id, name, checked))| {
+                    Line::from(Span::styled(
+                        format!(
+                            "{} [{}] {} ({})",
+                            if index == *selected { "›" } else { " " },
+                            if *checked { "x" } else { " " },
+                            name,
+                            id
+                        ),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Space toggle · Enter save · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::PickAccountAsset {
+            options, selected, ..
+        } => {
+            let lines: Vec<Line> = options
+                .iter()
+                .enumerate()
+                .map(|(index, (_, label))| {
+                    Line::from(Span::styled(
+                        format!("{} {}", if index == *selected { "›" } else { " " }, label),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Enter apply · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::EditEndpoint {
+            form: text_form, ..
+        }
+        | ActiveForm::EditNetwork {
+            form: text_form, ..
+        }
+        | ActiveForm::EditAsset {
+            form: text_form, ..
+        } => {
+            render_text_form(frame, popup, form.title(), text_form, Vec::new());
+        }
+        ActiveForm::PickQuoterToken {
+            options, selected, ..
+        } => {
+            let lines: Vec<Line> = options
+                .iter()
+                .enumerate()
+                .map(|(index, (_, label))| {
+                    Line::from(Span::styled(
+                        format!("{} {}", if index == *selected { "›" } else { " " }, label),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Enter choose · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::QuoterDiscovering => {
+            render_panel(
+                frame,
+                popup,
+                form.title(),
+                vec![
+                    Line::from(Span::styled(
+                        "Searching Uniswap pairs/pools and ERC-4626 vaults…",
+                        Style::default().fg(Color::Yellow).bg(PANEL_BG),
+                    )),
+                    Line::from(Span::raw("")),
+                    Line::from(Span::styled(
+                        "Esc cancel",
+                        Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                    )),
+                ],
+            );
+        }
+        ActiveForm::PickQuoterSource {
+            options, selected, ..
+        } => {
+            let lines: Vec<Line> = options
+                .iter()
+                .enumerate()
+                .map(|(index, option)| {
+                    Line::from(Span::styled(
+                        format!(
+                            "{} {}",
+                            if index == *selected { "›" } else { " " },
+                            option.label
+                        ),
+                        panel_row_style(index == *selected),
+                    ))
+                })
+                .chain(std::iter::once(Line::from(Span::raw(""))))
+                .chain(std::iter::once(Line::from(Span::styled(
+                    "Enter create · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                ))))
+                .collect();
+            render_panel(frame, popup, form.title(), lines);
+        }
+        ActiveForm::ConfirmDeleteNetwork { name, .. } => {
+            let lines = vec![
+                Line::from(Span::styled(
+                    format!("Delete network \"{name}\"?"),
+                    Style::default().bg(PANEL_BG),
+                )),
+                Line::from(Span::styled(
+                    "Its endpoints are removed as well.",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                )),
+                Line::from(Span::raw("")),
+                Line::from(Span::styled(
+                    "Enter delete · Esc cancel",
+                    Style::default().fg(Color::DarkGray).bg(PANEL_BG),
+                )),
+            ];
             render_panel(frame, popup, form.title(), lines);
         }
         ActiveForm::ConfirmDeleteGroup { name, .. } => {
@@ -2199,7 +3050,7 @@ fn render_text_form(
     area: Rect,
     title: &str,
     form: &TextForm,
-    _with_hints: bool,
+    extras: Vec<Line<'static>>,
 ) {
     let mut lines = Vec::new();
     for (index, field) in form.fields.iter().enumerate() {
@@ -2223,6 +3074,7 @@ fn render_text_form(
             },
         )));
     }
+    lines.extend(extras);
     lines.push(Line::from(Span::raw("")));
     lines.push(Line::from(Span::styled(
         "↑↓ field · Enter save · Esc cancel",

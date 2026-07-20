@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use super::{
-    Asset, AssetUpdate as AssetUpdateInput, identity::AssetIdentity,
+    Asset, AssetIconData, AssetUpdate as AssetUpdateInput, identity::AssetIdentity,
     metadata::AssetMetadataDiscovery,
 };
 use crate::{
@@ -48,6 +48,7 @@ rpc_method!(AssetUpdate, "asset.update", AssetUpdateParams => Asset);
 rpc_method!(AssetDelete, "asset.delete", AssetParams => ());
 rpc_method!(AssetDiscoverMetadata, "asset.discoverMetadata", AssetParams => AssetMetadataDiscovery);
 rpc_method!(AssetQuote, "asset.quote", AssetQuoteParams => String);
+rpc_method!(AssetIcon, "asset.icon", AssetParams => Option<AssetIconData>);
 
 impl RpcHandler for AssetList {
     async fn handle(state: &AppState, _params: EmptyParams) -> Result<Vec<Asset>, KoiError> {
@@ -104,5 +105,14 @@ impl RpcHandler for AssetQuote {
             .quote(state, &network, &params.asset_identity, &output, amount)
             .await
             .map(|quote| quote.to_string())
+    }
+}
+
+impl RpcHandler for AssetIcon {
+    async fn handle(
+        state: &AppState,
+        params: AssetParams,
+    ) -> Result<Option<AssetIconData>, KoiError> {
+        Asset::icon(&state.database, &params.asset_identity).await
     }
 }

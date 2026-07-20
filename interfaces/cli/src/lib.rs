@@ -36,6 +36,7 @@ const TICK_MS: u64 = 50;
 enum InputEvent {
     Key(KeyCode),
     Mouse(MouseEvent),
+    Resize,
 }
 
 pub async fn run(api_url: String) -> Result<()> {
@@ -54,6 +55,8 @@ pub async fn run(api_url: String) -> Result<()> {
     app.init_icons();
     let saved = TuiConfig::load();
     app.display_currency = saved.display_currency;
+    app.theme = saved.theme;
+    app.colored_assets = saved.colored_assets;
     app.collapsed_groups = saved.collapsed_groups.into_iter().collect();
     let generation = prepare_refresh_all(&mut app);
     loader.spawn_refresh_all(generation, false, app.display_currency.clone());
@@ -98,6 +101,10 @@ async fn run_loop(
                     let action = match input {
                         InputEvent::Key(code) => app.handle_key(code),
                         InputEvent::Mouse(event) => app.handle_mouse(event),
+                        InputEvent::Resize => {
+                            app.handle_resize();
+                            app::KeyAction::None
+                        }
                     };
                     match action {
                         KeyAction::Quit => break,
@@ -139,6 +146,121 @@ async fn run_loop(
                         }
                         KeyAction::FetchNetworkPresets => {
                             loader.fetch_network_presets(app.current_generation());
+                        }
+                        KeyAction::FetchDerivationPath => {
+                            loader.fetch_derivation_path(app.current_generation());
+                        }
+                        KeyAction::GenerateMnemonic => {
+                            loader.generate_mnemonic(app.current_generation());
+                        }
+                        KeyAction::ResolveEns(name) => {
+                            loader.resolve_ens(app.current_generation(), name);
+                        }
+                        KeyAction::ReverseEns(address) => {
+                            loader.reverse_ens(app.current_generation(), address);
+                        }
+                        KeyAction::DeriveAddresses { name, mnemonic, paths } => {
+                            loader.derive_addresses(app.current_generation(), name, mnemonic, paths);
+                        }
+                        KeyAction::CreateAccount { name, wallet } => {
+                            loader.create_account(
+                                app.current_generation(),
+                                name,
+                                wallet,
+                                app.settings_network_ids(),
+                                app.accounts.len() as u32,
+                            );
+                        }
+                        KeyAction::CreateAccountFromKey { name, key } => {
+                            loader.create_account_from_key(
+                                app.current_generation(),
+                                name,
+                                key,
+                                app.settings_network_ids(),
+                                app.accounts.len() as u32,
+                            );
+                        }
+                        KeyAction::RenameAccount(account_id, name) => {
+                            loader.rename_account(app.current_generation(), account_id, name);
+                        }
+                        KeyAction::DeleteAccount(account_id) => {
+                            loader.delete_account(app.current_generation(), account_id);
+                        }
+                        KeyAction::UpdateAccountNetworks(account_id, networks) => {
+                            loader.update_account_networks(
+                                app.current_generation(),
+                                account_id,
+                                networks,
+                            );
+                        }
+                        KeyAction::OpenAssetPicker { account_id, unlink } => {
+                            loader.fetch_account_assets(
+                                app.current_generation(),
+                                account_id,
+                                unlink,
+                            );
+                        }
+                        KeyAction::UpdateEndpoint { network_id, endpoint_id, update } => {
+                            loader.update_endpoint(
+                                app.current_generation(),
+                                network_id,
+                                endpoint_id,
+                                update,
+                                app.settings_network_ids(),
+                            );
+                        }
+                        KeyAction::UpdateNetwork { network_id, update } => {
+                            loader.update_network(
+                                app.current_generation(),
+                                network_id,
+                                update,
+                                app.settings_network_ids(),
+                            );
+                        }
+                        KeyAction::DeleteNetwork(network_id) => {
+                            loader.delete_network(
+                                app.current_generation(),
+                                network_id,
+                                app.settings_network_ids(),
+                            );
+                        }
+                        KeyAction::UpdateAsset { identity, update } => {
+                            loader.update_asset(
+                                app.current_generation(),
+                                identity,
+                                update,
+                                app.settings_network_ids(),
+                            );
+                        }
+                        KeyAction::ToggleQuoter(identity, enabled) => {
+                            loader.toggle_quoter(
+                                app.current_generation(),
+                                identity,
+                                enabled,
+                                app.settings_network_ids(),
+                            );
+                        }
+                        KeyAction::DiscoverQuoter { token_a, token_b } => {
+                            loader.discover_quoter(app.current_generation(), token_a, token_b);
+                        }
+                        KeyAction::CreateQuoter { token_a, token_b, config } => {
+                            loader.create_quoter(
+                                app.current_generation(),
+                                token_a,
+                                token_b,
+                                config,
+                                app.settings_network_ids(),
+                            );
+                        }
+                        KeyAction::AccountAssetAction { account_id, identity, unlink } => {
+                            app.prepare_balance_fetch(account_id);
+                            loader.account_asset_action(
+                                app.current_generation(),
+                                account_id,
+                                identity,
+                                unlink,
+                                app.display_currency.clone(),
+                            );
                         }
                         KeyAction::DeleteNetworkEndpoint(network_id, endpoint_id) => {
                             app.settings.notice = Some(format!(
@@ -211,10 +333,21 @@ async fn run_loop(
                             loader.commit_layout(app.current_generation(), update);
                         }
                         KeyAction::SetDisplayCurrency(currency) => {
-                            app.display_currency = currency;
-                            let generation = prepare_refresh_all(app);
-                            loader.spawn_refresh_all(generation, false, app.display_currency.clone());
+                            app.set_display_currency(currency);
+                            let generation = app.begin_balance_refresh();
+                            let account_ids: Vec<u64> = app
+                                .accounts
+                                .iter()
+                                .map(|account| account.account_identity.0)
+                                .collect();
+                            loader.spawn_balance_swap(
+                                generation,
+                                account_ids,
+                                app.display_currency.clone(),
+                            );
+                            spawn_quote_refresh(app, loader);
                         }
+                        KeyAction::SetTheme(theme) => app.theme = theme,
                         KeyAction::None => {}
                     }
                     dirty = true;
@@ -240,10 +373,14 @@ async fn run_loop(
         let mut collapsed: Vec<Option<u64>> = app.collapsed_groups.iter().copied().collect();
         collapsed.sort();
         if saved_config.display_currency != app.display_currency
+            || saved_config.theme != app.theme
+            || saved_config.colored_assets != app.colored_assets
             || saved_config.collapsed_groups != collapsed
         {
             saved_config = TuiConfig {
                 display_currency: app.display_currency.clone(),
+                theme: app.theme,
+                colored_assets: app.colored_assets,
                 collapsed_groups: collapsed,
             };
             saved_config.save();
@@ -282,6 +419,11 @@ fn spawn_input_task(tx: mpsc::UnboundedSender<InputEvent>) {
                 }
                 Ok(Event::Mouse(mouse)) => {
                     if tx.send(InputEvent::Mouse(mouse)).is_err() {
+                        break;
+                    }
+                }
+                Ok(Event::Resize(_, _)) => {
+                    if tx.send(InputEvent::Resize).is_err() {
                         break;
                     }
                 }

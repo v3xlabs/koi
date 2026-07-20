@@ -2,11 +2,25 @@ use std::collections::HashMap;
 
 use tokio::sync::mpsc;
 
-use koi::models::{
-    account::{Account, balances::AccountBalances, group::AccountGroup},
-    asset::{Asset, metadata::AssetMetadataDiscovery},
-    network::{Network, pool::RpcPoolStats},
-    tx::Tx,
+use koi::{
+    models::{
+        account::{
+            Account,
+            balances::AccountBalances,
+            group::AccountGroup,
+            identity::AccountIdentity,
+            metadata::{EOAWallet, SafeWallet, ViewWallet, WalletType},
+            rpc::{
+                AccountAssetParams, AccountCreateParams, AccountParams, AccountUpdateParams,
+                DeriveMnemonicInput, DeriveMnemonicParams, DeriveMnemonicResult,
+                DerivePrivateKeyParams,
+            },
+        },
+        asset::{Asset, metadata::AssetMetadataDiscovery},
+        network::{Network, identity::NetworkIdentity, pool::RpcPoolStats},
+        tx::Tx,
+    },
+    rpc::EmptyParams,
 };
 
 use koi_client::ApiClient;
@@ -14,8 +28,21 @@ use koi_client::ApiClient;
 use super::{
     app::{App, ResourceState},
     defi::{DefiClient, DefiResult},
+    form::NewAccountWallet,
     settings::SettingsSnapshot,
 };
+
+type AccountCreateMethod = koi::models::account::rpc::AccountCreate;
+type AccountNextIdentityMethod = koi::models::account::rpc::AccountNextIdentity;
+type AccountUpdateMethod = koi::models::account::rpc::AccountUpdate;
+type AccountDeleteMethod = koi::models::account::rpc::AccountDelete;
+type AccountAssetListMethod = koi::models::account::rpc::AccountAssetList;
+type AccountAssetAddMethod = koi::models::account::rpc::AccountAssetAdd;
+type AccountAssetRemoveMethod = koi::models::account::rpc::AccountAssetRemove;
+type AssetIconMethod = koi::models::asset::rpc::AssetIcon;
+type DerivationDefaultPathMethod = koi::models::account::rpc::AccountDerivationDefaultPath;
+type DerivationFromMnemonicMethod = koi::models::account::rpc::AccountDerivationFromMnemonic;
+type DerivationFromPrivateKeyMethod = koi::models::account::rpc::AccountDerivationFromPrivateKey;
 
 #[derive(Clone)]
 pub struct Loader {
@@ -59,7 +86,10 @@ pub enum BackgroundUpdate {
     Balance {
         generation: u64,
         account_id: u64,
+        display_currency: String,
         state: ResourceState<AccountBalances>,
+        // true while a fresher fetch for this account is still in flight
+        refreshing: bool,
     },
     Defi {
         generation: u64,
@@ -77,7 +107,6 @@ pub enum BackgroundUpdate {
     },
     EndpointNextId {
         generation: u64,
-        network_id: u64,
         next_id: i32,
     },
     AssetMetadata {
@@ -88,11 +117,52 @@ pub enum BackgroundUpdate {
     AssetQuote {
         generation: u64,
         identity: String,
+        display_currency: String,
         state: ResourceState<String>,
+    },
+    AssetIcon {
+        generation: u64,
+        identity: String,
+        icon: Option<koi::models::asset::AssetIconData>,
     },
     NetworkPresets {
         generation: u64,
         presets: Vec<Network>,
+    },
+    DerivationPath {
+        generation: u64,
+        path: String,
+    },
+    GeneratedMnemonic {
+        generation: u64,
+        mnemonic: String,
+    },
+    EnsResolved {
+        generation: u64,
+        name: String,
+        address: Option<String>,
+    },
+    EnsReversed {
+        generation: u64,
+        address: String,
+        name: Option<String>,
+    },
+    DerivedAddresses {
+        generation: u64,
+        name: String,
+        result: Result<Vec<DeriveMnemonicResult>, String>,
+    },
+    AccountAssets {
+        generation: u64,
+        account_id: u64,
+        unlink: bool,
+        identities: Vec<String>,
+    },
+    QuoterDiscovered {
+        generation: u64,
+        token_a: String,
+        token_b: Option<String>,
+        result: Result<koi::models::quoter::discover::QuoterDiscoveryResponse, String>,
     },
     Notice {
         generation: u64,
@@ -196,11 +266,19 @@ impl Loader {
                     HashMap::new()
                 }
             };
+            let asset_ids: Vec<_> = assets
+                .values()
+                .filter(|asset| asset.asset_icon_url.is_some())
+                .map(|asset| asset.asset_identity.clone())
+                .collect();
             let _ = tx.send(BackgroundUpdate::AssetsLoaded {
                 generation,
                 assets,
                 notice: None,
             });
+            for asset_identity in asset_ids {
+                spawn_asset_icon_fetch(client.clone(), tx.clone(), generation, asset_identity);
+            }
 
             for network_id in &network_ids {
                 spawn_rpc_fetch(client.clone(), tx.clone(), generation, *network_id);
@@ -230,6 +308,23 @@ impl Loader {
             display_currency,
             true,
         );
+    }
+
+    pub fn spawn_balance_swap(
+        &self,
+        generation: u64,
+        account_ids: Vec<u64>,
+        display_currency: String,
+    ) {
+        for account_id in account_ids {
+            spawn_balance_swap_fetch(
+                self.client.clone(),
+                self.tx.clone(),
+                generation,
+                account_id,
+                display_currency.clone(),
+            );
+        }
     }
 
     pub fn spawn_defi(&self, generation: u64, account_id: u64, holder: String) {
@@ -390,10 +485,551 @@ impl Loader {
                 let _ = tx.send(BackgroundUpdate::AssetQuote {
                     generation,
                     identity,
+                    display_currency,
                     state,
                 });
             });
         }
+    }
+
+    pub fn fetch_derivation_path(&self, generation: u64) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            if let Ok(path) = client
+                .call_typed::<DerivationDefaultPathMethod>(EmptyParams::default())
+                .await
+            {
+                let _ = tx.send(BackgroundUpdate::DerivationPath { generation, path });
+            }
+        });
+    }
+
+    pub fn generate_mnemonic(&self, generation: u64) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            match client
+                .call_typed::<koi::models::account::rpc::AccountMnemonicGenerate>(
+                    EmptyParams::default(),
+                )
+                .await
+            {
+                Ok(mnemonic) => {
+                    let _ = tx.send(BackgroundUpdate::GeneratedMnemonic {
+                        generation,
+                        mnemonic,
+                    });
+                }
+                Err(error) => {
+                    let _ = tx.send(BackgroundUpdate::Notice {
+                        generation,
+                        notice: format!("Mnemonic generation failed: {error:#}"),
+                    });
+                }
+            }
+            if let Ok(path) = client
+                .call_typed::<DerivationDefaultPathMethod>(EmptyParams::default())
+                .await
+            {
+                let _ = tx.send(BackgroundUpdate::DerivationPath { generation, path });
+            }
+        });
+    }
+
+    pub fn resolve_ens(&self, generation: u64, name: String) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let address = client
+                .call_typed::<koi::models::ens::EnsResolve>(koi::models::ens::EnsResolveParams {
+                    name: name.clone(),
+                })
+                .await
+                .ok()
+                .flatten();
+            let _ = tx.send(BackgroundUpdate::EnsResolved {
+                generation,
+                name,
+                address,
+            });
+        });
+    }
+
+    pub fn reverse_ens(&self, generation: u64, address: String) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let name = client
+                .call_typed::<koi::models::ens::EnsReverse>(koi::models::ens::EnsReverseParams {
+                    address: address.clone(),
+                })
+                .await
+                .ok()
+                .flatten();
+            let _ = tx.send(BackgroundUpdate::EnsReversed {
+                generation,
+                address,
+                name,
+            });
+        });
+    }
+
+    pub fn derive_addresses(
+        &self,
+        generation: u64,
+        name: String,
+        mnemonic: String,
+        paths: Vec<String>,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let result = client
+                .call_typed::<DerivationFromMnemonicMethod>(DeriveMnemonicParams {
+                    input: DeriveMnemonicInput { mnemonic, paths },
+                })
+                .await
+                .map_err(|error| error.to_string());
+            let _ = tx.send(BackgroundUpdate::DerivedAddresses {
+                generation,
+                name,
+                result,
+            });
+        });
+    }
+
+    pub fn create_account(
+        &self,
+        generation: u64,
+        name: String,
+        wallet: NewAccountWallet,
+        networks: Vec<u64>,
+        display_order: u32,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice =
+                match create_account_task(&client, name, wallet, networks, display_order).await {
+                    Ok(name) => format!("Created account {name}"),
+                    Err(error) => format!("Create account failed: {error}"),
+                };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_layout_fetch(client, tx, generation);
+        });
+    }
+
+    pub fn create_account_from_key(
+        &self,
+        generation: u64,
+        name: String,
+        key: String,
+        networks: Vec<u64>,
+        display_order: u32,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let derived = client
+                .call_typed::<DerivationFromPrivateKeyMethod>(DerivePrivateKeyParams { input: key })
+                .await;
+            let notice = match derived {
+                Ok(address) => {
+                    match create_account_task(
+                        &client,
+                        name,
+                        NewAccountWallet::Eoa(address),
+                        networks,
+                        display_order,
+                    )
+                    .await
+                    {
+                        Ok(name) => format!("Created account {name}"),
+                        Err(error) => format!("Create account failed: {error}"),
+                    }
+                }
+                Err(error) => format!("Key derivation failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_layout_fetch(client, tx, generation);
+        });
+    }
+
+    pub fn rename_account(&self, generation: u64, account_id: u64, name: String) {
+        self.update_account(
+            generation,
+            account_id,
+            koi::models::account::AccountUpdate {
+                name: Some(name),
+                networks: None,
+                metadata: None,
+            },
+        );
+    }
+
+    pub fn update_account_networks(&self, generation: u64, account_id: u64, networks: Vec<u64>) {
+        self.update_account(
+            generation,
+            account_id,
+            koi::models::account::AccountUpdate {
+                name: None,
+                networks: Some(networks.into_iter().map(NetworkIdentity).collect()),
+                metadata: None,
+            },
+        );
+    }
+
+    fn update_account(
+        &self,
+        generation: u64,
+        account_id: u64,
+        input: koi::models::account::AccountUpdate,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client
+                .call_typed::<AccountUpdateMethod>(AccountUpdateParams {
+                    account_identity: AccountIdentity(account_id),
+                    input,
+                })
+                .await
+            {
+                Ok(account) => format!("Updated account {}", account.name),
+                Err(error) => format!("Update account failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_layout_fetch(client, tx, generation);
+        });
+    }
+
+    pub fn delete_account(&self, generation: u64, account_id: u64) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client
+                .call_typed::<AccountDeleteMethod>(AccountParams {
+                    account_identity: AccountIdentity(account_id),
+                })
+                .await
+            {
+                Ok(()) => "Deleted account".to_string(),
+                Err(error) => format!("Delete account failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_layout_fetch(client, tx, generation);
+        });
+    }
+
+    pub fn fetch_account_assets(&self, generation: u64, account_id: u64, unlink: bool) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            match client
+                .call_typed::<AccountAssetListMethod>(AccountParams {
+                    account_identity: AccountIdentity(account_id),
+                })
+                .await
+            {
+                Ok(identities) => {
+                    let _ = tx.send(BackgroundUpdate::AccountAssets {
+                        generation,
+                        account_id,
+                        unlink,
+                        identities: identities
+                            .into_iter()
+                            .map(|identity| identity.to_string())
+                            .collect(),
+                    });
+                }
+                Err(error) => {
+                    let _ = tx.send(BackgroundUpdate::Notice {
+                        generation,
+                        notice: format!("Account assets: {error:#}"),
+                    });
+                }
+            }
+        });
+    }
+
+    pub fn account_asset_action(
+        &self,
+        generation: u64,
+        account_id: u64,
+        identity: String,
+        unlink: bool,
+        display_currency: String,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let params = identity.parse().map(|asset_identity| AccountAssetParams {
+                account_identity: AccountIdentity(account_id),
+                asset_identity,
+            });
+            let notice = match params {
+                Ok(params) if unlink => {
+                    match client.call_typed::<AccountAssetRemoveMethod>(params).await {
+                        Ok(()) => format!("Unlinked {identity}"),
+                        Err(error) => format!("Unlink failed: {error:#}"),
+                    }
+                }
+                Ok(params) => match client.call_typed::<AccountAssetAddMethod>(params).await {
+                    Ok(()) => format!("Linked {identity}"),
+                    Err(error) => format!("Link failed: {error:#}"),
+                },
+                Err(error) => format!("Invalid asset identity: {error}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_balance_fetch(client, tx, generation, account_id, display_currency, true);
+        });
+    }
+
+    pub fn update_endpoint(
+        &self,
+        generation: u64,
+        network_id: u64,
+        endpoint_id: i32,
+        update: koi::models::network::endpoint::NetworkEndpointUpdate,
+        network_ids: Vec<u64>,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client
+                .call_typed::<koi::models::network::rpc::EndpointUpdate>(
+                    koi::models::network::rpc::EndpointUpdateParams {
+                        network_identity: koi::models::network::identity::NetworkIdentity(
+                            network_id,
+                        ),
+                        endpoint_identity: endpoint_id,
+                        input: update,
+                    },
+                )
+                .await
+            {
+                Ok(endpoint) => format!("Updated endpoint #{}", endpoint.endpoint_identity),
+                Err(error) => format!("Update endpoint failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_settings_fetch(client, tx, generation, network_ids);
+        });
+    }
+
+    pub fn update_network(
+        &self,
+        generation: u64,
+        network_id: u64,
+        update: koi::models::network::NetworkUpdate,
+        network_ids: Vec<u64>,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client
+                .call_typed::<koi::models::network::rpc::NetworkUpdate>(
+                    koi::models::network::rpc::NetworkUpdateParams {
+                        network_identity: NetworkIdentity(network_id),
+                        input: update,
+                    },
+                )
+                .await
+            {
+                Ok(network) => format!("Updated network {}", network.network_name),
+                Err(error) => format!("Update network failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            if let Ok(networks) = client.networks().await {
+                let _ = tx.send(BackgroundUpdate::NetworksLoaded {
+                    generation,
+                    networks,
+                    notice: None,
+                });
+            }
+            spawn_settings_fetch(client, tx, generation, network_ids);
+        });
+    }
+
+    pub fn delete_network(&self, generation: u64, network_id: u64, network_ids: Vec<u64>) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client
+                .call_typed::<koi::models::network::rpc::NetworkDelete>(
+                    koi::models::network::rpc::NetworkParams {
+                        network_identity: NetworkIdentity(network_id),
+                    },
+                )
+                .await
+            {
+                Ok(()) => format!("Deleted network {network_id}"),
+                Err(error) => format!("Delete network failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            if let Ok(networks) = client.networks().await {
+                let _ = tx.send(BackgroundUpdate::NetworksLoaded {
+                    generation,
+                    networks,
+                    notice: None,
+                });
+            }
+            spawn_settings_fetch(client, tx, generation, network_ids);
+        });
+    }
+
+    pub fn update_asset(
+        &self,
+        generation: u64,
+        identity: String,
+        update: koi::models::asset::AssetUpdate,
+        network_ids: Vec<u64>,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match identity.parse() {
+                Ok(asset_identity) => {
+                    match client
+                        .call_typed::<koi::models::asset::rpc::AssetUpdate>(
+                            koi::models::asset::rpc::AssetUpdateParams {
+                                asset_identity,
+                                input: update,
+                            },
+                        )
+                        .await
+                    {
+                        Ok(asset) => format!("Updated asset {}", asset.asset_identity),
+                        Err(error) => format!("Update asset failed: {error:#}"),
+                    }
+                }
+                Err(error) => format!("Invalid asset identity: {error}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            if let Ok(assets) = client.assets().await {
+                let _ = tx.send(BackgroundUpdate::AssetsLoaded {
+                    generation,
+                    assets,
+                    notice: None,
+                });
+            }
+            spawn_settings_fetch(client, tx, generation, network_ids);
+        });
+    }
+
+    pub fn discover_quoter(&self, generation: u64, token_a: String, token_b: Option<String>) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let parsed = token_a.parse().and_then(|a| {
+                token_b
+                    .as_deref()
+                    .map(str::parse)
+                    .transpose()
+                    .map(|b| (a, b))
+            });
+            let result = match parsed {
+                Ok((parsed_a, parsed_b)) => client
+                    .call_typed::<koi::models::quoter::rpc::QuoterDiscover>(
+                        koi::models::quoter::rpc::QuoterDiscoverParams {
+                            input: koi::models::quoter::discover::QuoterDiscovery {
+                                token_a: parsed_a,
+                                token_b: parsed_b,
+                            },
+                        },
+                    )
+                    .await
+                    .map_err(|error| format!("{error:#}")),
+                Err(error) => Err(format!("invalid asset identity: {error}")),
+            };
+            let _ = tx.send(BackgroundUpdate::QuoterDiscovered {
+                generation,
+                token_a,
+                token_b,
+                result,
+            });
+        });
+    }
+
+    pub fn create_quoter(
+        &self,
+        generation: u64,
+        token_a: String,
+        token_b: String,
+        config: koi::models::quoter::QuoterConfig,
+        network_ids: Vec<u64>,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let parsed = token_a
+                .parse()
+                .and_then(|a| token_b.parse().map(|b| (a, b)));
+            let notice = match parsed {
+                Ok((parsed_a, parsed_b)) => {
+                    let name = format!("{token_a} → {token_b}");
+                    match client
+                        .call_typed::<koi::models::quoter::rpc::QuoterCreate>(
+                            koi::models::quoter::rpc::QuoterCreateParams {
+                                input: koi::models::quoter::QuoterCreate {
+                                    quoter_name: name,
+                                    token_a: parsed_a,
+                                    token_b: parsed_b,
+                                    config,
+                                    enabled: true,
+                                    watch: false,
+                                },
+                            },
+                        )
+                        .await
+                    {
+                        Ok(quoter) => format!("Created quoter {}", quoter.quoter_name),
+                        Err(error) => format!("Create quoter failed: {error:#}"),
+                    }
+                }
+                Err(error) => format!("Invalid asset identity: {error}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_settings_fetch(client, tx, generation, network_ids);
+        });
+    }
+
+    pub fn toggle_quoter(
+        &self,
+        generation: u64,
+        quoter_identity: String,
+        enabled: bool,
+        network_ids: Vec<u64>,
+    ) {
+        let client = self.client.clone();
+        let tx = self.tx.clone();
+        tokio::spawn(async move {
+            let notice = match client
+                .call_typed::<koi::models::quoter::rpc::QuoterUpdate>(
+                    koi::models::quoter::rpc::QuoterUpdateParams {
+                        quoter_identity,
+                        input: koi::models::quoter::QuoterUpdate {
+                            quoter_name: None,
+                            token_a: None,
+                            token_b: None,
+                            config: None,
+                            enabled: Some(enabled),
+                            watch: None,
+                        },
+                    },
+                )
+                .await
+            {
+                Ok(quoter) => format!(
+                    "{} quoter {}",
+                    if enabled { "Enabled" } else { "Disabled" },
+                    quoter.quoter_name
+                ),
+                Err(error) => format!("Quoter update failed: {error:#}"),
+            };
+            let _ = tx.send(BackgroundUpdate::Notice { generation, notice });
+            spawn_settings_fetch(client, tx, generation, network_ids);
+        });
     }
 
     pub fn fetch_network_presets(&self, generation: u64) {
@@ -449,7 +1085,6 @@ impl Loader {
             };
             let _ = tx.send(BackgroundUpdate::EndpointNextId {
                 generation,
-                network_id,
                 next_id,
             });
         });
@@ -535,6 +1170,27 @@ impl Loader {
     }
 }
 
+fn spawn_asset_icon_fetch(
+    client: ApiClient,
+    tx: mpsc::UnboundedSender<BackgroundUpdate>,
+    generation: u64,
+    asset_identity: koi::models::asset::identity::AssetIdentity,
+) {
+    tokio::spawn(async move {
+        let identity = asset_identity.to_string();
+        let icon = client
+            .call_typed::<AssetIconMethod>(koi::models::asset::rpc::AssetParams { asset_identity })
+            .await
+            .ok()
+            .flatten();
+        let _ = tx.send(BackgroundUpdate::AssetIcon {
+            generation,
+            identity,
+            icon,
+        });
+    });
+}
+
 fn spawn_rpc_fetch(
     client: ApiClient,
     tx: mpsc::UnboundedSender<BackgroundUpdate>,
@@ -579,7 +1235,58 @@ fn spawn_balance_fetch(
         let _ = tx.send(BackgroundUpdate::Balance {
             generation,
             account_id,
+            display_currency,
             state,
+            refreshing: false,
+        });
+    });
+}
+
+fn spawn_balance_swap_fetch(
+    client: ApiClient,
+    tx: mpsc::UnboundedSender<BackgroundUpdate>,
+    generation: u64,
+    account_id: u64,
+    display_currency: String,
+) {
+    tokio::spawn(async move {
+        let quick = client
+            .account_balances(account_id, &display_currency, false)
+            .await
+            .ok();
+        if let Some(balances) = &quick {
+            let _ = tx.send(BackgroundUpdate::Balance {
+                generation,
+                account_id,
+                display_currency: display_currency.clone(),
+                state: ResourceState::Ready(balances.clone()),
+                refreshing: true,
+            });
+        }
+
+        let state = match client
+            .account_balances(account_id, &display_currency, true)
+            .await
+        {
+            Ok(balances) => ResourceState::Ready(balances),
+            Err(error) => match quick {
+                // keep the quick values on screen instead of replacing them with an error
+                Some(balances) => {
+                    let _ = tx.send(BackgroundUpdate::Notice {
+                        generation,
+                        notice: format!("Balance refresh: {error:#}"),
+                    });
+                    ResourceState::Ready(balances)
+                }
+                None => ResourceState::Error(error.to_string()),
+            },
+        };
+        let _ = tx.send(BackgroundUpdate::Balance {
+            generation,
+            account_id,
+            display_currency,
+            state,
+            refreshing: false,
         });
     });
 }
@@ -730,6 +1437,50 @@ fn spawn_settings_fetch(
             }),
         });
     });
+}
+
+async fn create_account_task(
+    client: &ApiClient,
+    name: String,
+    wallet: NewAccountWallet,
+    networks: Vec<u64>,
+    display_order: u32,
+) -> Result<String, String> {
+    let parse = |address: &str| {
+        address
+            .trim()
+            .parse()
+            .map_err(|error| format!("invalid address: {error}"))
+    };
+    let metadata = match &wallet {
+        NewAccountWallet::View(address) => WalletType::View(ViewWallet {
+            evm_address: parse(address)?,
+        }),
+        NewAccountWallet::Safe(address) => WalletType::Safe(SafeWallet {
+            evm_address: parse(address)?,
+        }),
+        NewAccountWallet::Eoa(address) => WalletType::EOA(EOAWallet {
+            evm_address: parse(address)?,
+        }),
+    };
+
+    let identity = client
+        .call_typed::<AccountNextIdentityMethod>(EmptyParams::default())
+        .await
+        .map_err(|error| format!("{error:#}"))?;
+    let account = Account {
+        account_identity: identity,
+        name,
+        networks: networks.into_iter().map(NetworkIdentity).collect(),
+        metadata,
+        group_id: None,
+        display_order,
+    };
+    client
+        .call_typed::<AccountCreateMethod>(AccountCreateParams { input: account })
+        .await
+        .map(|created| created.name)
+        .map_err(|error| format!("{error:#}"))
 }
 
 pub fn prepare_refresh_all(app: &mut App) -> u64 {
