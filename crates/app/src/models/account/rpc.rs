@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use super::{
-    Account, AccountUpdate as AccountUpdateInput,
+    Account, AccountCreate as AccountCreateInput, AccountUpdate as AccountUpdateInput,
     balances::{AccountBalance, AccountBalances},
     derive::{
         default_derivation_path, derive_address_from_private_key, derive_addresses_from_mnemonic,
@@ -63,7 +63,7 @@ pub struct AccountBalancesParams {
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
 pub struct AccountCreateParams {
-    pub input: Account,
+    pub input: AccountCreateInput,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -127,7 +127,6 @@ pub struct DerivePrivateKeyParams {
 rpc_method!(AccountList, "account.list", EmptyParams => Vec<Account>);
 rpc_method!(AccountGet, "account.get", AccountParams => Account);
 rpc_method!(AccountCreate, "account.create", AccountCreateParams => Account);
-rpc_method!(AccountNextIdentity, "account.nextIdentity", EmptyParams => AccountIdentity);
 rpc_method!(AccountUpdate, "account.update", AccountUpdateParams => Account);
 rpc_method!(AccountDelete, "account.delete", AccountParams => ());
 rpc_method!(AccountAssetList, "account.asset.list", AccountParams => Vec<AssetIdentity>);
@@ -162,12 +161,6 @@ impl RpcHandler for AccountGet {
 impl RpcHandler for AccountCreate {
     async fn handle(state: &AppState, params: AccountCreateParams) -> Result<Account, KoiError> {
         Account::create(&state.database, params.input).await
-    }
-}
-
-impl RpcHandler for AccountNextIdentity {
-    async fn handle(state: &AppState, _params: EmptyParams) -> Result<AccountIdentity, KoiError> {
-        Account::get_next_identity(&state.database).await
     }
 }
 

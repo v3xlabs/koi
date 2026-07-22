@@ -2,7 +2,7 @@ import { Popover } from "@kobalte/core/popover";
 import { FiPlus } from "solid-icons/fi";
 import { Component, createSignal } from "solid-js";
 
-import { NetworkEndpoint, useCreateNetworkEndpoint, useNetworkEndpointNextId } from "#/api/network";
+import { NetworkEndpointCreate, useCreateNetworkEndpoint } from "#/api/network";
 import { button } from "#/components/input/button";
 import { Toggle } from "#/components/input/toggle";
 
@@ -10,15 +10,9 @@ import { endpointTypeForUrl } from "./connection";
 import { NetworkEndpointRoutingMenu } from "./routing";
 
 export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ network_identity }) => {
-    const createNetwork = useCreateNetworkEndpoint(({ data }: { data: NetworkEndpoint; }) => ({
+    const createNetwork = useCreateNetworkEndpoint(({ data }: { data: NetworkEndpointCreate; }) => ({
         contentType: "application/json; charset=utf-8",
         data,
-        path: {
-            network_identity,
-        },
-    }));
-
-    const nextIdQuery = useNetworkEndpointNextId(() => ({
         path: {
             network_identity,
         },
@@ -66,12 +60,10 @@ export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ n
                                   disabled={endpointTypeForUrl(url()) === undefined}
                                   onClick={() => createNetwork.mutate({
                                         data: {
-                                            endpoint_identity: Number(nextIdQuery.data ?? "0"),
                                             endpoint_label: name(),
                                             endpoint_type: endpointTypeForUrl(url()) ?? "http",
                                             endpoint_url: url(),
                                             endpoint_disabled: disabled(),
-                                            network_identity,
                                         },
                                     })}
                                 >

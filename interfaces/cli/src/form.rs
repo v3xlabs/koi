@@ -6,7 +6,7 @@ use koi::models::{
     asset::{Asset, AssetUpdate, identity::AssetIdentity, metadata::AssetMetadataDiscovery},
     network::{
         Network, NetworkUpdate,
-        endpoint::{NetworkEndpoint, NetworkEndpointUpdate},
+        endpoint::{NetworkEndpoint, NetworkEndpointCreate, NetworkEndpointUpdate},
         identity::NetworkIdentity,
     },
 };
@@ -220,7 +220,6 @@ pub enum ActiveForm {
     },
     AddEndpoint {
         network_id: u64,
-        next_id: i32,
         form: TextForm,
     },
     GroupName {
@@ -321,7 +320,10 @@ pub enum FormAction {
     FetchAssetMetadata(String),
     SubmitCreateAsset(Asset),
     SubmitCreateNetwork(Network),
-    SubmitCreateEndpoint(NetworkEndpoint),
+    SubmitCreateEndpoint {
+        network_id: u64,
+        input: NetworkEndpointCreate,
+    },
     SubmitGroupName {
         group_id: Option<u64>,
         name: String,
@@ -529,11 +531,7 @@ impl ActiveForm {
         if let Some(field) = form.fields.get_mut(3) {
             field.value = "yes".to_string();
         }
-        Self::AddEndpoint {
-            network_id,
-            next_id: 0,
-            form,
-        }
+        Self::AddEndpoint { network_id, form }
     }
 
     pub fn title(&self) -> &str {
@@ -709,12 +707,11 @@ impl ActiveForm {
             Self::AddNetwork(form) => handle_text_form(code, form, |form| {
                 build_network(form).map(FormAction::SubmitCreateNetwork)
             }),
-            Self::AddEndpoint {
-                network_id,
-                next_id,
-                form,
-            } => handle_text_form(code, form, |form| {
-                build_endpoint(*network_id, *next_id, form).map(FormAction::SubmitCreateEndpoint)
+            Self::AddEndpoint { network_id, form } => handle_text_form(code, form, |form| {
+                build_endpoint(form).map(|input| FormAction::SubmitCreateEndpoint {
+                    network_id: *network_id,
+                    input,
+                })
             }),
             Self::GroupName { group_id, form } => {
                 let group_id = *group_id;
@@ -1151,12 +1148,6 @@ impl ActiveForm {
         }
     }
 
-    pub fn set_endpoint_next_id(&mut self, next_id: i32) {
-        if let Self::AddEndpoint { next_id: id, .. } = self {
-            *id = next_id;
-        }
-    }
-
     pub fn apply_asset_metadata(
         &mut self,
         identity: &str,
@@ -1567,7 +1558,7 @@ fn build_network(form: &TextForm) -> Option<Network> {
     })
 }
 
-fn build_endpoint(network_id: u64, next_id: i32, form: &TextForm) -> Option<NetworkEndpoint> {
+fn build_endpoint(form: &TextForm) -> Option<NetworkEndpointCreate> {
     let url = form.field(1)?.trim().to_string();
     if url.is_empty() {
         return None;
@@ -1583,13 +1574,11 @@ fn build_endpoint(network_id: u64, next_id: i32, form: &TextForm) -> Option<Netw
         || form.field(3)?.trim().eq_ignore_ascii_case("true")
         || form.field(3)?.trim() == "1"
         || form.field(3)?.trim().is_empty();
-    Some(NetworkEndpoint {
-        endpoint_identity: next_id,
+    Some(NetworkEndpointCreate {
         endpoint_label: optional_field(form, 0),
         endpoint_type,
         endpoint_url: url,
         endpoint_disabled: !enabled,
-        network_identity: NetworkIdentity(network_id),
     })
 }
 

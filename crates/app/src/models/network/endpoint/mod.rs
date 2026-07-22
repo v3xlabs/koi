@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::{prelude::FromRow, query, query_as, query_scalar};
+use sqlx::{prelude::FromRow, query, query_as};
 use ts_rs::TS;
 
 use crate::{
@@ -23,6 +23,16 @@ pub struct NetworkEndpoint {
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(deny_unknown_fields)]
+#[ts(optional_fields)]
+pub struct NetworkEndpointCreate {
+    pub endpoint_label: Option<String>,
+    pub endpoint_type: String,
+    pub endpoint_url: String,
+    pub endpoint_disabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
 #[ts(optional_fields)]
 pub struct NetworkEndpointUpdate {
     pub endpoint_label: Option<String>,
@@ -41,26 +51,17 @@ impl Network {
 }
 
 impl NetworkEndpoint {
-    pub async fn get_next_id(database: &DB) -> Result<i32, KoiError> {
-        query_scalar::<_, i32>(
-            "SELECT COALESCE(MAX(endpoint_identity), 0) + 1 FROM network_endpoints",
-        )
-        .fetch_one(database)
-        .await
-        .map_err(KoiError::from)
-    }
-
     pub async fn create(
         database: &DB,
-        endpoint: NetworkEndpoint,
+        network_identity: NetworkIdentity,
+        endpoint: NetworkEndpointCreate,
     ) -> Result<NetworkEndpoint, KoiError> {
-        query_as::<_, NetworkEndpoint>("INSERT INTO network_endpoints (endpoint_identity, endpoint_label, endpoint_type, endpoint_url, endpoint_disabled, network_identity) VALUES (?, ?, ?, ?, ?, ?) RETURNING *")
-            .bind(endpoint.endpoint_identity)
+        query_as::<_, NetworkEndpoint>("INSERT INTO network_endpoints (endpoint_label, endpoint_type, endpoint_url, endpoint_disabled, network_identity) VALUES (?, ?, ?, ?, ?) RETURNING *")
             .bind(endpoint.endpoint_label)
             .bind(endpoint.endpoint_type)
             .bind(endpoint.endpoint_url)
             .bind(endpoint.endpoint_disabled)
-            .bind(endpoint.network_identity)
+            .bind(network_identity)
             .fetch_one(database)
             .await
             .map_err(KoiError::from)
