@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { createMemo, createSignal, Show } from "solid-js";
 import { generatePrivateKey } from "viem/accounts";
 
-import { useCreateAccount, useDeriveFromPrivateKey, useNextAccountId } from "#/api/account";
+import { useCreateAccount, useDeriveFromPrivateKey } from "#/api/account";
 import { FormNetworkField } from "#/components/account/form/networks";
 import { button } from "#/components/input/button";
 import { FormTextField } from "#/components/input/field";
@@ -14,16 +14,14 @@ export const Route = createFileRoute("/acc/_n/new/private-key")({
     },
     component: () => {
         const navigate = useNavigate();
-        const nextAccountId = useNextAccountId();
         const [generatedKey] = createSignal(generatePrivateKey());
         const derive = useDeriveFromPrivateKey(({ private_key }: { private_key: string; }) => ({
             contentType: "application/json; charset=utf-8",
             data: { private_key },
         }));
-        const createAccount = useCreateAccount(({ data }: { data: { account_identity: number; name: string; networks: number[]; address: string; display_order: number; }; }) => ({
+        const createAccount = useCreateAccount(({ data }: { data: { name: string; networks: number[]; address: string; display_order: number; }; }) => ({
             contentType: "application/json; charset=utf-8",
             data: {
-                account_identity: data.account_identity,
                 name: data.name,
                 networks: data.networks,
                 display_order: data.display_order,
@@ -38,17 +36,12 @@ export const Route = createFileRoute("/acc/_n/new/private-key")({
                 privateKey: generatedKey(),
             },
             onSubmit: async ({ value }) => {
-                const account_identity = nextAccountId.data;
-
-                if (!account_identity || account_identity <= 0) return;
-
                 if (value.networks.length === 0) return;
 
                 const derived = await derive.mutateAsync({ private_key: value.privateKey });
 
-                await createAccount.mutateAsync({
+                const account = await createAccount.mutateAsync({
                     data: {
-                        account_identity,
                         name: value.name,
                         networks: value.networks,
                         display_order: 0,
@@ -56,7 +49,7 @@ export const Route = createFileRoute("/acc/_n/new/private-key")({
                     },
                 });
 
-                navigate({ to: "/acc/$account", params: { account: account_identity.toString() } });
+                navigate({ to: "/acc/$account", params: { account: account.account_identity.toString() } });
             },
         }));
 
@@ -67,8 +60,7 @@ export const Route = createFileRoute("/acc/_n/new/private-key")({
             return state.values.name.length > 0
               && state.values.networks.length > 0
               && state.values.privateKey.trim().length >= 64
-              && !isPending()
-              && (nextAccountId.data ?? 0) > 0;
+              && !isPending();
         });
 
         return (

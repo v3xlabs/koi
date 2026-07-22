@@ -2,7 +2,7 @@ import { createForm } from "@tanstack/solid-form";
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { Show } from "solid-js";
 
-import { useCreateAccount, useNextAccountId } from "#/api/account";
+import { useCreateAccount } from "#/api/account";
 import { useNetworks } from "#/api/network";
 import { AddressInput } from "#/components/input/address";
 import { button } from "#/components/input/button";
@@ -15,12 +15,10 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
     },
     component: () => {
         const navigate = useNavigate();
-        const nextAccountId = useNextAccountId();
         const networksQuery = useNetworks();
-        const createAccount = useCreateAccount(({ data }: { data: { account_identity: number; name: string; networks: number[]; address: string; display_order: number; }; }) => ({
+        const createAccount = useCreateAccount(({ data }: { data: { name: string; networks: number[]; address: string; display_order: number; }; }) => ({
             contentType: "application/json; charset=utf-8",
             data: {
-                account_identity: data.account_identity,
                 name: data.name,
                 networks: data.networks,
                 display_order: data.display_order,
@@ -35,15 +33,10 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
                 address: "",
             },
             onSubmit: async ({ value }) => {
-                const account_identity = nextAccountId.data;
-
-                if (!account_identity || account_identity <= 0) return;
-
                 if (value.networks.length === 0) return;
 
-                await createAccount.mutateAsync({
+                const account = await createAccount.mutateAsync({
                     data: {
-                        account_identity,
                         name: value.name,
                         networks: value.networks,
                         display_order: 0,
@@ -51,7 +44,7 @@ export const Route = createFileRoute("/acc/_n/import/safe")({
                     },
                 });
 
-                navigate({ to: "/acc/$account", params: { account: account_identity.toString() } });
+                navigate({ to: "/acc/$account", params: { account: account.account_identity.toString() } });
             },
         }));
 

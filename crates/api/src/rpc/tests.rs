@@ -8,11 +8,7 @@ use koi::{
     models::{
         abi::AbiManager,
         account::{balance_cache::BalanceCacheManager, rpc::AccountBalancesParams},
-        network::{
-            identity::NetworkIdentity,
-            manager::NetworkManager,
-            rpc::{EndpointNextIdentity, NetworkParams},
-        },
+        network::manager::NetworkManager,
         quoter::man::QuoterManager,
         vendor::man::VendorManager,
     },
@@ -86,15 +82,6 @@ async fn typed_in_process_dispatch_uses_the_same_method_markers() {
             .await
             .unwrap(),
         "OK"
-    );
-    assert_eq!(
-        dispatcher
-            .call::<EndpointNextIdentity>(NetworkParams {
-                network_identity: NetworkIdentity(1),
-            })
-            .await
-            .unwrap(),
-        1
     );
 }
 
@@ -213,7 +200,6 @@ async fn account_crud_returns_direct_domain_values_and_null_units() {
                 "id":1,
                 "method":"account.create",
                 "params":{"input":{
-                    "account_identity":1,
                     "name":"Main",
                     "networks":[],
                     "metadata":{"type":"view","evm_address":"0x0000000000000000000000000000000000000000"},
@@ -228,23 +214,41 @@ async fn account_crud_returns_direct_domain_values_and_null_units() {
     assert_eq!(created["result"]["metadata"]["type"], "view");
     assert!(created["result"]["group_id"].is_null());
 
+    let rejected_identity = response(
+        &dispatcher,
+        r#"{
+            "jsonrpc":"2.0",
+            "id":2,
+            "method":"account.create",
+            "params":{"input":{
+                "account_identity":2,
+                "name":"Other",
+                "networks":[],
+                "metadata":{"type":"view","evm_address":"0x0000000000000000000000000000000000000000"},
+                "display_order":0
+            }}
+        }"#,
+    )
+    .await;
+    assert_eq!(rejected_identity["error"]["code"], -32602);
+
     let listed = response(
         &dispatcher,
-        r#"{"jsonrpc":"2.0","id":2,"method":"account.list","params":{}}"#,
+        r#"{"jsonrpc":"2.0","id":3,"method":"account.list","params":{}}"#,
     )
     .await;
     assert_eq!(listed["result"].as_array().unwrap().len(), 1);
 
     let layout = response(
         &dispatcher,
-        r#"{"jsonrpc":"2.0","id":3,"method":"account.layout.get","params":{}}"#,
+        r#"{"jsonrpc":"2.0","id":4,"method":"account.layout.get","params":{}}"#,
     )
     .await;
     assert_eq!(layout["result"]["accounts"][0]["name"], "Main");
 
     let deleted = response(
         &dispatcher,
-        r#"{"jsonrpc":"2.0","id":4,"method":"account.delete","params":{"account_identity":1}}"#,
+        r#"{"jsonrpc":"2.0","id":5,"method":"account.delete","params":{"account_identity":1}}"#,
     )
     .await;
     assert_eq!(deleted["result"], Value::Null);

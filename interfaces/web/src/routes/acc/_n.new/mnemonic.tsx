@@ -2,7 +2,7 @@ import { createForm } from "@tanstack/solid-form";
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { createMemo, Show } from "solid-js";
 
-import { useCreateAccount, useDefaultDerivationPath, useDeriveFromMnemonic, useGenerateMnemonic, useNextAccountId } from "#/api/account";
+import { useCreateAccount, useDefaultDerivationPath, useDeriveFromMnemonic, useGenerateMnemonic } from "#/api/account";
 import { FormNetworkField } from "#/components/account/form/networks";
 import { button } from "#/components/input/button";
 import { FormTextField } from "#/components/input/field";
@@ -13,17 +13,15 @@ export const Route = createFileRoute("/acc/_n/new/mnemonic")({
     },
     component: () => {
         const navigate = useNavigate();
-        const nextAccountId = useNextAccountId();
         const mnemonic = useGenerateMnemonic();
         const defaultPath = useDefaultDerivationPath();
         const derive = useDeriveFromMnemonic(({ data }: { data: { mnemonic: string; paths: string[]; }; }) => ({
             contentType: "application/json; charset=utf-8",
             data: { mnemonic: data.mnemonic, paths: data.paths },
         }));
-        const createAccount = useCreateAccount(({ data }: { data: { account_identity: number; name: string; networks: number[]; address: string; display_order: number; }; }) => ({
+        const createAccount = useCreateAccount(({ data }: { data: { name: string; networks: number[]; address: string; display_order: number; }; }) => ({
             contentType: "application/json; charset=utf-8",
             data: {
-                account_identity: data.account_identity,
                 name: data.name,
                 networks: data.networks,
                 display_order: data.display_order,
@@ -39,10 +37,6 @@ export const Route = createFileRoute("/acc/_n/new/mnemonic")({
                 path: defaultPath.data?.path ?? "m/44'/60'/0'/0/0",
             },
             onSubmit: async ({ value }) => {
-                const account_identity = nextAccountId.data;
-
-                if (!account_identity || account_identity <= 0) return;
-
                 if (value.networks.length === 0) return;
 
                 const derived = await derive.mutateAsync({ data: { mnemonic: value.mnemonic, paths: [value.path] } });
@@ -50,9 +44,8 @@ export const Route = createFileRoute("/acc/_n/new/mnemonic")({
 
                 if (!address) return;
 
-                await createAccount.mutateAsync({
+                const account = await createAccount.mutateAsync({
                     data: {
-                        account_identity,
                         name: value.name,
                         networks: value.networks,
                         display_order: 0,
@@ -60,7 +53,7 @@ export const Route = createFileRoute("/acc/_n/new/mnemonic")({
                     },
                 });
 
-                navigate({ to: "/acc/$account", params: { account: account_identity.toString() } });
+                navigate({ to: "/acc/$account", params: { account: account.account_identity.toString() } });
             },
         }));
 
@@ -72,8 +65,7 @@ export const Route = createFileRoute("/acc/_n/new/mnemonic")({
               && state.values.networks.length > 0
               && state.values.mnemonic.trim().split(/\s+/).length >= 12
               && state.values.path.length > 0
-              && !isPending()
-              && (nextAccountId.data ?? 0) > 0;
+              && !isPending();
         });
 
         return (

@@ -35,6 +35,19 @@ pub struct Account {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[serde(deny_unknown_fields)]
+#[ts(optional_fields)]
+pub struct AccountCreate {
+    pub name: String,
+    pub networks: Vec<NetworkIdentity>,
+    pub metadata: WalletType,
+    #[serde(default)]
+    pub group_id: Option<GroupIdentity>,
+    #[serde(default)]
+    pub display_order: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(optional_fields)]
 pub struct AccountUpdate {
     pub name: Option<String>,
@@ -93,7 +106,8 @@ impl Account {
             .map_err(KoiError::from)
     }
 
-    pub async fn create(database: &DB, account: Account) -> Result<Account, KoiError> {
+    pub async fn create(database: &DB, account: AccountCreate) -> Result<Account, KoiError> {
+        let account_identity = Self::get_next_identity(database).await?;
         let display_order = if account.display_order == 0 {
             Self::get_next_display_order(database, account.group_id).await?
         } else {
@@ -103,7 +117,7 @@ impl Account {
         query_as::<_, Account>(
             "INSERT INTO accounts (account_identity, name, networks, metadata, group_id, display_order) VALUES (?, ?, ?, ?, ?, ?) RETURNING *",
         )
-        .bind(account.account_identity)
+        .bind(account_identity)
         .bind(account.name)
         .bind(serde_json::to_string(&account.networks).map_err(|x| sqlx::Error::Encode(Box::new(x)))?)
         .bind(account.metadata)
@@ -137,7 +151,7 @@ impl Account {
         Ok(next as u32)
     }
 
-    pub async fn get_next_identity(database: &DB) -> Result<AccountIdentity, KoiError> {
+    async fn get_next_identity(database: &DB) -> Result<AccountIdentity, KoiError> {
         query_scalar::<_, AccountIdentity>(
             "SELECT COALESCE(MAX(account_identity), 0) + 1 FROM accounts",
         )

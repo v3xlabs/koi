@@ -293,9 +293,6 @@ async fn run_loop(
                                 app.settings_network_ids(),
                             );
                         }
-                        KeyAction::FetchEndpointNextId(network_id) => {
-                            loader.fetch_endpoint_next_id(app.current_generation(), network_id);
-                        }
                         KeyAction::FetchAssetMetadata(identity) => {
                             loader.fetch_asset_metadata(app.current_generation(), identity);
                         }
@@ -313,10 +310,11 @@ async fn run_loop(
                                 app.settings_network_ids(),
                             );
                         }
-                        KeyAction::CreateNetworkEndpoint(endpoint) => {
+                        KeyAction::CreateNetworkEndpoint { network_id, input } => {
                             loader.create_network_endpoint(
                                 app.current_generation(),
-                                endpoint,
+                                network_id,
+                                input,
                                 app.settings_network_ids(),
                             );
                         }

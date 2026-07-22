@@ -3,7 +3,6 @@ import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, Show } from "solid-js";
 
 import { useCreateAccount, useDeriveFromMnemonic } from "#/api/account";
-import { rpc } from "#/api/rpc.gen";
 import { FormNetworkField } from "#/components/account/form/networks";
 import { button } from "#/components/input/button";
 import { FormTextField } from "#/components/input/field";
@@ -16,10 +15,9 @@ export const Route = createFileRoute("/acc/_n/import/mnemonic")({
     },
     component: () => {
         const navigate = useNavigate();
-        const createAccount = useCreateAccount(({ data }: { data: { account_identity: number; name: string; networks: number[]; address: string; display_order: number; }; }) => ({
+        const createAccount = useCreateAccount(({ data }: { data: { name: string; networks: number[]; address: string; display_order: number; }; }) => ({
             contentType: "application/json; charset=utf-8",
             data: {
-                account_identity: data.account_identity,
                 name: data.name,
                 networks: data.networks,
                 display_order: data.display_order,
@@ -72,7 +70,6 @@ export const Route = createFileRoute("/acc/_n/import/mnemonic")({
             if (name.length === 0 || networks.length === 0 || selectedPaths.length === 0) return;
 
             for (const path of selectedPaths) {
-                const account_identity = await rpc.accountNextIdentity();
                 const derivedResult = await derive.mutateAsync({ data: { mnemonic, paths: [path] } });
                 const address = derivedResult.results[0]?.address;
 
@@ -80,7 +77,6 @@ export const Route = createFileRoute("/acc/_n/import/mnemonic")({
 
                 await createAccount.mutateAsync({
                     data: {
-                        account_identity,
                         name: `${name} ${path.split("/").pop()}`,
                         networks,
                         display_order: 0,
