@@ -5,7 +5,7 @@ import { button } from "#/components/input/button";
 
 import { Modal } from "../dialog";
 
-export const NetworkDelete: Component<{ network_identity: number; children?: JSX.Element; }> = ({ network_identity, children }) => {
+export const NetworkDelete: Component<{ network_identity: number; children?: JSX.Element; class?: string; }> = ({ network_identity, children, class: className }) => {
     const deleteNetwork = useDeleteNetwork<{ network_identity: number; }>(({ network_identity }) => ({
         path: {
             network_identity,
@@ -14,12 +14,12 @@ export const NetworkDelete: Component<{ network_identity: number; children?: JSX
 
     return (
         <Modal>
-            <Modal.Trigger class={children ? "" : button({ variant: "danger" })}>
+            <Modal.Trigger class={className ?? (children ? "" : button({ variant: "danger" }))}>
                 {children ?? "Delete"}
             </Modal.Trigger>
             <Modal.Portal>
                 <Modal.Overlay />
-                <div class="fixed inset-0">
+                <div class="fixed inset-0 z-50">
                     <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24">
                         <Modal.Title>
                             Delete Network #

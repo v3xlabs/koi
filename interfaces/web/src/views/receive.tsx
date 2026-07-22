@@ -13,7 +13,7 @@ export const Receive: Component<ReceiveProperties> = props => (
             </Modal.Trigger>
             <Modal.Portal>
                 <Modal.Overlay />
-                <div class="fixed inset-0">
+                <div class="fixed inset-0 z-50">
                     <Modal.Content class="w-full max-w-md bg-surface rounded-md p-4 relative mx-auto mt-24">
                         <Modal.CloseButton />
                         <Modal.Title>

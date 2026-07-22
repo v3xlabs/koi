@@ -1,7 +1,9 @@
+import { Popover } from "@kobalte/core/popover";
 import { Tabs } from "@kobalte/core/tabs";
-import { Component, createMemo, For, Show, Suspense } from "solid-js";
+import { FiMoreVertical } from "solid-icons/fi";
+import { Component, createEffect, createMemo, createSignal, For, Show, Suspense } from "solid-js";
 
-import { useNetwork, useNetworkEndpoints } from "#/api/network";
+import { NetworkUpdate, useNetwork, useNetworkEndpoints, useUpdateNetwork } from "#/api/network";
 import { button } from "#/components/input/button";
 
 import { NetworkDelete } from "./delete";
@@ -17,11 +19,7 @@ const NetworkEndpoints: Component<{ network_identity: number; }> = ({ network_id
 
     return (
         <div class="space-y-2">
-            <div class="flex justify-between items-end">
-                <div>Endpoints</div>
-                <NetworkEndpointAdd network_identity={network_identity} />
-            </div>
-            <ul class="border border-border rounded-lg overflow-hidden">
+            <ul class="overflow-hidden">
                 <Suspense fallback={<div>Loading...</div>}>
                     <Show when={networkEndpointsQuery.data}>
                         {data => (
@@ -43,7 +41,27 @@ const NetworkEndpoints: Component<{ network_identity: number; }> = ({ network_id
     );
 };
 
-export const NetworkEdit: Component<{ network_identity: number; embedded?: boolean; }> = (props) => {
+const NetworkActions: Component<{ network_identity: number; }> = ({ network_identity }) => (
+    <Popover>
+        <Popover.Trigger class={button({ variant: "ghost", size: "default", square: true })} aria-label="Network actions">
+            <FiMoreVertical />
+        </Popover.Trigger>
+        <Popover.Portal>
+            <Popover.Content class="popover-content w-48 p-1">
+                <menu class="flex flex-col">
+                    <NetworkDelete
+                      network_identity={network_identity}
+                      class="rounded-md px-3 py-2 text-left text-sm hover:bg-surface-alt"
+                    >
+                        Delete network
+                    </NetworkDelete>
+                </menu>
+            </Popover.Content>
+        </Popover.Portal>
+    </Popover>
+);
+
+export const NetworkEdit: Component<{ network_identity: number; }> = (props) => {
     const network_identity = () => props.network_identity;
     const networkQuery = useNetwork(() => ({
         path: {
@@ -51,21 +69,37 @@ export const NetworkEdit: Component<{ network_identity: number; embedded?: boole
         },
     }));
     const network = createMemo(() => networkQuery.data);
-    // const updateNetwork = useUpdateNetwork(({ data }: { data: { network_name?: string; network_icon_url?: string; }; }) => ({
-    //     path: {
-    //         network_identity,
-    //     },
-    //     contentType: "application/json; charset=utf-8",
-    //     data,
-    // }));
+    const [activeTab, setActiveTab] = createSignal("endpoints");
+    const [networkName, setNetworkName] = createSignal("");
+    const [networkIconUrl, setNetworkIconUrl] = createSignal("");
+    const updateNetwork = useUpdateNetwork(({ data }: { data: NetworkUpdate; }) => ({
+        path: {
+            network_identity: network_identity(),
+        },
+        contentType: "application/json; charset=utf-8",
+        data,
+    }));
+    const isDirty = createMemo(() => (
+        networkName() !== network()?.network_name
+        || networkIconUrl() !== (network()?.network_icon_url ?? "")
+    ));
+
+    createEffect(() => {
+        const value = network();
+
+        if (!value) return;
+
+        setNetworkName(value.network_name);
+        setNetworkIconUrl(value.network_icon_url ?? "");
+    });
 
     return (
-        <div class={props.embedded ? "border-b border-border pb-6 last:border-0 last:pb-0" : undefined}>
-            <Tabs>
-                <div class="flex justify-between items-end">
-                    <div class="flex items-center gap-2 px-1 pb-2 pt-1">
+        <div class="overflow-hidden rounded-md bg-surface">
+            <Tabs value={activeTab()} onChange={setActiveTab}>
+                <div class="flex items-center justify-between gap-2 px-4 pt-4">
+                    <div class="flex items-center gap-3">
                         <Show when={network()?.network_icon_url}>
-                            {icon => <img src={icon()} alt={network()?.network_name} class="size-4 aspect-square rounded-full" />}
+                            {icon => <img src={icon()} alt={network()?.network_name} class="size-8 aspect-square rounded-sm" />}
                         </Show>
                         <div class="flex items-baseline gap-1">
                             <span>{network()?.network_name}</span>
@@ -75,33 +109,51 @@ export const NetworkEdit: Component<{ network_identity: number; embedded?: boole
                             </span>
                         </div>
                     </div>
-
-                    <div class="flex justify-end">
-                        <Tabs.List class="flex gap-1">
-                            <For each={[{ value: "endpoints", label: "Endpoints" }, { value: "details", label: "Details" }]}>
-                                {item => (
-                                    <Tabs.Trigger value={item.value} class={button({ variant: "outline", size: "small", class: "border-b-0 !rounded-b-none text-sm" })}>{item.label}</Tabs.Trigger>
-                                )}
-                            </For>
-                        </Tabs.List>
+                    <div class="flex items-center gap-1">
+                        <Show when={isDirty()}>
+                            <button
+                              class={button({ variant: "primary" })}
+                              onClick={() => updateNetwork.mutate({
+                                    data: {
+                                        network_name: networkName(),
+                                        network_icon_url: networkIconUrl() || undefined,
+                                    },
+                                })}
+                            >
+                                Save
+                            </button>
+                        </Show>
+                        <Show when={activeTab() === "endpoints"}>
+                            <NetworkEndpointAdd network_identity={network_identity()} />
+                        </Show>
+                        <NetworkActions network_identity={network_identity()} />
                     </div>
                 </div>
-                <div class={props.embedded ? "w-full pt-2" : "bg-surface p-4 rounded-xl w-full"}>
+                <Tabs.List class="mt-3 flex gap-4 border-b border-border px-4">
+                            <For each={[{ value: "endpoints", label: "Endpoints" }, { value: "details", label: "Details" }]}>
+                                {item => (
+                                    <Tabs.Trigger value={item.value} class="border-b-2 border-transparent py-2 text-sm text-muted hover:text-foreground data-[selected]:border-primary data-[selected]:text-foreground">
+                                        {item.label}
+                                    </Tabs.Trigger>
+                                )}
+                            </For>
+                </Tabs.List>
+                <div class="w-full p-4">
                     <Tabs.Content value="endpoints">
                         <NetworkEndpoints network_identity={network_identity()} />
                     </Tabs.Content>
                     <Tabs.Content value="details">
                         <div class="w-full space-y-2">
                             <div class="flex gap-2 w-full">
-                                <div class="grow">
-                                    <div>Name</div>
+                                <label class="grow">
+                                    <span>Name</span>
                                     <input
                                       type="text"
                                       class="input w-full"
-                                      value={network()?.network_name}
-                                    //   onChange={e => updateNetwork.mutate({ data: { network_name: e.target.value } })}
+                                      value={networkName()}
+                                      onInput={event => setNetworkName(event.currentTarget.value)}
                                     />
-                                </div>
+                                </label>
                                 <div>
                                     <div>Network Id</div>
                                     <input
@@ -125,24 +177,13 @@ export const NetworkEdit: Component<{ network_identity: number; embedded?: boole
                                         <input
                                           type="text"
                                           class="bg-transparent outline-none w-full min-w-0"
-                                          value={network()?.network_icon_url}
-                                        //   onChange={e => setNetworkIconUrl(e.target.value)}
+                                          value={networkIconUrl()}
+                                          onInput={event => setNetworkIconUrl(event.currentTarget.value)}
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex w-full justify-end gap-2">
-                                <button
-                                  class={button({ variant: "primary" })}
-                                  disabled
-                                //   disabled={!isDirty()}
-                                //   onClick={() => updateNetwork.mutate({ data: { network_name: networkName(), network_icon_url: networkIconUrl() } })}
-                                >
-                                    Save
-                                </button>
-                                <NetworkDelete network_identity={network_identity()} />
-                            </div>
                         </div>
                     </Tabs.Content>
                 </div>

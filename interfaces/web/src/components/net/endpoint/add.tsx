@@ -4,6 +4,10 @@ import { Component, createSignal } from "solid-js";
 
 import { NetworkEndpoint, useCreateNetworkEndpoint, useNetworkEndpointNextId } from "#/api/network";
 import { button } from "#/components/input/button";
+import { Toggle } from "#/components/input/toggle";
+
+import { endpointTypeForUrl } from "./connection";
+import { NetworkEndpointRoutingMenu } from "./routing";
 
 export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ network_identity }) => {
     const createNetwork = useCreateNetworkEndpoint(({ data }: { data: NetworkEndpoint; }) => ({
@@ -22,7 +26,6 @@ export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ n
 
     const [name, setName] = createSignal("");
     const [url, setUrl] = createSignal("");
-    const [type, setType] = createSignal("http");
     const [disabled, setDisabled] = createSignal(false);
 
     return (
@@ -34,52 +37,38 @@ export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ n
             </Popover.Trigger>
             <Popover.Portal>
                 <Popover.Content class="popover-content p-4 w-full max-w-md">
-                    <div class="w-full">
-                        <div class="w-full">
-                            <label class="space-y-1 block w-full">
-                                <span>Name</span>
+                    <div class="space-y-4">
+                        <Toggle value={() => !disabled()} onChange={enabled => setDisabled(!enabled)} label="Use endpoint" />
+                        <label class="space-y-1 block w-full">
+                            <span>Label</span>
+                            <input
+                              type="text"
+                              class="input w-full"
+                              value={name()}
+                              onChange={e => setName(e.target.value)}
+                            />
+                        </label>
+                        <label class="space-y-1 block w-full">
+                            <span>URL</span>
+                            <div class="flex gap-1">
                                 <input
                                   type="text"
-                                  class="input w-full"
-                                  value={name()}
-                                  onChange={e => setName(e.target.value)}
-                                />
-                            </label>
-                            <label class="space-y-1 block w-full">
-                                <span>URL</span>
-                                <input
-                                  type="text"
-                                  class="input w-full"
+                                  class="input min-w-0 flex-1"
                                   value={url()}
                                   onChange={e => setUrl(e.target.value)}
                                 />
-                            </label>
-                            <label class="space-y-1 block w-full">
-                                <span>Type</span>
-                                <input
-                                  type="text"
-                                  class="input w-full"
-                                  value={type()}
-                                  onChange={e => setType(e.target.value)}
-                                />
-                            </label>
-                            <label class="flex items-center gap-2 py-2">
-                                <span>Enabled</span>
-                                <input
-                                  type="checkbox"
-                                  class="checkbox"
-                                  checked={!disabled()}
-                                  onChange={e => setDisabled(!e.target.checked)}
-                                />
-                            </label>
+                                <NetworkEndpointRoutingMenu />
+                            </div>
+                        </label>
                             <div class="flex justify-end">
                                 <button
                                   class={button({ variant: "primary" })}
+                                  disabled={endpointTypeForUrl(url()) === undefined}
                                   onClick={() => createNetwork.mutate({
                                         data: {
                                             endpoint_identity: Number(nextIdQuery.data ?? "0"),
                                             endpoint_label: name(),
-                                            endpoint_type: type(),
+                                            endpoint_type: endpointTypeForUrl(url()) ?? "http",
                                             endpoint_url: url(),
                                             endpoint_disabled: disabled(),
                                             network_identity,
@@ -89,7 +78,6 @@ export const NetworkEndpointAdd: Component<{ network_identity: number; }> = ({ n
                                     Create
                                 </button>
                             </div>
-                        </div>
                     </div>
                 </Popover.Content>
             </Popover.Portal>
