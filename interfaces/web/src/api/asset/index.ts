@@ -1,4 +1,4 @@
-import type { Asset, AssetMetadataDiscovery, AssetUpdate } from "../bindings.gen";
+import type { Asset, AssetIconData, AssetMetadataDiscovery, AssetUpdate } from "../bindings.gen";
 import { queryClient } from "../client";
 import { createRpcMutation, createRpcQuery, requireOptions } from "../query";
 import { rpc } from "../rpc.gen";
@@ -8,6 +8,7 @@ type Path = { path: { asset_identity: string; }; };
 export const assetKeys = {
     all: ["assets"] as const,
     detail: (assetIdentity: string) => ["assets", assetIdentity] as const,
+    icon: (assetIdentity: string) => ["asset-icon", assetIdentity] as const,
     discovery: (assetIdentity: string) => ["asset-discovery", assetIdentity] as const,
     quote: (assetIdentity: string) => ["quote", assetIdentity] as const,
 };
@@ -23,12 +24,17 @@ export const useAsset = createRpcQuery<Path, Asset>(
     options => rpc.assetGet({ asset_identity: requireOptions(options).path.asset_identity }),
     options => assetKeys.detail(requireOptions(options).path.asset_identity),
 );
+export const useAssetIcon = createRpcQuery<Path, AssetIconData | null>(
+    options => rpc.assetIcon({ asset_identity: requireOptions(options).path.asset_identity }),
+    options => assetKeys.icon(requireOptions(options).path.asset_identity),
+);
 export const useCreateAsset = createRpcMutation<{ data: Asset; }, Asset>(
     options => rpc.assetCreate({ input: options.data }),
     {
         onSuccess: (asset) => {
             void queryClient.invalidateQueries({ queryKey: assetKeys.all });
             void queryClient.invalidateQueries({ queryKey: assetKeys.detail(asset.asset_identity) });
+            void queryClient.invalidateQueries({ queryKey: assetKeys.icon(asset.asset_identity) });
         },
     },
 );
@@ -38,6 +44,7 @@ export const useUpdateAsset = createRpcMutation<Path & { data: AssetUpdate; }, A
         onSuccess: (asset) => {
             void queryClient.invalidateQueries({ queryKey: assetKeys.all });
             void queryClient.invalidateQueries({ queryKey: assetKeys.detail(asset.asset_identity) });
+            void queryClient.invalidateQueries({ queryKey: assetKeys.icon(asset.asset_identity) });
         },
     },
 );
@@ -47,6 +54,7 @@ export const useDeleteAsset = createRpcMutation<Path, null>(
         onSuccess: (_, options) => {
             void queryClient.invalidateQueries({ queryKey: assetKeys.all });
             queryClient.removeQueries({ queryKey: assetKeys.detail(options.path.asset_identity) });
+            queryClient.removeQueries({ queryKey: assetKeys.icon(options.path.asset_identity) });
         },
     },
 );
