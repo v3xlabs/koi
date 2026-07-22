@@ -266,7 +266,6 @@ const AssetAddInner: Component<AssetAddInnerProps> = (props) => {
                             {([iconUrl, source]) => (
                                 <li>
                                     <button class={button({ variant: "outline" })} onClick={() => setAssetIconUrl(iconUrl)}>
-                                        <img src={iconUrl} alt={source} class="size-8 aspect-square rounded-full" />
                                         {source}
                                     </button>
                                 </li>
