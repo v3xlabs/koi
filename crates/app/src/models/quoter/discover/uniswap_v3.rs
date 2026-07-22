@@ -12,8 +12,8 @@ use alloy::{
 };
 use eth_prices::quoter::uniswap_v3::discovery::UniswapV3Factory::{self, UniswapV3FactoryInstance};
 use futures::{StreamExt, stream};
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 fn factory_address(network_identity: &NetworkIdentity) -> Result<Address, KoiError> {
     match network_identity {
@@ -29,7 +29,8 @@ fn fees(network_identity: &NetworkIdentity) -> Result<Vec<u32>, KoiError> {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct UniswapV3Pool {
     pub pool_address: String,
     pub fee: u32,

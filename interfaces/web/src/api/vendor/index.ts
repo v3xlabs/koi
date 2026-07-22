@@ -1,26 +1,37 @@
+import type { VendorFlag, VendorFlagInfo } from "../bindings.gen";
 import { queryClient } from "../client";
-import { createApi, createApiMutation } from "../query";
-import { components } from "../schema.gen";
+import { createRpcMutation, createRpcQuery } from "../query";
+import { rpc } from "../rpc.gen";
+
+type Path = { path: { flag: VendorFlag; }; };
 
 export const vendorKeys = {
     enabled: ["vendors"] as const,
     all: ["vendors-all"] as const,
 };
-
-export type VendorFlagInfo = components["schemas"]["VendorFlagInfo"];
-export type VendorFlag = components["schemas"]["VendorFlag"];
-
-export const useVendors = createApi("/vendor", "get", () => vendorKeys.enabled, {});
-export const useAllVendors = createApi("/vendor/all", "get", () => vendorKeys.all, {});
-
-export const useVendorFlagEnable = createApiMutation("/vendor/{flag}", "post", {
-    onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: vendorKeys.enabled });
+export const useVendors = createRpcQuery<void, { vendors: VendorFlag[]; }>(
+    async () => ({ vendors: await rpc.vendorListEnabled() }),
+    () => vendorKeys.enabled,
+);
+export const useAllVendors = createRpcQuery<void, { vendors: VendorFlagInfo[]; }>(
+    async () => ({ vendors: await rpc.vendorListAll() }),
+    () => vendorKeys.all,
+);
+export const useVendorFlagEnable = createRpcMutation<Path, null>(
+    options => rpc.vendorEnable({ flag: options.path.flag }),
+    {
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: vendorKeys.enabled });
+        },
     },
-});
-
-export const useVendorFlagDisable = createApiMutation("/vendor/{flag}", "delete", {
-    onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: vendorKeys.enabled });
+);
+export const useVendorFlagDisable = createRpcMutation<Path, null>(
+    options => rpc.vendorDisable({ flag: options.path.flag }),
+    {
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: vendorKeys.enabled });
+        },
     },
-});
+);
+
+export { type VendorFlag, type VendorFlagInfo } from "../bindings.gen";

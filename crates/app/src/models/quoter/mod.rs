@@ -9,7 +9,6 @@ use eth_prices::{
         uniswap_v3::UniswapV3Quoter,
     },
 };
-use poem_openapi::{Object, Union};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     Decode, Encode, Sqlite, Type,
@@ -17,6 +16,7 @@ use sqlx::{
     query_as,
     sqlite::{SqliteTypeInfo, SqliteValueRef},
 };
+use ts_rs::TS;
 
 use crate::{
     error::KoiError,
@@ -26,10 +26,10 @@ use crate::{
 
 pub mod discover;
 pub mod man;
+pub mod rpc;
 
-#[derive(Debug, Serialize, Deserialize, Union)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
-#[oai(discriminator_name = "type", rename_all = "snake_case")]
 pub enum QuoterConfig {
     Fixed(FixedQuoterConfig),
     Erc4626(Erc4626QuoterConfig),
@@ -37,7 +37,7 @@ pub enum QuoterConfig {
     UniswapV3(UniswapV3QuoterConfig),
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct FixedQuoterConfig {
     pub price: String,
     pub decimals: u8,
@@ -45,15 +45,15 @@ pub struct FixedQuoterConfig {
     pub token_out_decimals: u8,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct Erc4626QuoterConfig {}
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct UniswapV2QuoterConfig {
     pub pair_address: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct UniswapV3QuoterConfig {
     pub pool_address: String,
 }
@@ -82,7 +82,7 @@ impl<'q> Encode<'q, Sqlite> for QuoterConfig {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Object, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, TS)]
 pub struct Quoter {
     pub quoter_identity: String,
     pub quoter_name: String,
@@ -93,7 +93,7 @@ pub struct Quoter {
     pub watch: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct QuoterCreate {
     pub quoter_name: String,
     pub token_a: AssetIdentity,
@@ -103,7 +103,8 @@ pub struct QuoterCreate {
     pub watch: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct QuoterUpdate {
     pub quoter_name: Option<String>,
     pub token_a: Option<AssetIdentity>,

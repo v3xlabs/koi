@@ -1,12 +1,8 @@
 use std::{fmt::Display, ops::Deref, str::FromStr};
 
 use alloy::primitives::{Address, Bytes, U256};
-use poem_openapi::{
-    registry::{MetaSchema, MetaSchemaRef},
-    types::{ParseError, ParseFromJSON, ParseResult, ToJSON},
-};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
-use serde_json::Value;
+use ts_rs::TS;
 
 macro_rules! api_string_type {
     (
@@ -74,55 +70,12 @@ macro_rules! api_string_type {
             }
         }
 
-        impl poem_openapi::types::Type for $name {
-            const IS_REQUIRED: bool = true;
-
-            type RawValueType = String;
-            type RawElementValueType = String;
-
-            fn name() -> std::borrow::Cow<'static, str> {
-                $type_name.into()
-            }
-
-            fn schema_ref() -> MetaSchemaRef {
-                MetaSchemaRef::Inline(Box::new(MetaSchema {
-                    ty: "string",
-                    format: Some($format),
-                    pattern: Some($pattern.to_string()),
-                    ..MetaSchema::ANY
-                }))
-            }
-
-            fn as_raw_value(&self) -> Option<&Self::RawValueType> {
-                None
-            }
-
-            fn raw_element_iter<'a>(
-                &'a self,
-            ) -> Box<dyn Iterator<Item = &'a Self::RawElementValueType> + 'a> {
-                Box::new(std::iter::empty())
-            }
-        }
-
-        impl ParseFromJSON for $name {
-            fn parse_from_json(value: Option<Value>) -> ParseResult<Self> {
-                match value {
-                    Some(Value::String(value)) => value.parse().map_err(ParseError::custom),
-                    _ => Err(ParseError::custom($error_message)),
-                }
-            }
-        }
-
-        impl ToJSON for $name {
-            fn to_json(&self) -> Option<Value> {
-                Some(Value::String(self.to_string()))
-            }
-        }
     };
 }
 
 api_string_type! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, TS)]
+    #[ts(type = "string")]
     pub struct ApiAddress(Address);
     type_name: "Address";
     format: "address";
@@ -132,7 +85,8 @@ api_string_type! {
 }
 
 api_string_type! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, TS)]
+    #[ts(type = "string")]
     pub struct ApiU256(U256);
     type_name: "U256";
     format: "uint256";
@@ -142,7 +96,8 @@ api_string_type! {
 }
 
 api_string_type! {
-    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, PartialEq, Eq, Hash, TS)]
+    #[ts(type = "string")]
     pub struct ApiBytes(Bytes);
     type_name: "Bytes";
     format: "bytes";

@@ -13,10 +13,11 @@ use alloy::{
 };
 use chrono::{DateTime, Utc};
 use futures::stream::{self, FuturesUnordered, StreamExt};
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Serialize, Deserialize, Clone, TS)]
+#[ts(optional_fields)]
 pub struct AccountBalances {
     pub balances: Vec<AccountBalance>,
     pub total_quote: Option<String>,
@@ -25,7 +26,8 @@ pub struct AccountBalances {
     pub errors: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Serialize, Deserialize, Clone, TS)]
+#[ts(optional_fields)]
 pub struct AccountBalance {
     pub asset_identity: AssetIdentity,
     #[serde(skip_serializing_if = "Option::is_none")]

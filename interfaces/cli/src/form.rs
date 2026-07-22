@@ -2,9 +2,50 @@ use std::str::FromStr;
 
 use crossterm::event::KeyCode;
 use koi::models::{
-    asset::{Asset, identity::AssetIdentity, metadata::AssetMetadataDiscovery},
-    network::{Network, endpoint::NetworkEndpoint, identity::NetworkIdentity},
+    account::rpc::DeriveMnemonicResult,
+    asset::{Asset, AssetUpdate, identity::AssetIdentity, metadata::AssetMetadataDiscovery},
+    network::{
+        Network, NetworkUpdate,
+        endpoint::{NetworkEndpoint, NetworkEndpointUpdate},
+        identity::NetworkIdentity,
+    },
 };
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AccountKind {
+    Generate,
+    View,
+    Safe,
+    Mnemonic,
+    PrivateKey,
+}
+
+impl AccountKind {
+    pub(crate) const ALL: [AccountKind; 5] = [
+        AccountKind::Generate,
+        AccountKind::View,
+        AccountKind::Safe,
+        AccountKind::Mnemonic,
+        AccountKind::PrivateKey,
+    ];
+
+    pub(crate) fn label(self) -> &'static str {
+        match self {
+            AccountKind::Generate => "New wallet (generate mnemonic)",
+            AccountKind::View => "Watch address (view only)",
+            AccountKind::Safe => "Safe wallet (watch)",
+            AccountKind::Mnemonic => "Import mnemonic",
+            AccountKind::PrivateKey => "Import private key",
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum NewAccountWallet {
+    View(String),
+    Safe(String),
+    Eoa(String),
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AssetType {
@@ -182,7 +223,95 @@ pub enum ActiveForm {
         next_id: i32,
         form: TextForm,
     },
+    GroupName {
+        group_id: Option<u64>,
+        form: TextForm,
+    },
+    PickCurrency {
+        options: Vec<Asset>,
+        selected: usize,
+    },
+    ConfirmDeleteGroup {
+        group_id: u64,
+        name: String,
+    },
+    AddAccountType {
+        selected: usize,
+    },
+    AddAccountAddress {
+        kind: AccountKind,
+        form: TextForm,
+        ens_hint: Option<String>,
+        ens_pending: Option<String>,
+        ens_primary: Option<String>,
+        ens_primary_pending: Option<String>,
+    },
+    AddAccountMnemonic {
+        form: TextForm,
+        deriving: bool,
+    },
+    AddAccountPickAddress {
+        name: String,
+        options: Vec<DeriveMnemonicResult>,
+        selected: usize,
+    },
+    RenameAccount {
+        account_id: u64,
+        form: TextForm,
+    },
+    ConfirmDeleteAccount {
+        account_id: u64,
+        name: String,
+    },
+    AccountNetworks {
+        account_id: u64,
+        options: Vec<(u64, String, bool)>,
+        selected: usize,
+    },
+    PickAccountAsset {
+        account_id: u64,
+        unlink: bool,
+        options: Vec<(String, String)>,
+        selected: usize,
+    },
+    EditEndpoint {
+        network_id: u64,
+        endpoint_id: i32,
+        form: TextForm,
+    },
+    EditNetwork {
+        network_id: u64,
+        form: TextForm,
+    },
+    EditAsset {
+        identity: String,
+        form: TextForm,
+    },
+    ConfirmDeleteNetwork {
+        network_id: u64,
+        name: String,
+    },
+    PickQuoterToken {
+        token_a: Option<String>,
+        options: Vec<(String, String)>,
+        selected: usize,
+    },
+    QuoterDiscovering,
+    PickQuoterSource {
+        token_a: String,
+        options: Vec<QuoterSourceOption>,
+        selected: usize,
+    },
 }
+
+#[derive(Debug)]
+pub struct QuoterSourceOption {
+    pub label: String,
+    pub token_b: String,
+    pub config: koi::models::quoter::QuoterConfig,
+}
+
+pub const ERC4626_SENTINEL: &str = "<erc4626>";
 
 #[derive(Debug)]
 pub enum FormAction {
@@ -193,6 +322,67 @@ pub enum FormAction {
     SubmitCreateAsset(Asset),
     SubmitCreateNetwork(Network),
     SubmitCreateEndpoint(NetworkEndpoint),
+    SubmitGroupName {
+        group_id: Option<u64>,
+        name: String,
+    },
+    ConfirmDeleteGroup(u64),
+    SubmitDisplayCurrency(String),
+    FetchDerivationPath,
+    GenerateMnemonic,
+    ResolveEns(String),
+    ReverseEns(String),
+    SubmitCreateAccount {
+        name: String,
+        wallet: NewAccountWallet,
+    },
+    DeriveMnemonic {
+        name: String,
+        mnemonic: String,
+        base_path: String,
+    },
+    CreateAccountFromKey {
+        name: String,
+        key: String,
+    },
+    SubmitRenameAccount {
+        account_id: u64,
+        name: String,
+    },
+    ConfirmDeleteAccount(u64),
+    SubmitAccountNetworks {
+        account_id: u64,
+        networks: Vec<u64>,
+    },
+    SubmitAccountAsset {
+        account_id: u64,
+        unlink: bool,
+        identity: String,
+    },
+    PickQuoterTokenA(String),
+    DiscoverQuoter {
+        token_a: String,
+        token_b: Option<String>,
+    },
+    SubmitCreateQuoter {
+        token_a: String,
+        token_b: String,
+        config: koi::models::quoter::QuoterConfig,
+    },
+    SubmitEditEndpoint {
+        network_id: u64,
+        endpoint_id: i32,
+        update: NetworkEndpointUpdate,
+    },
+    SubmitEditNetwork {
+        network_id: u64,
+        update: NetworkUpdate,
+    },
+    SubmitEditAsset {
+        identity: String,
+        update: AssetUpdate,
+    },
+    ConfirmDeleteNetwork(u64),
 }
 
 impl ActiveForm {
@@ -202,6 +392,125 @@ impl ActiveForm {
 
     pub fn open_add_network() -> Self {
         Self::AddNetworkMode { selected: 0 }
+    }
+
+    pub fn open_add_account() -> Self {
+        Self::AddAccountType { selected: 0 }
+    }
+
+    pub fn open_rename_account(account_id: u64, current_name: &str) -> Self {
+        let mut form = TextForm::new("Rename account", vec![("Name", true)]);
+        if let Some(field) = form.fields.get_mut(0) {
+            field.value = current_name.to_string();
+        }
+        Self::RenameAccount { account_id, form }
+    }
+
+    pub fn open_confirm_delete_account(account_id: u64, name: String) -> Self {
+        Self::ConfirmDeleteAccount { account_id, name }
+    }
+
+    pub fn open_account_networks(account_id: u64, options: Vec<(u64, String, bool)>) -> Self {
+        Self::AccountNetworks {
+            account_id,
+            options,
+            selected: 0,
+        }
+    }
+
+    pub fn open_edit_endpoint(endpoint: &NetworkEndpoint) -> Self {
+        let mut form = TextForm::new(
+            format!("Edit endpoint #{}", endpoint.endpoint_identity),
+            vec![
+                ("Label", false),
+                ("URL", true),
+                ("Type (http/ws)", true),
+                ("Enabled (yes/no)", true),
+            ],
+        );
+        let values = [
+            endpoint.endpoint_label.clone().unwrap_or_default(),
+            endpoint.endpoint_url.clone(),
+            endpoint.endpoint_type.clone(),
+            if endpoint.endpoint_disabled {
+                "no"
+            } else {
+                "yes"
+            }
+            .to_string(),
+        ];
+        for (field, value) in form.fields.iter_mut().zip(values) {
+            field.value = value;
+        }
+        Self::EditEndpoint {
+            network_id: endpoint.network_identity.0,
+            endpoint_id: endpoint.endpoint_identity,
+            form,
+        }
+    }
+
+    pub fn open_edit_network(network: &Network) -> Self {
+        let mut form = TextForm::new(
+            format!("Edit network {}", network.network_identity.0),
+            vec![("Name", true), ("Icon URL", false)],
+        );
+        let values = [
+            network.network_name.clone(),
+            network.network_icon_url.clone().unwrap_or_default(),
+        ];
+        for (field, value) in form.fields.iter_mut().zip(values) {
+            field.value = value;
+        }
+        Self::EditNetwork {
+            network_id: network.network_identity.0,
+            form,
+        }
+    }
+
+    pub fn open_edit_asset(asset: &Asset) -> Self {
+        let mut form = TextForm::new(
+            format!("Edit asset {}", asset.asset_identity),
+            vec![
+                ("Name", true),
+                ("Symbol", true),
+                ("Decimals", true),
+                ("Icon URL", false),
+            ],
+        );
+        let values = [
+            asset.asset_name.clone(),
+            asset.asset_symbol.clone(),
+            asset.asset_decimals.to_string(),
+            asset.asset_icon_url.clone().unwrap_or_default(),
+        ];
+        for (field, value) in form.fields.iter_mut().zip(values) {
+            field.value = value;
+        }
+        Self::EditAsset {
+            identity: asset.asset_identity.to_string(),
+            form,
+        }
+    }
+
+    pub fn open_confirm_delete_network(network_id: u64, name: String) -> Self {
+        Self::ConfirmDeleteNetwork { network_id, name }
+    }
+
+    pub fn open_group_name(group_id: Option<u64>, current_name: &str) -> Self {
+        let title = if group_id.is_some() {
+            "Rename group"
+        } else {
+            "New group"
+        };
+        let mut form = TextForm::new(title, vec![("Name", true)]);
+        if let Some(field) = form.fields.get_mut(0) {
+            field.value = current_name.to_string();
+        }
+        Self::GroupName { group_id, form }
+    }
+
+    pub fn open_confirm_delete_group(group_id: u64, name: String) -> Self {
+        Self::ConfirmDeleteGroup { group_id, name }
     }
 
     pub fn open_add_endpoint(network_id: u64) -> Self {
@@ -235,6 +544,28 @@ impl ActiveForm {
             Self::AddNetwork(form) => &form.title,
             Self::AddNetworkPreset { .. } => "Add network · choose preset",
             Self::AddEndpoint { form, .. } => &form.title,
+            Self::GroupName { form, .. } => &form.title,
+            Self::PickCurrency { .. } => "Display currency",
+            Self::ConfirmDeleteGroup { .. } => "Delete group",
+            Self::AddAccountType { .. } => "Add account · choose type",
+            Self::AddAccountAddress { form, .. } => &form.title,
+            Self::AddAccountMnemonic { .. } => "Add account · import mnemonic",
+            Self::AddAccountPickAddress { .. } => "Add account · pick address",
+            Self::RenameAccount { form, .. } => &form.title,
+            Self::ConfirmDeleteAccount { .. } => "Delete account",
+            Self::AccountNetworks { .. } => "Account networks",
+            Self::PickAccountAsset { unlink: false, .. } => "Link asset",
+            Self::PickAccountAsset { unlink: true, .. } => "Unlink asset",
+            Self::EditEndpoint { form, .. } => &form.title,
+            Self::EditNetwork { form, .. } => &form.title,
+            Self::EditAsset { form, .. } => &form.title,
+            Self::ConfirmDeleteNetwork { .. } => "Delete network",
+            Self::PickQuoterToken { token_a: None, .. } => "Add quoter · token to price",
+            Self::PickQuoterToken {
+                token_a: Some(_), ..
+            } => "Add quoter · quote against",
+            Self::QuoterDiscovering => "Add quoter · discovering routes",
+            Self::PickQuoterSource { .. } => "Add quoter · choose source",
         }
     }
 
@@ -251,6 +582,38 @@ impl ActiveForm {
             Self::AddNetworkPreset { presets, .. } => (74, (presets.len() + 5).min(20) as u16),
             Self::AddNetwork(form) => (58, (form.fields.len() + 5) as u16),
             Self::AddEndpoint { form, .. } => (62, (form.fields.len() + 5) as u16),
+            Self::GroupName { form, .. } => (48, (form.fields.len() + 5) as u16),
+            Self::PickCurrency { options, .. } => (48, (options.len() + 5).min(20) as u16),
+            Self::ConfirmDeleteGroup { .. } => (56, 7),
+            Self::AddAccountType { .. } => (48, 10),
+            Self::AddAccountAddress {
+                form,
+                ens_hint,
+                ens_primary,
+                ..
+            } => (
+                74,
+                (form.fields.len()
+                    + 5
+                    + usize::from(ens_hint.is_some())
+                    + usize::from(ens_primary.is_some())) as u16,
+            ),
+            Self::AddAccountMnemonic { form, deriving } => {
+                let extra = usize::from(*deriving);
+                (78, (form.fields.len() + extra + 5) as u16)
+            }
+            Self::AddAccountPickAddress { options, .. } => (74, (options.len() + 5).min(20) as u16),
+            Self::RenameAccount { form, .. } => (48, (form.fields.len() + 5) as u16),
+            Self::ConfirmDeleteAccount { .. } => (56, 7),
+            Self::AccountNetworks { options, .. } => (56, (options.len() + 6).min(20) as u16),
+            Self::PickAccountAsset { options, .. } => (70, (options.len() + 5).min(20) as u16),
+            Self::EditEndpoint { form, .. } => (62, (form.fields.len() + 5) as u16),
+            Self::EditNetwork { form, .. } => (58, (form.fields.len() + 5) as u16),
+            Self::EditAsset { form, .. } => (62, (form.fields.len() + 5) as u16),
+            Self::ConfirmDeleteNetwork { .. } => (56, 7),
+            Self::PickQuoterToken { options, .. } => (70, (options.len() + 5).min(20) as u16),
+            Self::QuoterDiscovering => (48, 7),
+            Self::PickQuoterSource { options, .. } => (74, (options.len() + 5).min(20) as u16),
         }
     }
 
@@ -353,6 +716,438 @@ impl ActiveForm {
             } => handle_text_form(code, form, |form| {
                 build_endpoint(*network_id, *next_id, form).map(FormAction::SubmitCreateEndpoint)
             }),
+            Self::GroupName { group_id, form } => {
+                let group_id = *group_id;
+                handle_text_form(code, form, |form| {
+                    let name = form.field(0)?.trim().to_string();
+                    if name.is_empty() {
+                        return None;
+                    }
+                    Some(FormAction::SubmitGroupName { group_id, name })
+                })
+            }
+            Self::ConfirmDeleteGroup { group_id, .. } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Enter => FormAction::ConfirmDeleteGroup(*group_id),
+                _ => FormAction::None,
+            },
+            Self::PickCurrency { options, selected } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    *selected = selected.saturating_sub(1);
+                    FormAction::None
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *selected = (*selected + 1).min(options.len().saturating_sub(1));
+                    FormAction::None
+                }
+                KeyCode::Enter => options
+                    .get(*selected)
+                    .map(|asset| {
+                        FormAction::SubmitDisplayCurrency(asset.asset_identity.to_string())
+                    })
+                    .unwrap_or(FormAction::None),
+                _ => FormAction::None,
+            },
+            Self::AddAccountType { selected } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    *selected = selected.saturating_sub(1);
+                    FormAction::None
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *selected = (*selected + 1).min(AccountKind::ALL.len() - 1);
+                    FormAction::None
+                }
+                KeyCode::Enter => {
+                    let kind = AccountKind::ALL[*selected];
+                    *self = match kind {
+                        AccountKind::View | AccountKind::Safe => Self::AddAccountAddress {
+                            kind,
+                            form: TextForm::new(
+                                format!("Add account · {}", kind.label()),
+                                vec![("Name", true), ("Address", true)],
+                            ),
+                            ens_hint: None,
+                            ens_pending: None,
+                            ens_primary: None,
+                            ens_primary_pending: None,
+                        },
+                        AccountKind::Mnemonic | AccountKind::Generate => Self::AddAccountMnemonic {
+                            form: TextForm::new(
+                                if kind == AccountKind::Generate {
+                                    "Add account · new wallet (write the mnemonic down!)"
+                                } else {
+                                    "Add account · import mnemonic"
+                                },
+                                vec![("Name", true), ("Mnemonic", true), ("Base path", true)],
+                            ),
+                            deriving: false,
+                        },
+                        AccountKind::PrivateKey => Self::AddAccountAddress {
+                            kind,
+                            form: TextForm::new(
+                                "Add account · import private key",
+                                vec![("Name", true), ("Private key", true)],
+                            ),
+                            ens_hint: None,
+                            ens_pending: None,
+                            ens_primary: None,
+                            ens_primary_pending: None,
+                        },
+                    };
+                    match kind {
+                        AccountKind::Generate => FormAction::GenerateMnemonic,
+                        AccountKind::Mnemonic => FormAction::FetchDerivationPath,
+                        _ => FormAction::None,
+                    }
+                }
+                _ => FormAction::None,
+            },
+            Self::AddAccountAddress {
+                kind,
+                form,
+                ens_hint,
+                ens_pending,
+                ens_primary,
+                ens_primary_pending,
+            } => {
+                let kind = *kind;
+                let supports_ens = matches!(kind, AccountKind::View | AccountKind::Safe);
+                match code {
+                    KeyCode::Esc => FormAction::Cancel,
+                    KeyCode::Up | KeyCode::BackTab => {
+                        form.move_focus(-1);
+                        FormAction::None
+                    }
+                    KeyCode::Down => {
+                        form.move_focus(1);
+                        FormAction::None
+                    }
+                    KeyCode::Tab => {
+                        if supports_ens {
+                            if let Some(hint) = ens_hint.take() {
+                                if let Some(field) = form.fields.get_mut(1) {
+                                    field.value = hint.clone();
+                                }
+                                form.focus = 1;
+                                *ens_primary = None;
+                                *ens_primary_pending = Some(hint.to_lowercase());
+                                return FormAction::ReverseEns(hint);
+                            }
+                            if form.focus == 0 {
+                                let name_empty =
+                                    form.field(0).is_none_or(|value| value.trim().is_empty());
+                                if name_empty {
+                                    if let Some(primary) = ens_primary.clone() {
+                                        if let Some(field) = form.fields.get_mut(0) {
+                                            field.value = primary;
+                                        }
+                                        return FormAction::None;
+                                    }
+                                }
+                            }
+                        }
+                        form.move_focus(1);
+                        FormAction::None
+                    }
+                    KeyCode::Backspace => {
+                        form.edit_current(|value| {
+                            value.pop();
+                        });
+                        ens_actions(
+                            supports_ens,
+                            form,
+                            ens_hint,
+                            ens_pending,
+                            ens_primary,
+                            ens_primary_pending,
+                        )
+                    }
+                    KeyCode::Char(ch) if !ch.is_control() => {
+                        form.edit_current(|value| value.push(ch));
+                        ens_actions(
+                            supports_ens,
+                            form,
+                            ens_hint,
+                            ens_pending,
+                            ens_primary,
+                            ens_primary_pending,
+                        )
+                    }
+                    KeyCode::Enter if form.can_submit() => {
+                        let name = form.field(0).unwrap_or_default().trim().to_string();
+                        let value = form.field(1).unwrap_or_default().trim().to_string();
+                        if name.is_empty() || value.is_empty() {
+                            return FormAction::None;
+                        }
+                        match kind {
+                            AccountKind::View => FormAction::SubmitCreateAccount {
+                                name,
+                                wallet: NewAccountWallet::View(value),
+                            },
+                            AccountKind::Safe => FormAction::SubmitCreateAccount {
+                                name,
+                                wallet: NewAccountWallet::Safe(value),
+                            },
+                            AccountKind::PrivateKey => {
+                                FormAction::CreateAccountFromKey { name, key: value }
+                            }
+                            AccountKind::Mnemonic | AccountKind::Generate => FormAction::None,
+                        }
+                    }
+                    _ => FormAction::None,
+                }
+            }
+            Self::AddAccountMnemonic { form, deriving } => {
+                if *deriving {
+                    return match code {
+                        KeyCode::Esc => FormAction::Cancel,
+                        _ => FormAction::None,
+                    };
+                }
+                handle_text_form(code, form, |form| {
+                    let name = form.field(0)?.trim().to_string();
+                    let mnemonic = form.field(1)?.trim().to_string();
+                    let base_path = form.field(2)?.trim().to_string();
+                    if name.is_empty() || mnemonic.is_empty() || base_path.is_empty() {
+                        return None;
+                    }
+                    Some(FormAction::DeriveMnemonic {
+                        name,
+                        mnemonic,
+                        base_path,
+                    })
+                })
+            }
+            Self::AddAccountPickAddress {
+                name,
+                options,
+                selected,
+            } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    *selected = selected.saturating_sub(1);
+                    FormAction::None
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *selected = (*selected + 1).min(options.len().saturating_sub(1));
+                    FormAction::None
+                }
+                KeyCode::Enter => options
+                    .get(*selected)
+                    .map(|result| FormAction::SubmitCreateAccount {
+                        name: name.clone(),
+                        wallet: NewAccountWallet::Eoa(result.address.clone()),
+                    })
+                    .unwrap_or(FormAction::None),
+                _ => FormAction::None,
+            },
+            Self::RenameAccount { account_id, form } => {
+                let account_id = *account_id;
+                handle_text_form(code, form, |form| {
+                    let name = form.field(0)?.trim().to_string();
+                    if name.is_empty() {
+                        return None;
+                    }
+                    Some(FormAction::SubmitRenameAccount { account_id, name })
+                })
+            }
+            Self::ConfirmDeleteAccount { account_id, .. } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Enter => FormAction::ConfirmDeleteAccount(*account_id),
+                _ => FormAction::None,
+            },
+            Self::AccountNetworks {
+                account_id,
+                options,
+                selected,
+            } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    *selected = selected.saturating_sub(1);
+                    FormAction::None
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *selected = (*selected + 1).min(options.len().saturating_sub(1));
+                    FormAction::None
+                }
+                KeyCode::Char(' ') => {
+                    if let Some(option) = options.get_mut(*selected) {
+                        option.2 = !option.2;
+                    }
+                    FormAction::None
+                }
+                KeyCode::Enter => FormAction::SubmitAccountNetworks {
+                    account_id: *account_id,
+                    networks: options
+                        .iter()
+                        .filter(|option| option.2)
+                        .map(|option| option.0)
+                        .collect(),
+                },
+                _ => FormAction::None,
+            },
+            Self::EditEndpoint {
+                network_id,
+                endpoint_id,
+                form,
+            } => {
+                let network_id = *network_id;
+                let endpoint_id = *endpoint_id;
+                handle_text_form(code, form, |form| {
+                    let url = form.field(1)?.trim().to_string();
+                    if url.is_empty() {
+                        return None;
+                    }
+                    let enabled = form.field(3)?.trim();
+                    Some(FormAction::SubmitEditEndpoint {
+                        network_id,
+                        endpoint_id,
+                        update: NetworkEndpointUpdate {
+                            endpoint_label: optional_field(form, 0),
+                            endpoint_url: Some(url),
+                            endpoint_type: optional_field(form, 2),
+                            endpoint_disabled: Some(
+                                !enabled.eq_ignore_ascii_case("yes")
+                                    && !enabled.eq_ignore_ascii_case("y")
+                                    && !enabled.eq_ignore_ascii_case("true")
+                                    && enabled != "1",
+                            ),
+                        },
+                    })
+                })
+            }
+            Self::EditNetwork { network_id, form } => {
+                let network_id = *network_id;
+                handle_text_form(code, form, |form| {
+                    let name = form.field(0)?.trim().to_string();
+                    if name.is_empty() {
+                        return None;
+                    }
+                    Some(FormAction::SubmitEditNetwork {
+                        network_id,
+                        update: NetworkUpdate {
+                            network_name: Some(name),
+                            network_icon_url: optional_field(form, 1),
+                        },
+                    })
+                })
+            }
+            Self::EditAsset { identity, form } => {
+                let identity = identity.clone();
+                handle_text_form(code, form, |form| {
+                    let name = form.field(0)?.trim().to_string();
+                    let symbol = form.field(1)?.trim().to_string();
+                    let decimals = form.field(2)?.trim().parse::<u8>().ok()?;
+                    if name.is_empty() || symbol.is_empty() {
+                        return None;
+                    }
+                    Some(FormAction::SubmitEditAsset {
+                        identity,
+                        update: AssetUpdate {
+                            asset_name: Some(name),
+                            asset_symbol: Some(symbol),
+                            asset_decimals: Some(decimals),
+                            asset_icon_url: optional_field(form, 3),
+                        },
+                    })
+                })
+            }
+            Self::ConfirmDeleteNetwork { network_id, .. } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Enter => FormAction::ConfirmDeleteNetwork(*network_id),
+                _ => FormAction::None,
+            },
+            Self::PickQuoterToken {
+                token_a,
+                options,
+                selected,
+            } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    *selected = selected.saturating_sub(1);
+                    FormAction::None
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *selected = (*selected + 1).min(options.len().saturating_sub(1));
+                    FormAction::None
+                }
+                KeyCode::Enter => {
+                    let Some((identity, _)) = options.get(*selected) else {
+                        return FormAction::None;
+                    };
+                    match token_a {
+                        None => FormAction::PickQuoterTokenA(identity.clone()),
+                        Some(token_a) => FormAction::DiscoverQuoter {
+                            token_a: token_a.clone(),
+                            token_b: (identity != ERC4626_SENTINEL).then(|| identity.clone()),
+                        },
+                    }
+                }
+                _ => FormAction::None,
+            },
+            Self::QuoterDiscovering => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                _ => FormAction::None,
+            },
+            Self::PickQuoterSource {
+                token_a,
+                options,
+                selected,
+            } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    *selected = selected.saturating_sub(1);
+                    FormAction::None
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *selected = (*selected + 1).min(options.len().saturating_sub(1));
+                    FormAction::None
+                }
+                KeyCode::Enter => {
+                    let Some(option) = options.get_mut(*selected) else {
+                        return FormAction::None;
+                    };
+                    let config = std::mem::replace(
+                        &mut option.config,
+                        koi::models::quoter::QuoterConfig::Erc4626(
+                            koi::models::quoter::Erc4626QuoterConfig {},
+                        ),
+                    );
+                    FormAction::SubmitCreateQuoter {
+                        token_a: token_a.clone(),
+                        token_b: option.token_b.clone(),
+                        config,
+                    }
+                }
+                _ => FormAction::None,
+            },
+            Self::PickAccountAsset {
+                account_id,
+                unlink,
+                options,
+                selected,
+            } => match code {
+                KeyCode::Esc => FormAction::Cancel,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    *selected = selected.saturating_sub(1);
+                    FormAction::None
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    *selected = (*selected + 1).min(options.len().saturating_sub(1));
+                    FormAction::None
+                }
+                KeyCode::Enter => options
+                    .get(*selected)
+                    .map(|(identity, _)| FormAction::SubmitAccountAsset {
+                        account_id: *account_id,
+                        unlink: *unlink,
+                        identity: identity.clone(),
+                    })
+                    .unwrap_or(FormAction::None),
+                _ => FormAction::None,
+            },
         }
     }
 
@@ -408,11 +1203,11 @@ fn handle_add_asset_key(
 ) -> FormAction {
     match code {
         KeyCode::Esc => FormAction::Cancel,
-        KeyCode::Up | KeyCode::Char('k') => {
+        KeyCode::Up => {
             form.move_focus(-1);
             FormAction::None
         }
-        KeyCode::Down | KeyCode::Char('j') => {
+        KeyCode::Down => {
             form.move_focus(1);
             FormAction::None
         }
@@ -580,6 +1375,63 @@ fn asset_identity_from_form(asset_type: AssetType, form: &TextForm) -> Option<St
     }
 }
 
+fn looks_like_ens_name(value: &str) -> bool {
+    !value.starts_with("0x") && value.len() >= 3 && value.contains('.') && !value.ends_with('.')
+}
+
+fn looks_like_address(value: &str) -> bool {
+    value.len() == 42
+        && value.starts_with("0x")
+        && value[2..].chars().all(|ch| ch.is_ascii_hexdigit())
+}
+
+fn ens_actions(
+    supports_ens: bool,
+    form: &TextForm,
+    ens_hint: &mut Option<String>,
+    ens_pending: &mut Option<String>,
+    ens_primary: &mut Option<String>,
+    ens_primary_pending: &mut Option<String>,
+) -> FormAction {
+    if !supports_ens {
+        return FormAction::None;
+    }
+
+    let address_value = form.field(1).unwrap_or_default().trim().to_string();
+    if !looks_like_address(&address_value) {
+        *ens_primary = None;
+        *ens_primary_pending = None;
+    }
+
+    let focused_value = form
+        .field(form.focus)
+        .unwrap_or_default()
+        .trim()
+        .to_lowercase();
+    if looks_like_ens_name(&focused_value) {
+        if ens_pending.as_deref() == Some(focused_value.as_str()) {
+            return FormAction::None;
+        }
+        *ens_hint = None;
+        *ens_pending = Some(focused_value.clone());
+        return FormAction::ResolveEns(focused_value);
+    }
+    if form.focus == 1 {
+        *ens_hint = None;
+        *ens_pending = None;
+    }
+
+    if looks_like_address(&address_value)
+        && ens_primary_pending.as_deref() != Some(address_value.to_lowercase().as_str())
+    {
+        *ens_primary = None;
+        *ens_primary_pending = Some(address_value.to_lowercase());
+        return FormAction::ReverseEns(address_value);
+    }
+
+    FormAction::None
+}
+
 fn handle_text_form(
     code: KeyCode,
     form: &mut TextForm,
@@ -587,11 +1439,11 @@ fn handle_text_form(
 ) -> FormAction {
     match code {
         KeyCode::Esc => FormAction::Cancel,
-        KeyCode::Up | KeyCode::Char('k') => {
+        KeyCode::Up => {
             form.move_focus(-1);
             FormAction::None
         }
-        KeyCode::Down | KeyCode::Char('j') => {
+        KeyCode::Down => {
             form.move_focus(1);
             FormAction::None
         }
@@ -748,15 +1600,4 @@ fn optional_field(form: &TextForm, index: usize) -> Option<String> {
     } else {
         Some(value.to_string())
     }
-}
-
-pub fn available_presets(existing_network_ids: &[u64]) -> Vec<Network> {
-    let existing = existing_network_ids
-        .iter()
-        .copied()
-        .collect::<std::collections::HashSet<_>>();
-    Network::presets()
-        .into_iter()
-        .filter(|preset| !existing.contains(&preset.network_identity.0))
-        .collect()
 }

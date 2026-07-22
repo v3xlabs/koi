@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { makePersisted } from "@solid-primitives/storage";
 import { useNavigate } from "@tanstack/solid-router";
 import { FaSolidGripVertical } from "solid-icons/fa";
@@ -7,6 +8,8 @@ import { Accessor, Component, createMemo, createSignal, For, onCleanup, Show } f
 import {
     Account,
     AccountGroup,
+    AccountGroupCreate,
+    AccountGroupUpdate,
     AccountLayout,
     normalizeGroupId,
     useCreateAccountGroup,
@@ -58,16 +61,16 @@ export const AccountsList: Component<AccountsListProps> = (props) => {
     const [newGroupOpen, setNewGroupOpen] = createSignal(false);
     const [newGroupName, setNewGroupName] = createSignal("");
 
-    const createGroup = useCreateAccountGroup(({ data }) => ({
+    const createGroup = useCreateAccountGroup(({ data }: { data: AccountGroupCreate; }) => ({
         contentType: "application/json; charset=utf-8",
         data,
     }));
-    const updateGroup = useUpdateAccountGroup(({ data, group_identity }) => ({
+    const updateGroup = useUpdateAccountGroup(({ data, group_identity }: { data: AccountGroupUpdate; group_identity: number; }) => ({
         path: { group_identity },
         contentType: "application/json; charset=utf-8",
         data,
     }));
-    const deleteGroup = useDeleteAccountGroup(({ group_identity }) => ({
+    const deleteGroup = useDeleteAccountGroup(({ group_identity }: { group_identity: number; }) => ({
         path: { group_identity },
     }));
 

@@ -70,7 +70,7 @@ const decodedContract = (tx: AccountTx) => {
   return decoded.contract?.verified_name ?? truncateAddress(decoded.contract?.address);
 };
 
-const subcallCount = (tx: AccountTx) => tx.decoded?.subcalls.length ?? 0;
+const subcallCount = (tx: AccountTx) => tx.decoded?.subcalls?.length ?? 0;
 
 const summaryTitle = (tx: AccountTx) => {
   const count = subcallCount(tx);

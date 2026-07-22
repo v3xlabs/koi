@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
 import { FiPlus } from "solid-icons/fi";
 import { createMemo, createSignal, Show, Suspense } from "solid-js";
 
-import type { AccountLayout } from "#/api/account";
+import type { AccountLayout, AccountLayoutUpdate } from "#/api/account";
 import { buildLayoutUpdate, useAccountLayout, useUpdateAccountLayout } from "#/api/account";
 import { AccountsList, cloneLayout } from "#/components/account/list";
 import { button } from "#/components/input/button";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
     const [editing, setEditing] = createSignal(false);
     const [draftLayout, setDraftLayout] = createSignal<AccountLayout | undefined>(undefined);
 
-    const updateLayout = useUpdateAccountLayout(({ data }) => ({
+    const updateLayout = useUpdateAccountLayout(({ data }: { data: AccountLayoutUpdate; }) => ({
       contentType: "application/json; charset=utf-8",
       data,
     }));

@@ -1,6 +1,6 @@
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use sqlx::query;
+use ts_rs::TS;
 
 use super::{
     Account,
@@ -9,27 +9,28 @@ use super::{
 };
 use crate::{error::KoiError, state::DB};
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct AccountLayout {
     pub groups: Vec<AccountGroup>,
     pub accounts: Vec<Account>,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct AccountLayoutGroupEntry {
     pub group_identity: GroupIdentity,
     pub name: String,
     pub display_order: u32,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(optional_fields)]
 pub struct AccountLayoutAccountEntry {
     pub account_identity: AccountIdentity,
     pub group_id: Option<GroupIdentity>,
     pub display_order: u32,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct AccountLayoutUpdate {
     pub groups: Vec<AccountLayoutGroupEntry>,
     pub accounts: Vec<AccountLayoutAccountEntry>,

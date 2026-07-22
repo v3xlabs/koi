@@ -11,8 +11,8 @@ use alloy::{
     providers::DynProvider,
 };
 use eth_prices::quoter::uniswap_v2::discovery::UniswapV2Factory::{self, UniswapV2FactoryInstance};
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 fn factory_address(network_identity: &NetworkIdentity) -> Result<Address, KoiError> {
     match network_identity {
@@ -21,7 +21,8 @@ fn factory_address(network_identity: &NetworkIdentity) -> Result<Address, KoiErr
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct UniswapV2Pair {
     pub pair_address: String,
     pub reserve_0: Option<String>,

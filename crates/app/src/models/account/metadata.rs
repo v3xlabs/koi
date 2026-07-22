@@ -1,43 +1,41 @@
 use std::{fmt::Display, str::FromStr};
 
 use alloy::primitives::Address;
-use poem_openapi::{Object, Union};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     Decode, Encode, FromRow, Row, Sqlite, Type,
     sqlite::{SqliteRow, SqliteTypeInfo, SqliteValueRef},
 };
+use ts_rs::TS;
 
 use crate::models::alloy::ApiAddress;
 
-#[derive(Serialize, Deserialize, Union, Clone)]
-#[oai(discriminator_name = "type", rename_all = "snake_case")]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum WalletType {
     Safe(SafeWallet),
     #[serde(rename = "eoa")]
-    #[oai(mapping = "eoa")]
     EOA(EOAWallet),
     View(ViewWallet),
     Railgun(RailgunWallet),
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct SafeWallet {
     pub evm_address: ApiAddress,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct EOAWallet {
     pub evm_address: ApiAddress,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct ViewWallet {
     pub evm_address: ApiAddress,
 }
 
-#[derive(Serialize, Deserialize, Object, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
 pub struct RailgunWallet {
     pub railgun_address: String,
 }

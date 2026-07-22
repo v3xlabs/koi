@@ -1,6 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:koi/main.dart';
+import 'package:koi/src/core/bridge/api.dart';
 import 'package:koi/src/core/bridge/frb_generated.dart';
 
 void main() {
@@ -10,10 +12,14 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('greets from the rust core', (tester) async {
-    await tester.pumpWidget(const KoiApp());
+  test('pings through the in-process rust dispatcher', () async {
+    final dataDirectory = await Directory.systemTemp.createTemp('koi-mobile-');
+    addTearDown(() => dataDirectory.delete(recursive: true));
 
-    expect(find.textContaining('Hello, koi!'), findsOneWidget);
-    expect(find.textContaining('rust core'), findsOneWidget);
+    final client = await createClient(dataDir: dataDirectory.path);
+    final response = await systemPing(client: client);
+
+    expect(response, 'OK');
+    expect(File('${dataDirectory.path}/koi.db').existsSync(), isTrue);
   });
 }

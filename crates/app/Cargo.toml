@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 sqlx = { git = "https://github.com/launchbadge/sqlx.git", features = [
-    "runtime-async-std",
+    "runtime-tokio",
     "tls-rustls",
     "sqlite",
     "migrate",
@@ -20,25 +20,6 @@ sqlx = { git = "https://github.com/launchbadge/sqlx.git", features = [
 ] }
 tracing = "0.1.41"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
-poem = { version = "3.1.6", git = "https://github.com/v3xlabs/poem", branch = "master", features = [
-    "rustls",
-    "sse",
-    "tempfile",
-    "opentelemetry",
-    "requestid",
-    "embed"
-] }
-poem-openapi = { version = "5.1.8", git = "https://github.com/v3xlabs/poem", branch = "master", features = [
-    "chrono",
-    "uuid",
-    "sqlx",
-    "url",
-    "email",
-    "email_address",
-    "redoc",
-    "static-files",
-] }
-rust-embed = "8"
 serde = "1.0.217"
 url = { version = "2.5.2", features = ["serde"] }
 thiserror = "2.0.3"
@@ -59,16 +40,17 @@ figment = { version = "0.10.19", features = ["env", "json"] }
 dirs = "6"
 bytes = { version = "1.10.1", features = ["serde"] }
 rustls = "0.23.19"
-alloy = { version = "1.8.3", features = ["json-rpc", "transport-throttle"] }
-alloy-signer-local = "1.8.3"
+alloy = { version = "2.2.0", features = ["json-rpc", "transport-throttle"] }
+alloy-signer-local = "2.2.0"
 coins-bip32 = "0.12"
 coins-bip39 = "0.12"
 k256 = "0.13"
 rand = "0.8"
 tracing-log = "0.2.0"
 petgraph = "0.8.3"
-eth-prices = { version = "1", features = ["ecb", "time"] }
-strum = "0.28"
+eth-prices = { version = "1.1.0", features = ["ecb", "time"] }
+linkme = "0.3"
+strum = { version = "0.28", features = ["derive"] }
 strum_macros = "0.28"
 serde_plain = "1"
 futures = "*"
@@ -76,6 +58,9 @@ sourcify = "0.0.4"
 moka = { version = "0.12.0", features = ["future"] }
 tower = "0.5.3"
 anyhow = "1"
+ts-rs = { version = "=12.0.1", features = ["serde-compat", "chrono-impl"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+resvg = "0.45"
 
 [dev-dependencies]
 tempfile = "3"

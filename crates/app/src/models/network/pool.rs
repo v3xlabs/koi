@@ -3,9 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use tracing::info;
+use ts_rs::TS;
 
 use crate::{
     error::KoiError,
@@ -19,7 +19,7 @@ use crate::{
     state::AppState,
 };
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct RpcPoolStats {
     pub network_identity: NetworkIdentity,
     pub endpoint_count: u64,
@@ -33,7 +33,7 @@ pub struct RpcPoolStats {
     pub endpoints: Vec<RpcPoolEndpointStats>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct RpcPoolEndpointStats {
     pub endpoint_identity: i32,
     pub status: String,

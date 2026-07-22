@@ -1,12 +1,12 @@
-import { createApi } from "../query";
-import { components } from "../schema.gen";
+import type { Tx } from "../bindings.gen";
+import { createRpcQuery, requireOptions } from "../query";
+import { rpc } from "../rpc.gen";
 
+export type AccountTx = Tx;
+type Options = { path: { account_identity: number; }; };
 export const accountTxKeys = {
-    all: (account_identity: number | string) => ["account-tx", account_identity.toString()] as const,
-    pending: (account_identity: number | string) => ["account-tx", account_identity.toString(), "pending"] as const,
+    all: (identity: number | string) => ["account-tx", identity.toString()] as const,
+    pending: (identity: number | string) => ["account-tx", identity.toString(), "pending"] as const,
 };
-
-export type AccountTx = components["schemas"]["Tx"];
-
-export const useAccountTxAll = createApi("/acc/{account_identity}/tx", "get", options => accountTxKeys.all(options.path.account_identity));
-export const useAccountTxPending = createApi("/acc/{account_identity}/tx/pending", "get", options => accountTxKeys.pending(options.path.account_identity));
+export const useAccountTxAll = createRpcQuery<Options, { transactions: Tx[]; }>(async options => ({ transactions: await rpc.accountTransactionList({ account_identity: requireOptions(options).path.account_identity }) }), options => accountTxKeys.all(requireOptions(options).path.account_identity));
+export const useAccountTxPending = createRpcQuery<Options, { transactions: Tx[]; }>(async options => ({ transactions: await rpc.accountTransactionPending({ account_identity: requireOptions(options).path.account_identity }) }), options => accountTxKeys.pending(requireOptions(options).path.account_identity));

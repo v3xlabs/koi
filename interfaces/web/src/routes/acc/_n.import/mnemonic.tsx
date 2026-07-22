@@ -2,8 +2,8 @@ import { createForm } from "@tanstack/solid-form";
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, Show } from "solid-js";
 
-import { api } from "#/api";
 import { useCreateAccount, useDeriveFromMnemonic } from "#/api/account";
+import { rpc } from "#/api/rpc.gen";
 import { FormNetworkField } from "#/components/account/form/networks";
 import { button } from "#/components/input/button";
 import { FormTextField } from "#/components/input/field";
@@ -72,11 +72,7 @@ export const Route = createFileRoute("/acc/_n/import/mnemonic")({
             if (name.length === 0 || networks.length === 0 || selectedPaths.length === 0) return;
 
             for (const path of selectedPaths) {
-                const nextIdResponse = await api("/acc/next-id", "get", {});
-
-                if (nextIdResponse.status !== 200) continue;
-
-                const account_identity = nextIdResponse.data;
+                const account_identity = await rpc.accountNextIdentity();
                 const derivedResult = await derive.mutateAsync({ data: { mnemonic, paths: [path] } });
                 const address = derivedResult.results[0]?.address;
 

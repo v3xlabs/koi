@@ -1,8 +1,8 @@
 pub mod config;
 pub mod db;
 pub mod error;
-pub mod http;
 pub mod models;
+pub mod rpc;
 pub mod state;
 pub mod vendor;
 

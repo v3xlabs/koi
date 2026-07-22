@@ -28,6 +28,24 @@ pub fn format_usd(raw: &str) -> DisplayAmount {
     format_amount(raw, 6, 2, true)
 }
 
+/// Formats a quote in the selected display currency, using that fiat asset's
+/// decimals and symbol; falls back to USD formatting when it is unknown.
+pub fn format_quote(raw: &str, display_asset: Option<&koi::models::asset::Asset>) -> DisplayAmount {
+    let Some(asset) = display_asset else {
+        return format_usd(raw);
+    };
+    if asset.asset_symbol == "$" && asset.asset_decimals == 6 {
+        return format_usd(raw);
+    }
+
+    let precision = 2.min(asset.asset_decimals);
+    let inner = format_amount(raw, asset.asset_decimals, precision, false);
+    DisplayAmount {
+        text: format!("{} {}", inner.text, asset.asset_symbol),
+        style: inner.style,
+    }
+}
+
 pub fn format_token(raw: &str, decimals: u8) -> DisplayAmount {
     let Ok(value) = raw.parse::<u128>() else {
         return DisplayAmount {
@@ -234,6 +252,21 @@ mod tests {
     fn marks_dust_usd() {
         let formatted = format_usd("50");
         assert_eq!(formatted.style, AmountStyle::Dust);
+    }
+
+    #[test]
+    fn formats_quotes_with_the_display_asset_decimals_and_symbol() {
+        let euro: koi::models::asset::Asset = serde_json::from_value(serde_json::json!({
+            "asset_identity": "fiat:eur",
+            "asset_name": "Euro",
+            "asset_symbol": "€",
+            "asset_decimals": 2,
+            "asset_icon_url": null,
+        }))
+        .unwrap();
+
+        assert_eq!(format_quote("123456", Some(&euro)).text, "1,234.56 €");
+        assert_eq!(format_quote("780133990000", None).text, "$780,133.99");
     }
 
     #[test]

@@ -4,10 +4,10 @@ use alloy::{
     json_abi::{Function, JsonAbi, Param},
     primitives::{Address, Bytes, Selector, U256},
 };
-use poem_openapi::{Object, Union};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::str::FromStr;
+use ts_rs::TS;
 
 use crate::{
     error::KoiError,
@@ -20,7 +20,8 @@ use crate::{
 
 const MAX_NESTED_CALL_DEPTH: usize = 6;
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct DecodeTransactionRequest {
     #[serde(default)]
     pub from: Option<ApiAddress>,
@@ -31,12 +32,13 @@ pub struct DecodeTransactionRequest {
     pub data: Option<ApiBytes>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct DecodeTransactionResponse {
     pub call: DecodedCall,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct SimulateTransactionRequest {
     #[serde(default)]
     pub from: Option<ApiAddress>,
@@ -47,7 +49,7 @@ pub struct SimulateTransactionRequest {
     pub data: Option<ApiBytes>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct SimulateTransactionResponse {
     pub call: DecodedCall,
 }
@@ -64,7 +66,8 @@ impl From<&SimulateTransactionRequest> for DecodeTransactionRequest {
 }
 
 /// High-level decoded call output.
-#[derive(Debug, Clone, Serialize, Deserialize, Object)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct DecodedCall {
     pub from: Option<ApiAddress>,
     pub to: ApiAddress,
@@ -75,13 +78,13 @@ pub struct DecodedCall {
     pub selector: Option<ApiBytes>,
     pub decoded: Decoded,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[ts(optional = nullable)]
     pub subcalls: Vec<DecodedCall>,
 }
 
 /// Best-effort decode result.
-#[derive(Debug, Clone, Serialize, Deserialize, Union)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
-#[oai(discriminator_name = "kind", rename_all = "snake_case")]
 pub enum Decoded {
     Verified(DecodedFunction),
     SignatureFallback(SignatureFallback),
@@ -89,7 +92,7 @@ pub enum Decoded {
 }
 
 /// ABI-decoded function call.
-#[derive(Debug, Clone, Serialize, Deserialize, Object)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DecodedFunction {
     pub contract: DecodedContract,
     pub selector: ApiBytes,
@@ -99,7 +102,8 @@ pub struct DecodedFunction {
 }
 
 /// Contract provenance used during decoding.
-#[derive(Debug, Clone, Serialize, Deserialize, Object)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct DecodedContract {
     pub address: ApiAddress,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -109,7 +113,8 @@ pub struct DecodedContract {
 }
 
 /// Proxy metadata when decoding through a verified implementation.
-#[derive(Debug, Clone, Serialize, Deserialize, Object)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct DecodedProxy {
     pub proxy_type: Option<String>,
     pub implementation: ApiAddress,
@@ -118,15 +123,18 @@ pub struct DecodedProxy {
 }
 
 /// One decoded input parameter.
-#[derive(Debug, Clone, Serialize, Deserialize, Object)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct DecodedParam {
     pub name: Option<String>,
     pub ty: String,
+    #[ts(type = "unknown")]
     pub value: Value,
 }
 
 /// Fallback when only 4byte resolution is available.
-#[derive(Debug, Clone, Serialize, Deserialize, Object)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct SignatureFallback {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contract: Option<DecodedContract>,
@@ -135,7 +143,7 @@ pub struct SignatureFallback {
 }
 
 /// Fallback when nothing better can be decoded.
-#[derive(Debug, Clone, Serialize, Deserialize, Object)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct RawCall {
     pub data: ApiBytes,
 }

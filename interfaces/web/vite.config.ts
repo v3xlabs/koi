@@ -14,11 +14,12 @@ export default defineConfig({
   }), devtools(), solidPlugin(), tailwindcss()],
   server: {
     port: 5173,
-    host: "127.0.0.1",
+    host: "localhost",
     proxy: {
-      "/api": {
-        target: "http://0.0.0.0:7777",
-        changeOrigin: true,
+      "/rpc": {
+        target: "http://localhost:7777",
+        ws: true,
+        rewriteWsOrigin: true,
       },
     },
   },

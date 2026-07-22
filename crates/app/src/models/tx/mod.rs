@@ -1,5 +1,5 @@
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{
     error::KoiError,
@@ -12,9 +12,11 @@ use crate::{
 };
 
 pub mod decode;
+pub mod rpc;
 pub mod simulate;
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct Tx {
     pub network_identity: NetworkIdentity,
     pub tx_hash: Option<ApiBytes>,
@@ -27,7 +29,8 @@ pub struct Tx {
     pub extra: TxExtra,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct TxBase {
     pub network_identity: NetworkIdentity,
     pub tx_hash: Option<ApiBytes>,
@@ -66,12 +69,14 @@ impl TxBase {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct TxExtra {
     pub safe_wallet: Option<SafeWalletTxExtra>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct SafeWalletTxExtra {
     pub nonce: Option<u64>,
     pub execution_date: Option<String>,
@@ -82,8 +87,9 @@ pub struct SafeWalletTxExtra {
     pub is_executed: Option<bool>,
     pub origin: Option<String>,
     // confirmations: Option<Vec<Confirmation>>,
+    #[ts(type = "unknown")]
     pub extra: serde_json::Value,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct PendingTx {}

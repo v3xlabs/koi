@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::error::KoiError;
 use crate::models::asset::identity::AssetIdentity;
@@ -11,7 +11,8 @@ use crate::vendor::{avara, blockscout, safe_wallet, smoldapp, zerion};
 
 use super::Asset;
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(optional_fields)]
 pub struct AssetMetadataOption {
     pub name: Option<String>,
     pub symbol: Option<String>,
@@ -19,7 +20,7 @@ pub struct AssetMetadataOption {
     pub icon_url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize, TS)]
 pub struct AssetMetadataDiscovery {
     pub asset_identity: AssetIdentity,
     pub options: HashMap<String, AssetMetadataOption>,

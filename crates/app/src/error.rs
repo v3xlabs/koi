@@ -1,15 +1,19 @@
 use std::{num::ParseIntError, sync::Arc};
 
-use poem::{IntoResponse, Response, web::headers::ContentType};
-use poem_openapi::{Object, payload::Json, types::ToJSON};
-use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::models::network::endpoint::provider::RpcError;
 
 #[derive(Debug, Error)]
 pub enum KoiError {
+    #[error("invalid input: {0}")]
+    InvalidInput(String),
+    #[error("not found: {0}")]
+    NotFound(String),
+    #[error("conflict: {0}")]
+    Conflict(String),
+    #[error("unavailable: {0}")]
+    Unavailable(String),
     #[error("internal error: {0}")]
     Internal(String),
     #[error("database error: {0}")]
@@ -28,34 +32,16 @@ pub enum KoiError {
     EthPrices(#[from] eth_prices::error::EthPricesError),
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
-pub struct ErrorResponse {
-    pub error: String,
-}
-
-impl IntoResponse for KoiError {
-    fn into_response(self) -> Response {
-        Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .content_type(ContentType::json().to_string())
-            .body(
-                Json(ErrorResponse {
-                    error: self.to_string(),
-                })
-                .to_json_string(),
-            )
-    }
-}
-
-impl From<KoiError> for poem::Error {
-    fn from(error: KoiError) -> Self {
-        poem::Error::from_response(error.into_response())
-    }
-}
-
 impl KoiError {
-    pub fn unwrap(self) -> Result<(), poem::Error> {
-        Err(self.into())
+    pub fn safe_message(&self) -> String {
+        match self {
+            Self::InvalidInput(message)
+            | Self::NotFound(message)
+            | Self::Conflict(message)
+            | Self::Unavailable(message) => message.clone(),
+            Self::Database(sqlx::Error::RowNotFound) => "resource not found".to_string(),
+            _ => "the operation could not be completed".to_string(),
+        }
     }
 }
 

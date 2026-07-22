@@ -11,3 +11,12 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 # pinned: must match the flutter_rust_bridge_codegen binary and the
 # flutter_rust_bridge version in interfaces/mobile/pubspec.yaml
 flutter_rust_bridge = "=2.9.0"
+koi = { path = "../app", package = "koi-app" }
+koi-api = { path = "../api" }
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(frb_expand)"] }

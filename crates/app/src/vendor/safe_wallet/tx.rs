@@ -1,5 +1,4 @@
 use alloy::primitives::{Address, U256};
-use poem_openapi::Object;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
@@ -23,7 +22,7 @@ pub struct SafeWalletTxQueuedResponse {
     pub extra: serde_json::Value,
 }
 
-#[derive(Debug, Serialize, Deserialize, Object)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SafeWalletTx {
     pub safe: Option<ApiAddress>,

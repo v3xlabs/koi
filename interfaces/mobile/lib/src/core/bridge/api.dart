@@ -6,5 +6,11 @@
 import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-String greet({required String name}) =>
-    RustLib.instance.api.crateApiGreet(name: name);
+Future<InProcessClient> createClient({required String dataDir}) =>
+    RustLib.instance.api.crateApiCreateClient(dataDir: dataDir);
+
+Future<String> systemPing({required InProcessClient client}) =>
+    RustLib.instance.api.crateApiSystemPing(client: client);
+
+// Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<InProcessClient>>
+abstract class InProcessClient implements RustOpaqueInterface {}

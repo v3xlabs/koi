@@ -143,7 +143,7 @@ mod tests {
             .await
             .unwrap();
         let count: i64 = row.get("count");
-        assert_eq!(count, 8);
+        assert_eq!(count, 10);
 
         apply_migrations(&pool, None).await.unwrap();
     }
