@@ -23,7 +23,7 @@
     "tailwindcss": "^4.1.13",
     "ts-to-zod": "5.1.0",
     "typescript": "^5.9.2",
-    "vite": "^7.1.4",
+    "vite": "^7.3.5",
     "vite-plugin-solid": "^2.11.8"
   },
   "dependencies": {
