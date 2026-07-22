@@ -403,7 +403,8 @@ fn render_price_board(frame: &mut Frame, app: &mut App, area: Rect) {
                     .unwrap_or_else(|| (identity.clone(), String::new()));
                 let (price, change) = asset_quote_cells(app, identity);
                 let mut symbol_spans = vec![Span::raw(format!(
-                    "    {} ",
+                    "{}{} ",
+                    asset_icon_padding(app),
                     if selected { "›" } else { " " }
                 ))];
                 if app.colored_assets
@@ -1029,7 +1030,8 @@ fn render_settings_assets(frame: &mut Frame, app: &mut App, area: Rect) {
                 let selected = index == app.settings.row_index;
                 let (price, change) = asset_quote_cells(app, identity);
                 let mut symbol_spans = vec![Span::raw(format!(
-                    "    {} ",
+                    "{}{} ",
+                    asset_icon_padding(app),
                     if selected { "›" } else { " " }
                 ))];
                 if app.colored_assets
@@ -1501,36 +1503,27 @@ fn render_account_assets(frame: &mut Frame, app: &mut App, account_identity: u64
 }
 
 fn render_account_asset_table(frame: &mut Frame, app: &mut App, account_identity: u64, area: Rect) {
+    let (show_weight, show_change) = match area.width {
+        80.. => (true, true),
+        70.. => (false, true),
+        _ => (false, false),
+    };
+    let column_count = 3 + usize::from(show_weight) + usize::from(show_change);
     let (table_rows, identities): (Vec<Row>, Vec<String>) =
         match app.balance_state(account_identity) {
             None | Some(ResourceState::Idle) => (
-                vec![Row::new(vec![
-                    Cell::from("No balance data yet — press r to refresh"),
-                    Cell::from(""),
-                    Cell::from(""),
-                    Cell::from(""),
-                    Cell::from(""),
-                ])],
+                vec![asset_table_message(
+                    "No balance data yet — press r to refresh",
+                    column_count,
+                )],
                 Vec::new(),
             ),
             Some(ResourceState::Loading) => (
-                vec![Row::new(vec![
-                    Cell::from("Loading balances…"),
-                    Cell::from(""),
-                    Cell::from(""),
-                    Cell::from(""),
-                    Cell::from(""),
-                ])],
+                vec![asset_table_message("Loading balances…", column_count)],
                 Vec::new(),
             ),
             Some(ResourceState::Error(error)) => (
-                vec![Row::new(vec![
-                    Cell::from(truncate_error(error)),
-                    Cell::from(""),
-                    Cell::from(""),
-                    Cell::from(""),
-                    Cell::from(""),
-                ])],
+                vec![asset_table_message(truncate_error(error), column_count)],
                 Vec::new(),
             ),
             Some(ResourceState::Ready(balances)) => {
@@ -1550,7 +1543,7 @@ fn render_account_asset_table(frame: &mut Frame, app: &mut App, account_identity
                     .collect();
                 identities.sort_by(|left, right| right.0.cmp(&left.0));
                 (
-                    asset_rows(app, balances),
+                    asset_rows(app, balances, show_weight, show_change),
                     identities
                         .into_iter()
                         .map(|(_, identity)| identity)
@@ -1568,24 +1561,34 @@ fn render_account_asset_table(frame: &mut Frame, app: &mut App, account_identity
         .take(end.saturating_sub(start))
         .collect();
 
-    let table = Table::new(
-        table_rows,
-        [
-            Constraint::Percentage(32),
-            Constraint::Percentage(26),
-            Constraint::Length(14),
-            Constraint::Length(8),
-            Constraint::Length(10),
-        ],
-    )
-    .header(
-        Row::new(vec!["    Asset", "Balance", "Value", "Weight", "24h"]).style(
-            Style::default()
-                .add_modifier(Modifier::BOLD)
-                .fg(Color::DarkGray),
-        ),
-    )
-    .column_spacing(2);
+    let mut constraints = vec![
+        Constraint::Fill(1),
+        Constraint::Length(20),
+        Constraint::Length(20),
+    ];
+    let mut header = vec![
+        format!("{}Asset", asset_icon_padding(app)),
+        "Balance".to_string(),
+        "Value".to_string(),
+    ];
+    if show_weight {
+        constraints.push(Constraint::Length(8));
+        header.push("Weight".to_string());
+    }
+    if show_change {
+        constraints.push(Constraint::Length(10));
+        header.push("24h".to_string());
+    }
+
+    let table = Table::new(table_rows, constraints)
+        .header(
+            Row::new(header).style(
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::DarkGray),
+            ),
+        )
+        .column_spacing(2);
 
     frame.render_widget(table, area);
     if !identities.is_empty() {
@@ -1672,7 +1675,7 @@ fn render_account_defi(frame: &mut Frame, app: &mut App, account_identity: u64, 
             Vec::new(),
         ),
         Some(ResourceState::Ready(result)) => (
-            defi_rows(result),
+            defi_rows(result, asset_icon_padding(app)),
             result
                 .positions
                 .iter()
@@ -1696,6 +1699,7 @@ fn render_account_defi(frame: &mut Frame, app: &mut App, account_identity: u64, 
         .take(end.saturating_sub(start))
         .collect();
 
+    let position_header = format!("{}Position", asset_icon_padding(app));
     let table = Table::new(
         rows,
         [
@@ -1712,7 +1716,7 @@ fn render_account_defi(frame: &mut Frame, app: &mut App, account_identity: u64, 
         Row::new(vec![
             "Chain",
             "Protocol",
-            "    Position",
+            &position_header,
             "Value",
             "TVL",
             "APR",
@@ -1796,7 +1800,7 @@ fn render_account_transactions(frame: &mut Frame, app: &App, account_identity: u
     frame.render_widget(table, area);
 }
 
-fn defi_rows(result: &DefiResult) -> Vec<Row<'static>> {
+fn defi_rows(result: &DefiResult, asset_padding: &str) -> Vec<Row<'static>> {
     if result.positions.is_empty() {
         let message = if result.errors.is_empty() {
             "No tracked DeFi positions found"
@@ -1845,7 +1849,7 @@ fn defi_rows(result: &DefiResult) -> Vec<Row<'static>> {
                     10,
                 )),
                 Cell::from(position.protocol.clone()),
-                Cell::from(format!("    {}", truncate(&position.name, 28))),
+                Cell::from(format!("{asset_padding}{}", truncate(&position.name, 28))),
                 Cell::from(value),
                 Cell::from(format_fiat(position.tvl_usd)),
                 Cell::from(format_percent(position.apr)),
@@ -2049,7 +2053,12 @@ fn render_tx_detail(frame: &mut Frame, app: &App, area: Rect) {
     render_panel(frame, popup, "Transaction", lines);
 }
 
-fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
+fn asset_rows(
+    app: &App,
+    balances: &AccountBalances,
+    show_weight: bool,
+    show_change: bool,
+) -> Vec<Row<'static>> {
     let mut entries: Vec<(u128, String, Line<'static>, String, String, Style, Style)> = balances
         .balances
         .iter()
@@ -2125,13 +2134,10 @@ fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
     entries.sort_by(|(left, _, _, _, _, _, _), (right, _, _, _, _, _, _)| right.cmp(left));
 
     if entries.is_empty() {
-        return vec![Row::new(vec![
-            Cell::from("No assets with balance"),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-            Cell::from(""),
-        ])];
+        return vec![asset_table_message(
+            "No assets with balance",
+            3 + usize::from(show_weight) + usize::from(show_change),
+        )];
     }
 
     let total: u128 = balances
@@ -2147,36 +2153,55 @@ fn asset_rows(app: &App, balances: &AccountBalances) -> Vec<Row<'static>> {
         }
     };
 
+    let asset_padding = asset_icon_padding(app);
     let mut rows: Vec<Row<'static>> = entries
         .into_iter()
         .map(
             |(sort_value, name, balance_line, value, change, change_style, value_style)| {
-                Row::new(vec![
-                    Cell::from(format!("    {name}")),
+                let mut cells = vec![
+                    Cell::from(format!("{asset_padding}{name}")),
                     Cell::from(balance_line),
                     Cell::from(value).style(value_style),
-                    Cell::from(weight(sort_value)).style(Style::default().fg(Color::DarkGray)),
-                    Cell::from(change).style(change_style),
-                ])
+                ];
+                if show_weight {
+                    cells.push(
+                        Cell::from(weight(sort_value)).style(Style::default().fg(Color::DarkGray)),
+                    );
+                }
+                if show_change {
+                    cells.push(Cell::from(change).style(change_style));
+                }
+                Row::new(cells)
             },
         )
         .collect();
 
     if let Some(total_quote) = balances.total_quote.as_ref() {
         let formatted = format_quote(total_quote, app.display_asset());
-        rows.push(
-            Row::new(vec![
+        rows.push({
+            let mut cells = vec![
                 Cell::from("Total"),
                 Cell::from(""),
                 Cell::from(formatted.text),
-                Cell::from("100%"),
-                Cell::from(""),
-            ])
-            .style(Style::default().add_modifier(Modifier::BOLD)),
-        );
+            ];
+            if show_weight {
+                cells.push(Cell::from("100%"));
+            }
+            if show_change {
+                cells.push(Cell::from(""));
+            }
+            Row::new(cells).style(Style::default().add_modifier(Modifier::BOLD))
+        });
     }
 
     rows
+}
+
+fn asset_table_message(message: impl Into<String>, column_count: usize) -> Row<'static> {
+    let mut cells = Vec::with_capacity(column_count);
+    cells.push(Cell::from(message.into()));
+    cells.resize_with(column_count, || Cell::from(""));
+    Row::new(cells)
 }
 
 fn render_footer(frame: &mut Frame, app: &App, area: Rect) {
@@ -2329,6 +2354,14 @@ fn account_icons_enabled(app: &App) -> bool {
         .is_some_and(IconRenderer::uses_graphics)
 }
 
+fn asset_icon_padding(app: &App) -> &'static str {
+    if account_icons_enabled(app) {
+        "    "
+    } else {
+        "  "
+    }
+}
+
 fn account_list_icon_rect(table_area: Rect, visible_row: usize, row_height: u16) -> Rect {
     Rect {
         x: table_area.x,
@@ -2376,14 +2409,18 @@ fn render_asset_table_icons_at(
         })
         .collect();
     for (row, identity, icon) in icons {
+        let graphics = app
+            .icon_renderer
+            .as_ref()
+            .is_some_and(IconRenderer::uses_graphics);
         let icon_area = Rect {
             x: area.x.saturating_add(offset_x),
             y: area.y + 1 + row as u16,
-            width: 3,
+            width: if graphics { 3 } else { 1 },
             height: 1,
         };
         if let Some(renderer) = app.icon_renderer.as_mut()
-            && renderer.uses_graphics()
+            && graphics
         {
             renderer.render_asset_icon(frame, icon_area, &identity, &icon.png_data);
         } else {

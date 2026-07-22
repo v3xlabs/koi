@@ -139,22 +139,10 @@ impl IconRenderer {
     }
 
     pub fn asset_symbol_spans(colors: &AssetIconColors) -> Vec<Span<'static>> {
-        let primary = terminal_color(colors.primary);
-        let secondary = colors.secondary.map(terminal_color);
-        ["▐", "▌", "▐"]
-            .into_iter()
-            .enumerate()
-            .map(|(index, symbol)| {
-                Span::styled(
-                    symbol,
-                    Style::default().fg(if index % 2 == 1 {
-                        secondary.unwrap_or(primary)
-                    } else {
-                        primary
-                    }),
-                )
-            })
-            .collect()
+        vec![Span::styled(
+            "■",
+            Style::default().fg(terminal_color(colors.primary)),
+        )]
     }
 
     pub fn color_symbol(symbol: &str, colors: &AssetIconColors) -> Vec<Span<'static>> {
