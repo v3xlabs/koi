@@ -192,13 +192,11 @@ export const eoaWalletSchema = z.object({
 
 export const emptyParamsSchema = z.record(z.string(), z.never());
 
-export const networkEndpointSchema = z.object({
-    endpoint_identity: z.number(),
+export const networkEndpointCreateSchema = z.object({
     endpoint_label: z.string().nullish().transform(value => value ?? undefined),
     endpoint_type: z.string(),
     endpoint_url: z.string(),
-    endpoint_disabled: z.boolean(),
-    network_identity: networkIdentitySchema
+    endpoint_disabled: z.boolean()
 });
 
 export const endpointParamsSchema = z.object({
@@ -257,6 +255,15 @@ export const networkSchema = z.object({
 
 export const networkCreateParamsSchema = z.object({
     input: networkSchema
+});
+
+export const networkEndpointSchema = z.object({
+    endpoint_identity: z.number(),
+    endpoint_label: z.string().nullish().transform(value => value ?? undefined),
+    endpoint_type: z.string(),
+    endpoint_url: z.string(),
+    endpoint_disabled: z.boolean(),
+    network_identity: networkIdentitySchema
 });
 
 export const networkMetadataOptionSchema = z.object({
@@ -574,10 +581,6 @@ export const accountMnemonicGenerateRpcParamsSchema = emptyParamsSchema;
 
 export const accountMnemonicGenerateRpcResultSchema = z.string();
 
-export const accountNextIdentityRpcParamsSchema = emptyParamsSchema;
-
-export const accountNextIdentityRpcResultSchema = accountIdentitySchema;
-
 export const accountTransactionListRpcParamsSchema = accountParamsSchema;
 
 export const accountTransactionPendingRpcParamsSchema = accountParamsSchema;
@@ -635,7 +638,7 @@ export const networkDeleteRpcParamsSchema = networkParamsSchema;
 
 export const networkDeleteRpcResultSchema = z.null();
 
-export const networkDiscoverMetadataRpcParamsSchema = networkParamsSchema;
+export const networkDiscoverRpcParamsSchema = networkParamsSchema;
 
 export const networkMetadataDiscoverySchema = z.object({
     network_identity: networkIdentitySchema,
@@ -644,7 +647,7 @@ export const networkMetadataDiscoverySchema = z.object({
 
 export const endpointCreateParamsSchema = z.object({
     network_identity: networkIdentitySchema,
-    input: networkEndpointSchema
+    input: networkEndpointCreateSchema
 });
 
 export const endpointCreateRpcResultSchema = networkEndpointSchema;
@@ -660,10 +663,6 @@ export const endpointGetRpcResultSchema = networkEndpointSchema;
 export const endpointListRpcParamsSchema = networkParamsSchema;
 
 export const endpointListRpcResultSchema = z.array(networkEndpointSchema);
-
-export const endpointNextIdentityRpcParamsSchema = networkParamsSchema;
-
-export const endpointNextIdentityRpcResultSchema = z.number();
 
 export const endpointStatusRpcParamsSchema = endpointParamsSchema;
 
@@ -683,13 +682,13 @@ export const networkListRpcParamsSchema = emptyParamsSchema;
 
 export const networkListRpcResultSchema = z.array(networkSchema);
 
-export const networkListPresetsRpcParamsSchema = emptyParamsSchema;
+export const networkPresetsRpcParamsSchema = emptyParamsSchema;
 
-export const networkListPresetsRpcResultSchema = z.array(networkSchema);
+export const networkPresetsRpcResultSchema = z.array(networkSchema);
 
-export const networkRpcStatsRpcParamsSchema = networkParamsSchema;
+export const networkStatsRpcParamsSchema = networkParamsSchema;
 
-export const networkRpcStatsRpcResultSchema = rpcPoolStatsSchema;
+export const networkStatsRpcResultSchema = rpcPoolStatsSchema;
 
 export const networkUpdateRpcParamsSchema = networkUpdateParamsSchema;
 
@@ -761,8 +760,16 @@ export const vendorListEnabledRpcParamsSchema = emptyParamsSchema;
 
 export const vendorListEnabledRpcResultSchema = z.array(vendorFlagSchema);
 
+export const accountCreateSchema = z.object({
+    name: z.string(),
+    networks: z.array(networkIdentitySchema),
+    metadata: walletTypeSchema,
+    group_id: groupIdentitySchema.nullish().transform(value => value ?? undefined),
+    display_order: z.number()
+});
+
 export const accountCreateParamsSchema = z.object({
-    input: accountSchema
+    input: accountCreateSchema
 });
 
 export const accountUpdateSchema = z.object({
@@ -853,7 +860,7 @@ export const accountUpdateRpcParamsSchema = accountUpdateParamsSchema;
 
 export const assetDiscoverMetadataRpcResultSchema = assetMetadataDiscoverySchema;
 
-export const networkDiscoverMetadataRpcResultSchema = networkMetadataDiscoverySchema;
+export const networkDiscoverRpcResultSchema = networkMetadataDiscoverySchema;
 
 export const endpointCreateRpcParamsSchema = endpointCreateParamsSchema;
 

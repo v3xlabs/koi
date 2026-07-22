@@ -2,27 +2,25 @@ use std::collections::HashMap;
 
 use tokio::sync::mpsc;
 
-use koi::{
-    models::{
-        account::{
-            Account,
-            balances::AccountBalances,
-            group::AccountGroup,
-            identity::AccountIdentity,
-            metadata::{EOAWallet, SafeWallet, ViewWallet, WalletType},
-            rpc::{
-                AccountAssetParams, AccountCreateParams, AccountParams, AccountUpdateParams,
-                DeriveMnemonicInput, DeriveMnemonicParams, DeriveMnemonicResult,
-                DerivePrivateKeyParams,
-            },
+use koi::models::{
+    account::{
+        Account, AccountCreate,
+        balances::AccountBalances,
+        group::AccountGroup,
+        identity::AccountIdentity,
+        metadata::{EOAWallet, SafeWallet, ViewWallet, WalletType},
+        rpc::{
+            AccountAssetParams, AccountCreateParams, AccountParams, AccountUpdateParams,
+            DeriveMnemonicInput, DeriveMnemonicParams, DeriveMnemonicResult,
+            DerivePrivateKeyParams,
         },
-        asset::{Asset, metadata::AssetMetadataDiscovery},
-        network::{Network, identity::NetworkIdentity, pool::RpcPoolStats},
-        tx::Tx,
     },
-    rpc::EmptyParams,
+    asset::{Asset, metadata::AssetMetadataDiscovery},
+    network::{Network, identity::NetworkIdentity, pool::RpcPoolStats},
+    tx::Tx,
 };
 
+use koi::rpc::EmptyParams;
 use koi_client::ApiClient;
 
 use super::{
@@ -33,7 +31,6 @@ use super::{
 };
 
 type AccountCreateMethod = koi::models::account::rpc::AccountCreate;
-type AccountNextIdentityMethod = koi::models::account::rpc::AccountNextIdentity;
 type AccountUpdateMethod = koi::models::account::rpc::AccountUpdate;
 type AccountDeleteMethod = koi::models::account::rpc::AccountDelete;
 type AccountAssetListMethod = koi::models::account::rpc::AccountAssetList;
@@ -104,10 +101,6 @@ pub enum BackgroundUpdate {
     Settings {
         generation: u64,
         state: ResourceState<SettingsSnapshot>,
-    },
-    EndpointNextId {
-        generation: u64,
-        next_id: i32,
     },
     AssetMetadata {
         generation: u64,
@@ -1069,27 +1062,6 @@ impl Loader {
         });
     }
 
-    pub fn fetch_endpoint_next_id(&self, generation: u64, network_id: u64) {
-        let client = self.client.clone();
-        let tx = self.tx.clone();
-        tokio::spawn(async move {
-            let next_id = match client.network_endpoint_next_id(network_id).await {
-                Ok(next_id) => next_id,
-                Err(error) => {
-                    let _ = tx.send(BackgroundUpdate::Notice {
-                        generation,
-                        notice: format!("Could not fetch endpoint id: {error:#}"),
-                    });
-                    1
-                }
-            };
-            let _ = tx.send(BackgroundUpdate::EndpointNextId {
-                generation,
-                next_id,
-            });
-        });
-    }
-
     pub fn create_asset(
         &self,
         generation: u64,
@@ -1153,12 +1125,12 @@ impl Loader {
     pub fn create_network_endpoint(
         &self,
         generation: u64,
-        endpoint: koi::models::network::endpoint::NetworkEndpoint,
+        network_id: u64,
+        endpoint: koi::models::network::endpoint::NetworkEndpointCreate,
         network_ids: Vec<u64>,
     ) {
         let client = self.client.clone();
         let tx = self.tx.clone();
-        let network_id = endpoint.network_identity.0;
         tokio::spawn(async move {
             let notice = match client.create_network_endpoint(network_id, &endpoint).await {
                 Ok(created) => format!("Created endpoint #{}", created.endpoint_identity),
@@ -1464,12 +1436,7 @@ async fn create_account_task(
         }),
     };
 
-    let identity = client
-        .call_typed::<AccountNextIdentityMethod>(EmptyParams::default())
-        .await
-        .map_err(|error| format!("{error:#}"))?;
-    let account = Account {
-        account_identity: identity,
+    let account = AccountCreate {
         name,
         networks: networks.into_iter().map(NetworkIdentity).collect(),
         metadata,

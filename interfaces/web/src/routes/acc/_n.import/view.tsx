@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { createMemo, createSignal } from "solid-js";
 
-import { useCreateAccount, useNextAccountId } from "#/api/account";
+import { useCreateAccount } from "#/api/account";
 import { AddressInput } from "#/components/input/address";
 import { button } from "#/components/input/button";
 import { NetworkSelect } from "#/components/net/input";
@@ -12,24 +12,20 @@ export const Route = createFileRoute("/acc/_n/import/view")({
   },
   component: () => {
     const navigate = useNavigate();
-    const nextAccountId = useNextAccountId();
     const [address, setAddress] = createSignal("");
     const [name, setName] = createSignal("");
     const [networks, setNetworks] = createSignal<number[]>([]);
-    const createAccount = useCreateAccount(({ data: { account_identity, name, networks, address, display_order } }: { data: { account_identity: number; name: string; networks: number[]; address: string; display_order: number; }; }) => ({
+    const createAccount = useCreateAccount(({ data: { name, networks, address, display_order } }: { data: { name: string; networks: number[]; address: string; display_order: number; }; }) => ({
       contentType: "application/json; charset=utf-8",
-      data: { account_identity, name, networks, display_order, metadata: { type: "view", evm_address: address } },
+      data: { name, networks, display_order, metadata: { type: "view", evm_address: address } },
     }));
 
     const handleClick = async () => {
-      const account_identity = nextAccountId.data;
-
-      if (!account_identity || account_identity <= 0) return;
-
       if (networks().length === 0) return;
 
-      await createAccount.mutateAsync({ data: { account_identity, name: name(), networks: networks(), display_order: 0, address: address() } });
-      navigate({ to: "/acc/$account", params: { account: account_identity.toString() } });
+      const account = await createAccount.mutateAsync({ data: { name: name(), networks: networks(), display_order: 0, address: address() } });
+
+      navigate({ to: "/acc/$account", params: { account: account.account_identity.toString() } });
     };
 
     const disabled = createMemo(() => createAccount.isPending || !address() || !name() || networks().length === 0);

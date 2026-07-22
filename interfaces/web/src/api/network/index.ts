@@ -1,4 +1,4 @@
-import type { Network, NetworkEndpoint, NetworkEndpointUpdate, NetworkMetadataDiscovery, NetworkUpdate, RpcPoolStats, RpcStatus } from "../bindings.gen";
+import type { Network, NetworkEndpoint, NetworkEndpointCreate, NetworkEndpointUpdate, NetworkMetadataDiscovery, NetworkUpdate, RpcPoolStats, RpcStatus } from "../bindings.gen";
 import { queryClient } from "../client";
 import { createRpcMutation, createRpcQuery, requireOptions } from "../query";
 import { rpc } from "../rpc.gen";
@@ -13,7 +13,6 @@ export const networkKeys = {
     presets: ["network-presets"] as const,
     endpoints: (networkIdentity: number | string) => ["network-endpoints", networkIdentity.toString()] as const,
     endpoint: (networkIdentity: number | string, endpointIdentity: number | string) => ["network-endpoint", networkIdentity.toString(), endpointIdentity.toString()] as const,
-    endpointNextId: (networkIdentity: number | string) => ["network-endpoint-next-id", networkIdentity.toString()] as const,
     endpointStatus: (networkIdentity: number | string, endpointIdentity: number | string) => ["network-endpoint-status", networkIdentity.toString(), endpointIdentity.toString()] as const,
     rpc: (networkIdentity: number | string) => ["network-rpc", networkIdentity.toString()] as const,
 };
@@ -33,11 +32,11 @@ export const useNetwork = createRpcQuery<NetworkPath, Network>(
     options => networkKeys.detail(requireOptions(options).path.network_identity),
 );
 export const useNetworkMetadataDiscovery = createRpcQuery<NetworkPath, NetworkMetadataDiscovery>(
-    options => rpc.networkDiscoverMetadata({ network_identity: requireOptions(options).path.network_identity }),
+    options => rpc.networkDiscover({ network_identity: requireOptions(options).path.network_identity }),
     options => networkKeys.discovery(requireOptions(options).path.network_identity),
 );
 export const useNetworkRpcStats = createRpcQuery<NetworkPath, RpcPoolStats>(
-    options => rpc.networkRpcStats({ network_identity: requireOptions(options).path.network_identity }),
+    options => rpc.networkStats({ network_identity: requireOptions(options).path.network_identity }),
     options => networkKeys.rpc(requireOptions(options).path.network_identity),
 );
 export const useNetworks = createRpcQuery<void, { networks: Network[]; }>(
@@ -48,7 +47,7 @@ export const useNetworks = createRpcQuery<void, { networks: Network[]; }>(
     },
 );
 export const useNetworkPresets = createRpcQuery<void, Network[]>(
-    () => rpc.networkListPresets(),
+    () => rpc.networkPresets(),
     () => networkKeys.presets,
 );
 export const useCreateNetwork = createRpcMutation<{ data: Network; }, Network>(
@@ -69,10 +68,6 @@ export const useDeleteNetwork = createRpcMutation<NetworkPath, null>(
         },
     },
 );
-export const useNetworkEndpointNextId = createRpcQuery<NetworkPath, number>(
-    options => rpc.endpointNextIdentity({ network_identity: requireOptions(options).path.network_identity }),
-    options => networkKeys.endpointNextId(requireOptions(options).path.network_identity),
-);
 export const useNetworkEndpoints = createRpcQuery<NetworkPath, NetworkEndpoint[]>(
     options => rpc.endpointList({ network_identity: requireOptions(options).path.network_identity }),
     options => networkKeys.endpoints(requireOptions(options).path.network_identity),
@@ -80,12 +75,11 @@ export const useNetworkEndpoints = createRpcQuery<NetworkPath, NetworkEndpoint[]
         onData: endpoints => endpoints.forEach(endpoint => queryClient.setQueryData(networkKeys.endpoint(endpoint.network_identity, endpoint.endpoint_identity), endpoint)),
     },
 );
-export const useCreateNetworkEndpoint = createRpcMutation<NetworkPath & { data: NetworkEndpoint; }, NetworkEndpoint>(
+export const useCreateNetworkEndpoint = createRpcMutation<NetworkPath & { data: NetworkEndpointCreate; }, NetworkEndpoint>(
     options => rpc.endpointCreate({ network_identity: options.path.network_identity, input: options.data }),
     {
         onSuccess: (endpoint) => {
             invalidateEndpoint(endpoint);
-            void queryClient.invalidateQueries({ queryKey: networkKeys.endpointNextId(endpoint.network_identity) });
         },
     },
 );
@@ -118,7 +112,6 @@ export const useDeleteNetworkEndpoint = createRpcMutation<EndpointPath, null>(
             const { endpoint_identity, network_identity } = options.path;
 
             void queryClient.invalidateQueries({ queryKey: networkKeys.endpoints(network_identity) });
-            void queryClient.invalidateQueries({ queryKey: networkKeys.endpointNextId(network_identity) });
             queryClient.removeQueries({ queryKey: networkKeys.endpoint(network_identity, endpoint_identity) });
             queryClient.removeQueries({ queryKey: networkKeys.endpointStatus(network_identity, endpoint_identity) });
             void queryClient.invalidateQueries({ queryKey: networkKeys.rpc(network_identity) });
@@ -138,4 +131,4 @@ export const useNetworkEndpointStatus = createRpcQuery<EndpointPath, RpcStatus>(
     },
 );
 
-export { type Network, type NetworkEndpoint, type NetworkEndpointUpdate, type NetworkMetadataDiscovery, type RpcEndpointStats, type RpcPoolStats } from "../bindings.gen";
+export { type Network, type NetworkEndpoint, type NetworkEndpointCreate, type NetworkEndpointUpdate, type NetworkMetadataDiscovery, type RpcEndpointStats, type RpcPoolStats } from "../bindings.gen";

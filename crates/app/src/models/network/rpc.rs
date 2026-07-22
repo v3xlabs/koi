@@ -3,7 +3,9 @@ use ts_rs::TS;
 
 use super::{
     Network, NetworkUpdate as NetworkUpdateInput,
-    endpoint::{NetworkEndpoint, NetworkEndpointUpdate, provider::RpcStatus},
+    endpoint::{
+        NetworkEndpoint, NetworkEndpointCreate, NetworkEndpointUpdate, provider::RpcStatus,
+    },
     identity::NetworkIdentity,
     metadata::NetworkMetadataDiscovery,
     pool::RpcPoolStats,
@@ -45,7 +47,7 @@ pub struct EndpointParams {
 #[serde(deny_unknown_fields)]
 pub struct EndpointCreateParams {
     pub network_identity: NetworkIdentity,
-    pub input: NetworkEndpoint,
+    pub input: NetworkEndpointCreate,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -61,15 +63,14 @@ rpc_method!(NetworkGet, "network.get", NetworkParams => Network);
 rpc_method!(NetworkCreate, "network.create", NetworkCreateParams => Network);
 rpc_method!(NetworkUpdate, "network.update", NetworkUpdateParams => Network);
 rpc_method!(NetworkDelete, "network.delete", NetworkParams => ());
-rpc_method!(NetworkListPresets, "network.listPresets", EmptyParams => Vec<Network>);
-rpc_method!(NetworkDiscoverMetadata, "network.discoverMetadata", NetworkParams => NetworkMetadataDiscovery);
-rpc_method!(NetworkRpcStats, "network.rpcStats", NetworkParams => RpcPoolStats);
+rpc_method!(NetworkPresets, "network.presets", EmptyParams => Vec<Network>);
+rpc_method!(NetworkDiscover, "network.discover", NetworkParams => NetworkMetadataDiscovery);
+rpc_method!(NetworkStats, "network.stats", NetworkParams => RpcPoolStats);
 rpc_method!(EndpointList, "network.endpoint.list", NetworkParams => Vec<NetworkEndpoint>);
 rpc_method!(EndpointGet, "network.endpoint.get", EndpointParams => NetworkEndpoint);
 rpc_method!(EndpointCreate, "network.endpoint.create", EndpointCreateParams => NetworkEndpoint);
 rpc_method!(EndpointUpdate, "network.endpoint.update", EndpointUpdateParams => NetworkEndpoint);
 rpc_method!(EndpointDelete, "network.endpoint.delete", EndpointParams => ());
-rpc_method!(EndpointNextIdentity, "network.endpoint.nextIdentity", NetworkParams => i32);
 rpc_method!(EndpointStatus, "network.endpoint.status", EndpointParams => RpcStatus);
 
 impl RpcHandler for NetworkList {
@@ -102,13 +103,13 @@ impl RpcHandler for NetworkDelete {
     }
 }
 
-impl RpcHandler for NetworkListPresets {
+impl RpcHandler for NetworkPresets {
     async fn handle(_state: &AppState, _params: EmptyParams) -> Result<Vec<Network>, KoiError> {
         Ok(Network::presets())
     }
 }
 
-impl RpcHandler for NetworkDiscoverMetadata {
+impl RpcHandler for NetworkDiscover {
     async fn handle(
         state: &AppState,
         params: NetworkParams,
@@ -117,7 +118,7 @@ impl RpcHandler for NetworkDiscoverMetadata {
     }
 }
 
-impl RpcHandler for NetworkRpcStats {
+impl RpcHandler for NetworkStats {
     async fn handle(state: &AppState, params: NetworkParams) -> Result<RpcPoolStats, KoiError> {
         Ok(state.networks.get_pool(&params.network_identity).snapshot())
     }
@@ -148,12 +149,7 @@ impl RpcHandler for EndpointCreate {
         state: &AppState,
         params: EndpointCreateParams,
     ) -> Result<NetworkEndpoint, KoiError> {
-        if params.input.network_identity != params.network_identity {
-            return Err(KoiError::InvalidInput(
-                "endpoint network does not match parameters".to_string(),
-            ));
-        }
-        NetworkEndpoint::create(&state.database, params.input).await
+        NetworkEndpoint::create(&state.database, params.network_identity, params.input).await
     }
 }
 
@@ -194,12 +190,6 @@ impl RpcHandler for EndpointDelete {
             .get_pool(&params.network_identity)
             .remove_endpoint(&params.endpoint_identity);
         Ok(())
-    }
-}
-
-impl RpcHandler for EndpointNextIdentity {
-    async fn handle(state: &AppState, _params: NetworkParams) -> Result<i32, KoiError> {
-        NetworkEndpoint::get_next_id(&state.database).await
     }
 }
 

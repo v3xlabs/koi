@@ -12,7 +12,9 @@ export type AccountBalances = { balances: Array<AccountBalance>, total_quote?: s
 
 export type AccountBalancesParams = { account_identity: AccountIdentity, display_currency: AssetIdentity, fresh?: boolean, };
 
-export type AccountCreateParams = { input: Account, };
+export type AccountCreate = { name: string, networks: Array<NetworkIdentity>, metadata: WalletType, group_id?: GroupIdentity, display_order: number, };
+
+export type AccountCreateParams = { input: AccountCreate, };
 
 export type AccountGroup = { group_identity: GroupIdentity, name: string, display_order: number, };
 
@@ -96,7 +98,7 @@ export type EOAWallet = { evm_address: ApiAddress, };
 
 export type EmptyParams = Record<string, never>;
 
-export type EndpointCreateParams = { network_identity: NetworkIdentity, input: NetworkEndpoint, };
+export type EndpointCreateParams = { network_identity: NetworkIdentity, input: NetworkEndpointCreate, };
 
 export type EndpointParams = { network_identity: NetworkIdentity, endpoint_identity: number, };
 
@@ -139,6 +141,8 @@ network_icon_url?: string, };
 export type NetworkCreateParams = { input: Network, };
 
 export type NetworkEndpoint = { endpoint_identity: number, endpoint_label?: string, endpoint_type: string, endpoint_url: string, endpoint_disabled: boolean, network_identity: NetworkIdentity, };
+
+export type NetworkEndpointCreate = { endpoint_label?: string, endpoint_type: string, endpoint_url: string, endpoint_disabled: boolean, };
 
 export type NetworkEndpointUpdate = { endpoint_label?: string, endpoint_type?: string, endpoint_url?: string, endpoint_disabled?: boolean, };
 
@@ -282,8 +286,6 @@ export type AccountListRpcParams = EmptyParams;
 export type AccountListRpcResult = Array<Account>;
 export type AccountMnemonicGenerateRpcParams = EmptyParams;
 export type AccountMnemonicGenerateRpcResult = string;
-export type AccountNextIdentityRpcParams = EmptyParams;
-export type AccountNextIdentityRpcResult = AccountIdentity;
 export type AccountTransactionListRpcParams = AccountParams;
 export type AccountTransactionListRpcResult = Array<Tx>;
 export type AccountTransactionPendingRpcParams = AccountParams;
@@ -314,8 +316,8 @@ export type NetworkCreateRpcParams = NetworkCreateParams;
 export type NetworkCreateRpcResult = Network;
 export type NetworkDeleteRpcParams = NetworkParams;
 export type NetworkDeleteRpcResult = null;
-export type NetworkDiscoverMetadataRpcParams = NetworkParams;
-export type NetworkDiscoverMetadataRpcResult = NetworkMetadataDiscovery;
+export type NetworkDiscoverRpcParams = NetworkParams;
+export type NetworkDiscoverRpcResult = NetworkMetadataDiscovery;
 export type EndpointCreateRpcParams = EndpointCreateParams;
 export type EndpointCreateRpcResult = NetworkEndpoint;
 export type EndpointDeleteRpcParams = EndpointParams;
@@ -324,8 +326,6 @@ export type EndpointGetRpcParams = EndpointParams;
 export type EndpointGetRpcResult = NetworkEndpoint;
 export type EndpointListRpcParams = NetworkParams;
 export type EndpointListRpcResult = Array<NetworkEndpoint>;
-export type EndpointNextIdentityRpcParams = NetworkParams;
-export type EndpointNextIdentityRpcResult = number;
 export type EndpointStatusRpcParams = EndpointParams;
 export type EndpointStatusRpcResult = RpcStatus;
 export type EndpointUpdateRpcParams = EndpointUpdateParams;
@@ -334,10 +334,10 @@ export type NetworkGetRpcParams = NetworkParams;
 export type NetworkGetRpcResult = Network;
 export type NetworkListRpcParams = EmptyParams;
 export type NetworkListRpcResult = Array<Network>;
-export type NetworkListPresetsRpcParams = EmptyParams;
-export type NetworkListPresetsRpcResult = Array<Network>;
-export type NetworkRpcStatsRpcParams = NetworkParams;
-export type NetworkRpcStatsRpcResult = RpcPoolStats;
+export type NetworkPresetsRpcParams = EmptyParams;
+export type NetworkPresetsRpcResult = Array<Network>;
+export type NetworkStatsRpcParams = NetworkParams;
+export type NetworkStatsRpcResult = RpcPoolStats;
 export type NetworkUpdateRpcParams = NetworkUpdateParams;
 export type NetworkUpdateRpcResult = Network;
 export type QuoterCreateRpcParams = QuoterCreateParams;

@@ -1016,15 +1016,6 @@ impl App {
                 }
                 self.settings.notice = Some(notice);
             }
-            BackgroundUpdate::EndpointNextId {
-                generation,
-                next_id,
-            } => {
-                if generation != self.refresh_generation {
-                    return;
-                }
-                self.set_endpoint_next_id(next_id);
-            }
             BackgroundUpdate::AssetMetadata {
                 generation,
                 identity,
@@ -2049,7 +2040,7 @@ impl App {
             Tab::Networks if self.settings.nested_network.is_some() => {
                 let network_id = self.settings.nested_network.unwrap();
                 self.form = Some(ActiveForm::open_add_endpoint(network_id));
-                KeyAction::FetchEndpointNextId(network_id)
+                KeyAction::None
             }
             Tab::Networks => {
                 self.form = Some(ActiveForm::open_add_network());
@@ -2105,13 +2096,10 @@ impl App {
                 self.settings.notice = Some(format!("Creating network {}…", network.network_name));
                 KeyAction::CreateNetwork(network)
             }
-            FormAction::SubmitCreateEndpoint(endpoint) => {
+            FormAction::SubmitCreateEndpoint { network_id, input } => {
                 self.form = None;
-                self.settings.notice = Some(format!(
-                    "Creating endpoint #{}…",
-                    endpoint.endpoint_identity
-                ));
-                KeyAction::CreateNetworkEndpoint(endpoint)
+                self.settings.notice = Some("Creating endpoint…".to_string());
+                KeyAction::CreateNetworkEndpoint { network_id, input }
             }
             FormAction::SubmitGroupName { group_id, name } => {
                 self.form = None;
@@ -2342,12 +2330,6 @@ impl App {
                 ))
             })
         })
-    }
-
-    pub fn set_endpoint_next_id(&mut self, next_id: i32) {
-        if let Some(form) = &mut self.form {
-            form.set_endpoint_next_id(next_id);
-        }
     }
 
     fn move_account_panel(&mut self, delta: i32) -> KeyAction {
@@ -2751,11 +2733,13 @@ pub enum KeyAction {
     DeleteNetworkEndpoint(u64, i32),
     DeleteAsset(String),
     SetVendor(String, bool),
-    FetchEndpointNextId(u64),
     FetchAssetMetadata(String),
     CreateAsset(koi::models::asset::Asset),
     CreateNetwork(koi::models::network::Network),
-    CreateNetworkEndpoint(koi::models::network::endpoint::NetworkEndpoint),
+    CreateNetworkEndpoint {
+        network_id: u64,
+        input: koi::models::network::endpoint::NetworkEndpointCreate,
+    },
     CreateGroup(String),
     RenameGroup(u64, String),
     DeleteGroup(u64),

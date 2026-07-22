@@ -10,7 +10,11 @@ use koi::models::{
         layout::{AccountLayout, AccountLayoutUpdate},
     },
     asset::{Asset, metadata::AssetMetadataDiscovery},
-    network::{Network, endpoint::NetworkEndpoint, pool::RpcPoolStats},
+    network::{
+        Network,
+        endpoint::{NetworkEndpoint, NetworkEndpointCreate},
+        pool::RpcPoolStats,
+    },
     quoter::Quoter,
     tx::Tx,
     vendor::flags::{VendorFlag, VendorFlagInfo},
@@ -141,7 +145,7 @@ impl ApiClient {
 
     pub async fn network_rpc_stats(&self, network_identity: u64) -> Result<RpcPoolStats> {
         self.call(
-            "network.rpcStats",
+            "network.stats",
             json!({ "network_identity": network_identity }),
         )
         .await
@@ -170,14 +174,6 @@ impl ApiClient {
         .await
     }
 
-    pub async fn network_endpoint_next_id(&self, network_identity: u64) -> Result<i32> {
-        self.call(
-            "network.endpoint.nextIdentity",
-            json!({ "network_identity": network_identity }),
-        )
-        .await
-    }
-
     pub async fn create_network(&self, network: &Network) -> Result<Network> {
         self.call("network.create", json!({ "input": network }))
             .await
@@ -186,7 +182,7 @@ impl ApiClient {
     pub async fn create_network_endpoint(
         &self,
         network_identity: u64,
-        endpoint: &NetworkEndpoint,
+        endpoint: &NetworkEndpointCreate,
     ) -> Result<NetworkEndpoint> {
         self.call(
             "network.endpoint.create",
@@ -221,7 +217,7 @@ impl ApiClient {
     }
 
     pub async fn network_presets(&self) -> Result<Vec<Network>> {
-        self.call("network.listPresets", json!({})).await
+        self.call("network.presets", json!({})).await
     }
 
     pub async fn asset_metadata_discovery(

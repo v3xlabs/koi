@@ -1,4 +1,4 @@
-import type { Account, AccountGroup, AccountGroupCreate, AccountGroupUpdate, AccountLayout, AccountLayoutUpdate, AccountUpdate } from "../bindings.gen";
+import type { Account, AccountCreate, AccountGroup, AccountGroupCreate, AccountGroupUpdate, AccountLayout, AccountLayoutUpdate, AccountUpdate } from "../bindings.gen";
 import { queryClient } from "../client";
 import { createRpcMutation, createRpcQuery, requireOptions } from "../query";
 import { rpc } from "../rpc.gen";
@@ -11,7 +11,6 @@ export const accountKeys = {
     all: ["accounts"] as const,
     layout: ["account-layout"] as const,
     detail: (identity: number | string) => ["account", identity.toString()] as const,
-    nextId: ["next-account-id"] as const,
     assets: (identity: number | string) => ["account", identity.toString(), "assets"] as const,
     assetBalance: (account: number | string, asset: string, currency: string) => ["account", account.toString(), "asset", asset, "balance", currency] as const,
     balances: (account: number | string, currency: string) => ["account", account.toString(), "balances", currency] as const,
@@ -45,14 +44,11 @@ export const useAccountLayout = createRpcQuery<void, AccountLayout>(
         onData: data => data.accounts.forEach(account => queryClient.setQueryData(accountKeys.detail(account.account_identity), account)),
     },
 );
-export const useNextAccountId = createRpcQuery<void, number>(() => rpc.accountNextIdentity(), () => accountKeys.nextId);
-
-export const useCreateAccount = createRpcMutation<{ data: Account; }, Account>(
+export const useCreateAccount = createRpcMutation<{ data: AccountCreate; }, Account>(
     options => rpc.accountCreate({ input: options.data }),
     {
         onSuccess: () => {
             invalidateAccountLists();
-            void queryClient.invalidateQueries({ queryKey: accountKeys.nextId });
         },
     },
 );
@@ -200,4 +196,4 @@ export const moveAccountToGroup = (layout: AccountLayout, account_identity: numb
     return { ...layout, accounts };
 };
 
-export { type Account, type AccountGroup, type AccountGroupCreate, type AccountGroupUpdate, type AccountLayout, type AccountLayoutUpdate, type AccountUpdate, type WalletType } from "../bindings.gen";
+export { type Account, type AccountCreate, type AccountGroup, type AccountGroupCreate, type AccountGroupUpdate, type AccountLayout, type AccountLayoutUpdate, type AccountUpdate, type WalletType } from "../bindings.gen";
