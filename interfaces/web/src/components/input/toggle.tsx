@@ -5,11 +5,17 @@ export type ToggleProperties = {
     value: Accessor<boolean>;
     label?: string;
     description?: string;
+    disabled?: boolean;
     onChange: (value: boolean) => void;
 };
 
-export const Toggle: Component<ToggleProperties> = ({ value = () => false, onChange = () => {}, label, description }) => (
-    <Switch checked={value()} onChange={onChange} classList={{ "switch": true, "w-full flex justify-between items-center": !!(label || description) }}>
+export const Toggle: Component<ToggleProperties> = ({ value = () => false, onChange = () => {}, label, description, disabled = false }) => (
+    <Switch
+      checked={value()}
+      onChange={onChange}
+      disabled={disabled}
+      classList={{ "switch": true, "w-full flex justify-between items-center": !!(label || description), "opacity-50": disabled }}
+    >
         {(label || description) && (
             <div>
                 {label && (

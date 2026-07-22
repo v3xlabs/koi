@@ -18,7 +18,7 @@ export const NetworkEndpointCollapsible: Component<{ network_identity: number; e
     const endpoint = createMemo(() => endpointQuery.data);
 
     return (
-        <Collapsible>
+        <Collapsible class="border-t border-border first:border-t-0">
             <Collapsible.Trigger class="w-full flex items-center justify-between pr-4 group cursor-pointer hover:bg-surface-alt">
                 <NetworkEndpointPreview network_identity={network_identity} endpoint_identity={endpoint_identity} />
                 <FaSolidChevronDown class="text-muted group-hover:text-foreground" />

@@ -20,7 +20,7 @@ export const NetworkEndpointDelete: Component<{ network_identity: number; endpoi
             </Modal.Trigger>
             <Modal.Portal>
                 <Modal.Overlay />
-                <div class="fixed inset-0">
+                <div class="fixed inset-0 z-50">
                     <Modal.Content class="w-full max-w-xl bg-surface rounded-md relative mx-auto mt-24">
                         <Modal.Title>
                             Delete Network Endpoint #
